@@ -1,3 +1,5 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -5,13 +7,24 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
 
+/* ============= STATIC FILES ============= */
+app.use(express.static(path.join(__dirname, 'public')));
+
+/* Serve index.html for root URL */
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+/* ============= SUPABASE ============= */
 const sb = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
@@ -370,9 +383,7 @@ app.get('/api/rounds', auth, async (req, res) => {
   res.json({ rounds: data });
 });
 
-/* =====================================================
-   NEW: DEPOSITS
-===================================================== */
+/* ============= DEPOSITS ============= */
 
 app.post('/api/user/deposits', auth, async (req, res) => {
   if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -409,9 +420,7 @@ app.get('/api/user/deposits', auth, async (req, res) => {
   res.json({ deposits: data || [] });
 });
 
-/* =====================================================
-   NEW: WITHDRAWALS
-===================================================== */
+/* ============= WITHDRAWALS ============= */
 
 app.post('/api/user/withdrawals', auth, async (req, res) => {
   if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -430,7 +439,6 @@ app.post('/api/user/withdrawals', auth, async (req, res) => {
   if (Number(user.balance) < amt)
     return res.status(400).json({ error: 'Insufficient balance' });
 
-  /* Freeze the amount by deducting immediately */
   const newBalance = Number(user.balance) - amt;
   await sb.from('users').update({ balance: newBalance }).eq('id', req.user.id);
 
@@ -445,7 +453,6 @@ app.post('/api/user/withdrawals', auth, async (req, res) => {
   });
 
   if (error) {
-    /* rollback */
     await sb.from('users').update({ balance: user.balance }).eq('id', req.user.id);
     return res.status(500).json({ error: error.message });
   }
@@ -461,9 +468,7 @@ app.get('/api/user/withdrawals', auth, async (req, res) => {
   res.json({ withdrawals: data || [] });
 });
 
-/* =====================================================
-   ADMIN: MANAGE REQUESTS
-===================================================== */
+/* ============= ADMIN: MANAGE REQUESTS ============= */
 
 app.get('/api/admin/deposits', auth, adminOnly, async (req, res) => {
   const { data, error } = await sb.from('deposits').select('*').order('id', { ascending: false });
@@ -515,7 +520,6 @@ app.post('/api/admin/withdrawals/:id/decide', auth, adminOnly, async (req, res) 
   if (w.status !== 'pending') return res.status(400).json({ error: 'Already processed' });
 
   if (action === 'reject') {
-    /* Refund balance since it was deducted at request time */
     const { data: user } = await sb.from('users').select('balance').eq('id', w.user_id).single();
     if (user) {
       await sb.from('users').update({
@@ -533,9 +537,7 @@ app.post('/api/admin/withdrawals/:id/decide', auth, adminOnly, async (req, res) 
   res.json({ ok: true });
 });
 
-/* =====================================================
-   USER: BUY TICKETS
-===================================================== */
+/* ============= USER: BUY TICKETS ============= */
 
 app.post('/api/user/tickets/buy', auth, async (req, res) => {
   if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -546,14 +548,12 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
   const { data: user } = await sb.from('users').select('*').eq('id', req.user.id).single();
   if (!user) return res.status(404).json({ error: 'User not found' });
 
-  /* check availability */
   const { data: current } = await sb.from('tickets')
     .select('*').eq('round_number', settings.round_number).in('number', numbers);
 
   const sold = (current || []).filter(t => t.user_id);
   if (sold.length) return res.status(400).json({ error: 'Some tickets are already sold' });
 
-  /* free ticket path */
   let usedFree = false;
   let cost = 0;
 
@@ -569,7 +569,6 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
       return res.status(400).json({ error: 'Insufficient balance. Please deposit first.' });
   }
 
-  /* deduct */
   const updates = {};
   if (usedFree) updates.free_tickets = (user.free_tickets || 0) - 1;
   else updates.balance = Number(user.balance) - cost;
@@ -578,7 +577,6 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
 
   await sb.from('users').update(updates).eq('id', user.id);
 
-  /* assign tickets */
   for (const n of numbers) {
     const existing = (current || []).find(t => t.number === n);
     const soldDate = new Date().toISOString();
@@ -595,7 +593,6 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
     }
   }
 
-  /* referral logic */
   let referralMessage = null;
   if (!user.has_bought_ticket && user.referred_by) {
     const { data: referrer } = await sb.from('users')
@@ -620,10 +617,8 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-// Only run a local server when not on Vercel
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => console.log(`✅ Lucky Wheel running locally on port ${PORT}`));
 }
 
-// Export the app for Vercel
 export default app;
