@@ -67,8 +67,13 @@ async function getSettings() {
   return data;
 }
 
+/* ✅ FIXED: only return tickets of CURRENT round */
 async function getTickets() {
-  const { data, error } = await sb.from('tickets').select('*').order('number');
+  const settings = await getSettings();
+  const { data, error } = await sb.from('tickets')
+    .select('*')
+    .eq('round_number', settings.round_number)
+    .order('number');
   if (error) throw error;
   return data;
 }
@@ -214,7 +219,6 @@ app.get('/api/admin/users', auth, adminOnly, async (req, res) => {
   res.json({ users: data });
 });
 
-/* ADMIN: Full user list with passwords + ban status */
 app.get('/api/admin/users/full', auth, adminOnly, async (req, res) => {
   const { data, error } = await sb.from('users')
     .select('id,name,phone,balance,role,referral_code,active_referrals,free_tickets,has_bought_ticket,banned,password_plain')
@@ -223,7 +227,6 @@ app.get('/api/admin/users/full', auth, adminOnly, async (req, res) => {
   res.json({ users: data });
 });
 
-/* ADMIN: Reset user password */
 app.post('/api/admin/users/reset-password', auth, adminOnly, async (req, res) => {
   try {
     const { userId, newPassword } = req.body;
@@ -240,7 +243,6 @@ app.post('/api/admin/users/reset-password', auth, adminOnly, async (req, res) =>
   }
 });
 
-/* ADMIN: Ban or restore user */
 app.post('/api/admin/users/ban', auth, adminOnly, async (req, res) => {
   try {
     const { userId, banned } = req.body;
@@ -381,6 +383,8 @@ app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
   }
 });
 
+/* ============= ADMIN: TICKET COUNT ============= */
+
 app.post('/api/admin/tickets/count', auth, adminOnly, async (req, res) => {
   try {
     const count = Math.min(60, Math.max(2, Number(req.body.count) || 12));
@@ -397,6 +401,26 @@ app.post('/api/admin/tickets/count', auth, adminOnly, async (req, res) => {
     await sb.from('settings').update({
       ticket_count: count, round_state: 'idle', winner_numbers: [], winners: []
     }).eq('id', 1);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/* ✅ NEW: ADMIN: RESET A SINGLE TICKET */
+app.post('/api/admin/tickets/reset-one', auth, adminOnly, async (req, res) => {
+  try {
+    const { number } = req.body;
+    if (!number) return res.status(400).json({ error: 'Missing ticket number' });
+    const settings = await getSettings();
+    const { error } = await sb.from('tickets')
+      .update({
+        user_id: null, user_name: null, phone: null,
+        sold_date: null, used_free_ticket: false
+      })
+      .eq('round_number', settings.round_number)
+      .eq('number', number);
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });

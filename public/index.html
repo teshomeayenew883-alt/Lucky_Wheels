@@ -694,9 +694,25 @@ function ticketStatus() {
         const sold = t.user_id !== null;
         return `<div class="ticket ${sold ? 'sold' : ''} ${t.used_free_ticket ? 'free' : ''}">
             <div class="ticket-number">#${t.number}</div>
-            ${sold ? `<p class="sold-text">SOLD</p>${t.used_free_ticket ? '<p class="free-badge">🎁 FREE</p>' : ''}<br><p>${escapeHTML(t.user_name || '')}</p><p>${escapeHTML(t.phone || '')}</p>` : `<p class="available">AVAILABLE</p>`}
+            ${sold ? `
+                <p class="sold-text">SOLD</p>
+                ${t.used_free_ticket ? '<p class="free-badge">🎁 FREE</p>' : ''}
+                <br>
+                <p>${escapeHTML(t.user_name || '')}</p>
+                <p>${escapeHTML(t.phone || '')}</p>
+                <button class="small-button red-button" style="margin-top:8px;padding:5px 10px;font-size:11px" onclick="resetOneTicket(${t.number})">🔄 Reset</button>
+            ` : `<p class="available">AVAILABLE</p>`}
         </div>`;
     }).join('');
+}
+async function resetOneTicket(number) {
+    if (!confirm(`Reset ticket #${number}?\n\nThis will make it AVAILABLE for other users.`)) return;
+    try {
+        await api('/admin/tickets/reset-one', { method: 'POST', body: { number } });
+        toast('✅ Ticket #' + number + ' reset');
+        await refreshState();
+        ticketsPage();
+    } catch (e) { alert('❌ ' + e.message); }
 }
 
 async function requestsPage() {
@@ -790,66 +806,112 @@ function buildWheel() {
     const wheel = document.getElementById('wheel');
     const labels = document.getElementById('wheelLabels');
     if (!wheel || !labels) return;
-    const n = SETTINGS.ticket_count;
+
+    const soldTickets = TICKETS.filter(t => t.user_id !== null);
+    const n = soldTickets.length;
+
+    if (n === 0) {
+        wheel.style.background = '#334155';
+        labels.innerHTML = `<div style="position:absolute;inset:0;display:flex;justify-content:center;align-items:center;color:#94a3b8;font-size:16px;text-align:center;padding:0 40px">No tickets sold yet.<br>Assign tickets from the admin panel to start.</div>`;
+        return;
+    }
+
     const angle = 360 / n;
     const winners = SETTINGS.round_state === 'finished' ? (SETTINGS.winner_numbers || []) : [];
     const stops = [];
-    for (let i = 1; i <= n; i++) {
-        const start = (i - 1) * angle, end = i * angle;
+
+    for (let i = 0; i < n; i++) {
+        const t = soldTickets[i];
+        const start = i * angle;
+        const end = (i + 1) * angle;
         let color;
-        if (winners.includes(i)) color = '#fbbf24';
-        else if (i % 2 === 1) color = `hsl(${(i * 37) % 360}, 62%, 38%)`;
-        else color = `hsl(${(i * 37) % 360}, 55%, 27%)`;
+        if (winners.includes(t.number)) color = '#fbbf24';
+        else if (i % 2 === 1) color = `hsl(${(t.number * 37) % 360}, 62%, 38%)`;
+        else color = `hsl(${(t.number * 37) % 360}, 55%, 27%)`;
         stops.push(`${color} ${start}deg ${end}deg`);
     }
+
     wheel.style.background = `conic-gradient(from 0deg, ${stops.join(',')})`;
     wheel.classList.toggle('has-winners', winners.length > 0);
-    const fontSize = Math.max(9, Math.min(20, 190 / n));
+
+    const fontSize = Math.max(9, Math.min(22, 250 / n));
     let html = '';
-    for (let i = 1; i <= n; i++) {
-        const rot = (i - 1) * angle + angle / 2;
-        const isWinner = winners.includes(i);
-        html += `<div class="wl" style="transform:rotate(${rot}deg)"><span style="font-size:${fontSize}px;color:${isWinner ? '#111827' : '#ffffff'}">${i}</span></div>`;
+    for (let i = 0; i < n; i++) {
+        const t = soldTickets[i];
+        const rot = i * angle + angle / 2;
+        const isWinner = winners.includes(t.number);
+        html += `<div class="wl" style="transform:rotate(${rot}deg)">
+            <span style="font-size:${fontSize}px;color:${isWinner ? '#111827' : '#ffffff'}">#${t.number}</span>
+        </div>`;
     }
     labels.innerHTML = html;
 }
 function applyWheelState() {
     const wheel = document.getElementById('wheel');
     if (!wheel) return;
+
     const s = SETTINGS;
     const target = Number(s.target_rotation || 0);
     const pointer = document.getElementById('topPointer');
     const orbit = document.getElementById('arrowOrbit');
+    const soldTickets = TICKETS.filter(t => t.user_id !== null);
+    const n = soldTickets.length;
+
     if (s.round_state === 'idle') {
-        stopCountdown(); wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
-        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
-        const c = document.getElementById('wheelCenter'); if (c) c.textContent = 'SPIN';
-        const a = document.getElementById('winnerArea'); if (a) a.innerHTML = '';
+        stopCountdown();
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        if (pointer) pointer.classList.remove('winner');
+        if (orbit) orbit.classList.add('hidden');
+        const c = document.getElementById('wheelCenter');
+        if (c) c.textContent = n > 0 ? 'SPIN' : 'EMPTY';
+        const a = document.getElementById('winnerArea');
+        if (a) a.innerHTML = '';
         return;
     }
+
     if (s.round_state === 'spinning') {
         const startedAt = new Date(s.spin_started_at).getTime();
         const elapsed = (Date.now() - startedAt) / 1000;
         const remaining = Math.max(0, s.duration - elapsed);
-        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
-        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)'; void wheel.offsetWidth;
-        requestAnimationFrame(() => { wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`; wheel.style.transform = `rotate(${target}deg)`; });
+        if (pointer) pointer.classList.remove('winner');
+        if (orbit) orbit.classList.add('hidden');
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        void wheel.offsetWidth;
+        requestAnimationFrame(() => {
+            wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`;
+            wheel.style.transform = `rotate(${target}deg)`;
+        });
         startCountdown(startedAt, s.duration);
         return;
     }
+
     if (s.round_state === 'finished') {
-        stopCountdown(); wheel.style.transition = 'none'; wheel.style.transform = `rotate(${target}deg)`;
+        stopCountdown();
+        wheel.style.transition = 'none';
+        wheel.style.transform = `rotate(${target}deg)`;
         if (pointer) pointer.classList.add('winner');
         const winners = s.winner_numbers || [];
-        if (orbit && winners.length) {
-            const angle = 360 / s.ticket_count, number = winners[0], center = (number - 1) * angle + angle / 2;
-            const screen = ((center + target) % 360 + 360) % 360;
-            orbit.classList.remove('hidden'); orbit.style.transform = `rotate(${screen}deg)`;
+
+        if (orbit && winners.length > 0 && n > 0) {
+            const winnerNum = winners[0];
+            const winnerIndex = soldTickets.findIndex(t => t.number === winnerNum);
+            if (winnerIndex !== -1) {
+                const angle = 360 / n;
+                const center = winnerIndex * angle + angle / 2;
+                const screen = ((center + target) % 360 + 360) % 360;
+                orbit.classList.remove('hidden');
+                orbit.style.transform = `rotate(${screen}deg)`;
+            }
         }
+
         const centerEl = document.getElementById('wheelCenter');
         if (centerEl) centerEl.innerHTML = winners.length ? `🏆<br>#${winners[0]}` : 'DONE';
-        const timerEl = document.getElementById('timer'); if (timerEl) timerEl.textContent = '00:00';
-        const statusEl = document.getElementById('status'); if (statusEl) statusEl.textContent = 'Round completed.';
+        const timerEl = document.getElementById('timer');
+        if (timerEl) timerEl.textContent = '00:00';
+        const statusEl = document.getElementById('status');
+        if (statusEl) statusEl.textContent = 'Round completed.';
         showWinners(s.winners || []);
     }
 }
