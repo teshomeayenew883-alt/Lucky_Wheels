@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Wheel</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #0f172a; color: white; }
+button, input, select, textarea { font-family: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+.banner-img { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.3); background: #1e293b; }
+.login-banner { height: 160px; border-radius: 12px; margin-bottom: 20px; }
+.login-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle, #1e3a5f, #0f172a); }
+.login-card { width: 430px; max-width: 100%; padding: 35px; background: #111827; border: 1px solid #334155; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.logo { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 10px; }
+.logo span, .header-logo span { color: #fbbf24; }
+.login-description { text-align: center; color: #94a3b8; margin-bottom: 25px; }
+input, select, textarea { width: 100%; padding: 13px; margin: 7px 0 12px; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; outline: none; font-size: 14px; }
+input:focus, select:focus, textarea:focus { border-color: #fbbf24; }
+.hint { font-size: 12px; color: #64748b; margin: -6px 0 10px; }
+.main-button { width: 100%; padding: 13px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; margin-top: 8px; }
+.main-button:hover { opacity: .85; }
+.main-button:disabled { opacity: .5; cursor: not-allowed; }
+.login-footer { text-align: center; color: #94a3b8; margin-top: 18px; }
+.link-button { border: none; background: none; color: #fbbf24; font-weight: bold; }
+.header { height: 70px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: #111827; border-bottom: 1px solid #334155; }
+.header-logo { font-size: 25px; font-weight: bold; }
+.header-user { display: flex; align-items: center; gap: 15px; }
+.logout { padding: 9px 14px; border: none; border-radius: 7px; background: #991b1b; color: white; }
+.layout { min-height: calc(100vh - 70px); display: grid; grid-template-columns: 230px 1fr; }
+.sidebar { padding: 20px; background: #111827; border-right: 1px solid #334155; }
+.nav { width: 100%; padding: 13px; margin-bottom: 8px; border: none; border-radius: 8px; background: transparent; color: #94a3b8; text-align: left; }
+.nav:hover { background: #1e293b; color: white; }
+.nav.active { background: #334155; color: #fbbf24; }
+.main { width: 100%; max-width: 1400px; padding: 25px; }
+.card { padding: 20px; margin-bottom: 20px; background: #111827; border: 1px solid #334155; border-radius: 15px; }
+.title { margin-bottom: 20px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+.stat { padding: 20px; background: #172033; border: 1px solid #334155; border-radius: 12px; }
+.stat small { color: #94a3b8; }
+.stat h2 { margin-top: 10px; color: #fbbf24; }
+.referral-card { padding: 22px; margin-bottom: 20px; border-radius: 15px; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #fbbf24; }
+.referral-code-box { display: flex; gap: 10px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+.referral-code { padding: 12px 20px; border-radius: 8px; background: #0b1220; border: 2px dashed #fbbf24; font-size: 22px; font-weight: bold; letter-spacing: 3px; color: #fbbf24; font-family: monospace; }
+.copy-btn { padding: 12px 18px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; }
+.progress-bar { width: 100%; height: 14px; background: #0b1220; border-radius: 7px; overflow: hidden; margin: 10px 0; border: 1px solid #334155; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width .4s ease; }
+.ref-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+.ref-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+.ref-badge.active { background: #166534; color: #86efac; }
+.ref-badge.pending { background: #78350f; color: #fcd34d; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.full { grid-column: 1 / -1; }
+label { color: #cbd5e1; display: block; }
+.ticket-selector, .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; margin-top: 10px; }
+.ticket-select { padding: 15px 5px; border: 1px solid #475569; border-radius: 8px; background: #172033; color: white; }
+.ticket-select.selected { background: #fbbf24; color: #111827; }
+.ticket-select.sold { background: #7f1d1d; color: #fecaca; cursor: not-allowed; }
+.ticket-select.mine { background: #166534; color: #86efac; cursor: not-allowed; border-color: #4ade80; }
+.ticket { padding: 18px; border-radius: 10px; background: #172033; border: 1px solid #475569; }
+.ticket.sold { background: #3f1515; border-color: #991b1b; }
+.ticket.free { background: #14532d; border-color: #4ade80; }
+.ticket-number { font-size: 25px; font-weight: bold; color: #fbbf24; margin-bottom: 10px; }
+.available { color: #4ade80; }
+.sold-text { color: #f87171; }
+.free-badge { color: #4ade80; font-weight: bold; font-size: 12px; }
+.checkbox-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: #0b1220; border-radius: 8px; border: 1px solid #4ade80; margin-bottom: 12px; }
+.checkbox-row input { width: auto; margin: 0; }
+.checkbox-row label { color: #86efac; font-weight: bold; margin: 0; display: inline; }
+.wheel-layout { display: grid; grid-template-columns: minmax(300px, 460px) 1fr; gap: 30px; align-items: center; }
+.wheel-container { position: relative; width: 380px; max-width: 88vw; aspect-ratio: 1; margin: auto; }
+.wheel { width: 100%; height: 100%; position: relative; overflow: hidden; border: 7px solid #fbbf24; border-radius: 50%; background: #334155; box-shadow: 0 0 40px rgba(0,0,0,.5); will-change: transform; }
+.wheel.has-winners { animation: winnerGlow 1.4s ease-in-out infinite; }
+@keyframes winnerGlow { 0%,100% { box-shadow: 0 0 30px rgba(251,191,36,.45); } 50% { box-shadow: 0 0 70px rgba(251,191,36,.95); } }
+.wheel-labels { position: absolute; inset: 0; pointer-events: none; }
+.wl { position: absolute; inset: 0; display: flex; justify-content: center; }
+.wl span { margin-top: 14px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.pointer { position: absolute; z-index: 20; top: -2px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 17px solid transparent; border-right: 17px solid transparent; border-top: 38px solid red; }
+.pointer.winner { border-top-color: #4ade80; animation: bounceP 0.7s infinite alternate; }
+@keyframes bounceP { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(6px); } }
+.center { position: absolute; z-index: 30; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 78px; height: 78px; border-radius: 50%; background: #111827; border: 4px solid #fbbf24; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; text-align: center; line-height: 1.1; pointer-events: none; }
+.arrow-orbit { position: absolute; inset: 0; z-index: 25; pointer-events: none; transition: transform 1s cubic-bezier(.2,.8,.3,1); }
+.arrow-tip { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: translate(-50%, -50%) translateY(-66px); border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 20px solid #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.9)); animation: pulseArrow .8s infinite alternate; }
+@keyframes pulseArrow { from { opacity: .65; } to { opacity: 1; } }
+.timer { text-align: center; font-size: 55px; font-weight: bold; color: #fbbf24; margin-bottom: 15px; }
+.status { text-align: center; color: #94a3b8; margin-bottom: 15px; }
+.winners { padding: 20px; margin-top: 20px; border-radius: 12px; background: #14532d; border: 1px solid #4ade80; }
+.winners h2 { color: #4ade80; margin-bottom: 12px; }
+.winner { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+.table-box { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 13px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+th { color: #94a3b8; }
+.small-button { padding: 8px 12px; border: none; border-radius: 7px; background: #334155; color: white; margin: 2px; }
+.gold-button { background: #fbbf24; color: #111827; }
+.red-button { background: #991b1b; color: white; }
+.green-button { background: #166534; color: white; }
+.history { padding: 18px; margin-bottom: 12px; background: #172033; border: 1px solid #334155; border-radius: 10px; }
+.history h3 { color: #fbbf24; margin-bottom: 8px; }
+.muted { color: #94a3b8; }
+.gold { color: #fbbf24; }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #4ade80; margin-right: 6px; animation: livePulse 1.2s infinite; }
+@keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+.toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 24px; border-radius: 10px; background: #166534; color: white; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,.4); transform: translateY(-20px); opacity: 0; transition: all .35s ease; max-width: 380px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { background: #991b1b; }
+
+.method-box { padding: 20px; border-radius: 12px; border: 2px dashed #fbbf24; background: #0b1220; margin: 12px 0; }
+.method-box h3 { color: #fbbf24; margin-bottom: 8px; }
+.method-box .acct { font-size: 22px; font-weight: bold; font-family: monospace; letter-spacing: 2px; color: #ffffff; margin: 6px 0; }
+.method-box .name { color: #86efac; font-weight: bold; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.status-badge.pending { background: #78350f; color: #fcd34d; }
+.status-badge.approved { background: #166534; color: #86efac; }
+.status-badge.rejected { background: #7f1d1d; color: #fecaca; }
+.req-card { padding: 16px; border-radius: 12px; background: #172033; border: 1px solid #334155; margin-bottom: 12px; }
+.req-card .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; flex-wrap: wrap; gap: 6px; }
+.req-card .row b { color: #cbd5e1; }
+.req-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+@media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } }
+@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } }
+@media(max-width:450px) { .wheel-container { width: 280px; } }
+</style>
+</head>
+<body>
+<div id="toast" class="toast hidden"></div>
+
+<section id="loginPage" class="login-page">
+<div class="login-card">
+    <img src="image1.jpg" alt="Lucky Wheel" class="banner-img login-banner">
+    <div class="logo">LUCKY<span>WHEEL</span></div>
+    <p class="login-description">Teshe Number Lucky Wheel</p>
+    <div id="loginForm">
+        <input id="loginPhone" placeholder="Phone Number">
+        <input id="loginPassword" type="password" placeholder="Password">
+        <button class="main-button" onclick="loginUser()">Login</button>
+        <div class="login-footer">Don't have an account? <button class="link-button" onclick="showRegister()">Register</button></div>
+    </div>
+    <div id="register" class="hidden">
+        <h2 style="margin-bottom:20px">Create Account</h2>
+        <input id="regName" placeholder="Full Name">
+        <input id="regPhone" placeholder="Phone Number">
+        <input id="regPassword" type="password" placeholder="Password">
+        <label>Referral Code (optional)</label>
+        <input id="regReferral" placeholder="e.g. ABC1234" style="text-transform:uppercase">
+        <p class="hint">Got an invite? Paste the code — auto-filled if you opened an invite link.</p>
+        <button class="main-button" onclick="register()">Register</button>
+        <div class="login-footer">Already registered? <button class="link-button" onclick="showLogin()">Login</button></div>
+    </div>
+</div>
+</section>
+
+<section id="app" class="hidden">
+<header class="header">
+    <div class="header-logo">LUCKY<span>WHEEL</span></div>
+    <div class="header-user">
+        <span class="muted" style="font-size:13px"><span class="live-dot"></span>live</span>
+        <span id="headerName"></span>
+        <button class="logout" onclick="logout()">Logout</button>
+    </div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+    <button class="nav active" data-page="dashboard" onclick="openPage('dashboard')">🏠 Dashboard</button>
+    <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Wheel</button>
+    <button class="nav" data-page="buy" onclick="openPage('buy')">🛒 Buy Tickets</button>
+    <button class="nav" data-page="deposit" onclick="openPage('deposit')">💰 Deposit</button>
+    <button class="nav" data-page="withdraw" onclick="openPage('withdraw')">💸 Withdraw</button>
+    <button class="nav" data-page="referrals" onclick="openPage('referrals')">🎁 Referrals</button>
+    <button id="usersNav" class="nav hidden" data-page="users" onclick="openPage('users')">👥 Users</button>
+    <button id="ticketsNav" class="nav hidden" data-page="tickets" onclick="openPage('tickets')">🎟️ Assign Tickets</button>
+    <button id="requestsNav" class="nav hidden" data-page="requests" onclick="openPage('requests')">📥 Requests</button>
+    <button class="nav" data-page="history" onclick="openPage('history')">📜 History</button>
+    <button id="settingsNav" class="nav hidden" data-page="settings" onclick="openPage('settings')">⚙️ Settings</button>
+</aside>
+<main id="main" class="main"></main>
+</div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const API = '/api';
+let TOKEN    = localStorage.getItem('lw_token') || null;
+let ME       = null;
+let SETTINGS = null;
+let TICKETS  = [];
+let PAGE     = 'dashboard';
+let sb           = null;
+let countdownId  = null;
+let settleCalled = false;
+let subscribed   = false;
+
+function toast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 4500);
+}
+
+async function api(path, options = {}) {
+    const res = await fetch(API + path, {
+        method: options.method || 'GET',
+        headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}) },
+        body: options.body ? JSON.stringify(options.body) : undefined
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error(data.error || 'Request failed');
+    return data;
+}
+
+async function boot() {
+    try {
+        const cfg = await api('/config');
+        sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    } catch (e) { console.error('Realtime init failed', e); }
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    if (urlRef) {
+        const input = document.getElementById('regReferral');
+        if (input) input.value = urlRef.toUpperCase();
+        setTimeout(() => showRegister(), 100);
+    }
+    if (TOKEN) {
+        try { await enterApp(); return; }
+        catch (e) { TOKEN = null; localStorage.removeItem('lw_token'); }
+    }
+    showLoginPage();
+}
+function showLoginPage() { document.getElementById('loginPage').classList.remove('hidden'); document.getElementById('app').classList.add('hidden'); }
+function showRegister() { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('register').classList.remove('hidden'); }
+function showLogin() { document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('register').classList.add('hidden'); }
+
+async function register() {
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const referralCode = document.getElementById('regReferral').value.trim().toUpperCase();
+    if (!name || !phone || !password) { alert('Please fill all required fields.'); return; }
+    try {
+        const res = await api('/auth/register', { method: 'POST', body: { name, phone, password, referralCode } });
+        let msg = '✅ Account created!\n\nYour referral code: ' + res.referral_code + '\n\nShare it — when 8 of your friends buy a ticket, you get a FREE one!';
+        if (res.referred) msg += '\n\n✓ Referral link applied.';
+        alert(msg);
+        showLogin();
+    } catch (e) { alert(e.message); }
+}
+
+async function loginUser() {
+    const phone = document.getElementById('loginPhone').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!phone || !password) { alert('Enter phone and password.'); return; }
+    try {
+        const data = await api('/auth/login', { method: 'POST', body: { phone, password } });
+        TOKEN = data.token;
+        localStorage.setItem('lw_token', TOKEN);
+        await enterApp();
+    } catch (e) { alert(e.message); }
+}
+
+async function enterApp() {
+    await refreshState();
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('headerName').textContent = ME.role === 'admin' ? 'Admin' : ME.name;
+    const isAdmin = ME.role === 'admin';
+    document.getElementById('usersNav').classList.toggle('hidden', !isAdmin);
+    document.getElementById('ticketsNav').classList.toggle('hidden', !isAdmin);
+    document.getElementById('requestsNav').classList.toggle('hidden', !isAdmin);
+    document.getElementById('settingsNav').classList.toggle('hidden', !isAdmin);
+    subscribeRealtime();
+    openPage('dashboard');
+}
+async function refreshState() {
+    const data = await api('/state');
+    SETTINGS = data.settings; TICKETS = data.tickets; ME = data.me;
+}
+function subscribeRealtime() {
+    if (!sb || subscribed) return;
+    subscribed = true;
+    sb.channel('lucky-wheel-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' },  onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rounds' },   onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' },    onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawals' }, onLiveUpdate)
+      .subscribe();
+}
+let liveBusy = false;
+async function onLiveUpdate() {
+    if (liveBusy) return; liveBusy = true;
+    try { await refreshState(); await renderPage(); } catch (e) { console.warn(e); }
+    finally { liveBusy = false; }
+}
+function openPage(page) { PAGE = page; document.querySelectorAll('.nav').forEach(btn => btn.classList.toggle('active', btn.dataset.page === page)); renderPage(); }
+async function renderPage() {
+    if (!ME) return;
+    if (PAGE === 'dashboard')  return dashboard();
+    if (PAGE === 'wheel')      return wheelPage();
+    if (PAGE === 'buy')        return buyPage();
+    if (PAGE === 'deposit')    return depositPage();
+    if (PAGE === 'withdraw')   return withdrawPage();
+    if (PAGE === 'referrals')  return referralsPage();
+    if (PAGE === 'users')      return usersPage();
+    if (PAGE === 'tickets')    return ticketsPage();
+    if (PAGE === 'requests')   return requestsPage();
+    if (PAGE === 'history')    return historyPage();
+    if (PAGE === 'settings')   return settingsPage();
+}
+
+function dashboard() {
+    const sold = TICKETS.filter(t => t.user_id !== null).length;
+    if (ME.role === 'admin') {
+        document.getElementById('main').innerHTML = `
+            <img src="image1.jpg" alt="Admin" class="banner-img">
+            <h1 class="title">Admin Dashboard</h1>
+            <div class="stats">
+                <div class="stat"><small>Registered Users</small><h2 id="statUsers">—</h2></div>
+                <div class="stat"><small>Sold Tickets</small><h2>${sold}/${SETTINGS.ticket_count}</h2></div>
+                <div class="stat"><small>Winners Per Round</small><h2>${SETTINGS.winner_count}</h2></div>
+                <div class="stat"><small>Round Duration</small><h2>${SETTINGS.duration}s</h2></div>
+            </div>
+            <div class="card"><h2>Admin Actions</h2><br>
+                <button class="main-button" onclick="openPage('tickets')">🎟️ Assign Tickets</button><br>
+                <button class="main-button" onclick="openPage('requests')">📥 Manage Requests (Deposit/Withdraw)</button><br>
+                <button class="main-button" onclick="openPage('wheel')">🎡 Open Wheel</button><br>
+                <button class="main-button" onclick="openPage('settings')">⚙️ Wheel Settings</button>
+            </div>`;
+        api('/admin/users').then(list => { const el = document.getElementById('statUsers'); if (el) el.textContent = list.users.length; }).catch(() => {});
+        return;
+    }
+    const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id));
+    const refs = ME.active_referrals || 0;
+    const goal = SETTINGS.referral_goal || 8;
+    const nextReward = goal - (refs % goal);
+    const progressPct = ((refs % goal) / goal) * 100;
+    document.getElementById('main').innerHTML = `
+        <img src="image2.jpg" alt="Dashboard" class="banner-img">
+        <h1 class="title">Welcome, ${escapeHTML(ME.name)}</h1>
+        <div class="stats">
+            <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
+            <div class="stat"><small>My Tickets</small><h2>${mine.length}</h2></div>
+            <div class="stat"><small>Active Referrals</small><h2>${refs}</h2></div>
+            <div class="stat"><small>Free Tickets</small><h2>${ME.free_tickets || 0}</h2></div>
+        </div>
+        <div class="card"><h2>Quick Actions</h2><br>
+            <button class="main-button" onclick="openPage('deposit')">💰 Deposit Money</button><br>
+            <button class="main-button" onclick="openPage('buy')">🛒 Buy Tickets</button><br>
+            <button class="main-button" onclick="openPage('withdraw')">💸 Withdraw</button>
+        </div>
+        <div class="referral-card">
+            <h2 style="color:#fbbf24">🎁 Referral Progress</h2>
+            <p class="muted" style="margin:8px 0 12px">${refs} active referrals · ${nextReward} more to earn a FREE ticket</p>
+            <div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+            <div class="referral-code-box">
+                <div class="referral-code">${ME.referral_code || '—'}</div>
+                <button class="copy-btn" onclick="copyReferral()">📋 Copy</button>
+                <button class="copy-btn" onclick="copyInviteLink()">🔗 Invite Link</button>
+            </div>
+        </div>
+        <div class="card"><h2>🎟️ My Tickets</h2><br>
+            ${mine.length ? mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' ') : `<p class="muted">No tickets yet. Buy one from the "Buy Tickets" page.</p>`}
+        </div>`;
+}
+function copyReferral() { if (!ME.referral_code) return; navigator.clipboard.writeText(ME.referral_code); toast('📋 Referral code copied!'); }
+function copyInviteLink() { if (!ME.referral_code) return; const link = window.location.origin + '/?ref=' + ME.referral_code; navigator.clipboard.writeText(link); toast('🔗 Invite link copied!'); }
+
+/* ================= BUY TICKETS PAGE ================= */
+let buySelected = [];
+function buyPage() {
+    if (ME.role === 'admin') {
+        document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Buy Tickets page is for users only. Use "Assign Tickets" instead.</p></div>`;
+        return;
+    }
+    buySelected = [];
+    const soldCount = TICKETS.filter(t => t.user_id !== null).length;
+    const availCount = TICKETS.length - soldCount;
+
+    document.getElementById('main').innerHTML = `
+        <img src="image3.jpg" alt="Buy" class="banner-img">
+        <h1 class="title">🛒 Buy Tickets</h1>
+
+        <div class="stats">
+            <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
+            <div class="stat"><small>Ticket Price</small><h2>${money(SETTINGS.ticket_price)}</h2></div>
+            <div class="stat"><small>Available</small><h2>${availCount}</h2></div>
+            <div class="stat"><small>My Free Tickets</small><h2>${ME.free_tickets || 0}</h2></div>
+        </div>
+
+        <div class="card">
+            <h2>Select Tickets To Buy</h2>
+            <p class="muted" style="margin-top:8px">Click on available tickets. Green = your tickets. Red = sold.</p>
+            <br>
+            <div class="ticket-grid">${buyTicketButtons()}</div>
+        </div>
+
+        <div class="card">
+            <div class="checkbox-row">
+                <input type="checkbox" id="buyUseFree" ${(ME.free_tickets || 0) === 0 ? 'disabled' : ''}>
+                <label for="buyUseFree">🎁 Use 1 FREE ticket (you have ${ME.free_tickets || 0}) — can only select 1 ticket</label>
+            </div>
+            <p style="margin-top:10px"><b>Selected:</b> <span id="buyCount">0</span> ticket(s)</p>
+            <p><b>Total Cost:</b> <span class="gold" id="buyCost">${money(0)}</span></p>
+            <br>
+            <button class="main-button" onclick="buySelectedTickets()">🛒 CONFIRM PURCHASE</button>
+        </div>
+    `;
+}
+function buyTicketButtons() {
+    return TICKETS.map(t => {
+        const sold = t.user_id !== null;
+        const mine = sold && String(t.user_id) === String(ME.id);
+        let cls = 'ticket-select';
+        if (mine) cls += ' mine';
+        else if (sold) cls += ' sold';
+        let label = 'AVAILABLE';
+        if (mine) label = 'YOURS';
+        else if (sold) label = 'SOLD';
+        return `<button type="button" class="${cls}" ${sold ? 'disabled' : ''} onclick="selectBuy(${t.number}, this)">#${t.number}<br><small>${label}</small></button>`;
+    }).join('');
+}
+function selectBuy(number, element) {
+    const useFree = document.getElementById('buyUseFree').checked;
+    if (useFree) {
+        /* only one allowed */
+        document.querySelectorAll('.ticket-select.selected').forEach(el => el.classList.remove('selected'));
+        buySelected = [number];
+        element.classList.add('selected');
+    } else {
+        if (buySelected.includes(number)) {
+            buySelected = buySelected.filter(n => n !== number);
+            element.classList.remove('selected');
+        } else {
+            buySelected.push(number);
+            element.classList.add('selected');
+        }
+    }
+    updateBuyTotals();
+}
+function updateBuyTotals() {
+    const useFree = document.getElementById('buyUseFree').checked;
+    const count = buySelected.length;
+    const cost = useFree ? 0 : count * Number(SETTINGS.ticket_price);
+    const cEl = document.getElementById('buyCount');
+    const costEl = document.getElementById('buyCost');
+    if (cEl) cEl.textContent = count;
+    if (costEl) costEl.textContent = money(cost);
+}
+async function buySelectedTickets() {
+    if (!buySelected.length) { alert('Select at least one ticket.'); return; }
+    const useFree = document.getElementById('buyUseFree').checked;
+    if (useFree && buySelected.length > 1) { alert('With free ticket, select only 1.'); return; }
+    const cost = useFree ? 0 : buySelected.length * Number(SETTINGS.ticket_price);
+    if (!useFree && Number(ME.balance) < cost) {
+        alert(`Insufficient balance.\n\nYou need ${money(cost)} but have ${money(ME.balance)}.\nPlease deposit first.`);
+        return;
+    }
+    const ok = confirm(`Buy ${buySelected.length} ticket(s) for ${money(cost)}?`);
+    if (!ok) return;
+
+    try {
+        const res = await api('/user/tickets/buy', { method: 'POST', body: { numbers: buySelected, useFreeTicket: useFree } });
+        let msg = '✅ Purchase successful!\nTickets: ' + buySelected.map(n => '#' + n).join(', ');
+        if (res.usedFree) msg += '\n🎁 Free ticket used';
+        else msg += '\nCost: ' + money(res.cost);
+        if (res.referralMessage) { msg += '\n\n' + res.referralMessage; toast(res.referralMessage); }
+        alert(msg);
+        await refreshState();
+        buyPage();
+    } catch (e) { alert(e.message); }
+}
+
+/* ================= DEPOSIT PAGE ================= */
+async function depositPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Deposits are for users only.</p></div>`; return; }
+    let dep = { deposits: [] };
+    try { dep = await api('/user/deposits'); } catch (e) {}
+
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Deposit" class="banner-img">
+        <h1 class="title">💰 Deposit Money</h1>
+
+        <div class="card">
+            <h2>Step 1: Send Money To One Of These Accounts</h2>
+            <p class="muted" style="margin-top:8px">Send the amount you want to deposit to one of our accounts below. Then get the transaction ID from your bank SMS or receipt.</p>
+
+            <div class="method-box">
+                <h3>🏦 Commercial Bank of Ethiopia (CBE)</h3>
+                <div class="acct">1000676405058</div>
+                <div class="name">Teshome Ayenew</div>
+            </div>
+
+            <div class="method-box">
+                <h3>🏦 Bank of Abyssinia (BOA)</h3>
+                <div class="acct">189018436</div>
+                <div class="name">Teshome Ayenew</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Step 2: Submit Your Deposit Request</h2>
+            <br>
+            <div class="form-grid">
+                <div>
+                    <label>Payment Method</label>
+                    <select id="depMethod">
+                        <option value="cbe">CBE (Commercial Bank of Ethiopia)</option>
+                        <option value="boa">BOA (Bank of Abyssinia)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Amount (ETB)</label>
+                    <input id="depAmount" type="number" min="1" placeholder="e.g. 500">
+                </div>
+                <div class="full">
+                    <label>Transaction ID / Reference Number</label>
+                    <input id="depTxn" placeholder="e.g. FT23A8K12 or 1234567890">
+                    <p class="hint">Get this from your bank SMS or receipt after sending money.</p>
+                </div>
+                <div class="full">
+                    <button class="main-button" onclick="submitDeposit()">📤 SUBMIT DEPOSIT REQUEST</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>My Deposit History</h2><br>
+            ${!dep.deposits.length ? `<p class="muted">No deposit requests yet.</p>` : dep.deposits.map(d => `
+                <div class="req-card">
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div>
+                    <div class="row"><b>Method:</b> <span>${d.method.toUpperCase()}</span></div>
+                    <div class="row"><b>Transaction ID:</b> <span>${escapeHTML(d.transaction_id)}</span></div>
+                    <div class="row"><b>Date:</b> <span class="muted">${formatDate(d.created_at)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>
+                    ${d.admin_comment ? `<div class="row"><b>Admin Note:</b> <span>${escapeHTML(d.admin_comment)}</span></div>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+async function submitDeposit() {
+    const method = document.getElementById('depMethod').value;
+    const amount = Number(document.getElementById('depAmount').value);
+    const transactionId = document.getElementById('depTxn').value.trim();
+    if (!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+    if (!transactionId) { alert('Enter your transaction ID'); return; }
+    try {
+        await api('/user/deposits', { method: 'POST', body: { method, amount, transactionId } });
+        alert('✅ Deposit request submitted!\n\nAdmin will review it and add the money to your balance.');
+        depositPage();
+    } catch (e) { alert(e.message); }
+}
+
+/* ================= WITHDRAW PAGE ================= */
+async function withdrawPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Withdrawals are for users only.</p></div>`; return; }
+    let w = { withdrawals: [] };
+    try { w = await api('/user/withdrawals'); } catch (e) {}
+
+    document.getElementById('main').innerHTML = `
+        <img src="image2.jpg" alt="Withdraw" class="banner-img">
+        <h1 class="title">💸 Withdraw Money</h1>
+
+        <div class="stats">
+            <div class="stat"><small>Available Balance</small><h2>${money(ME.balance)}</h2></div>
+        </div>
+
+        <div class="card">
+            <h2>Request Withdrawal</h2>
+            <p class="muted" style="margin-top:8px">Your balance is deducted immediately. If admin rejects, the amount is refunded.</p>
+            <br>
+            <div class="form-grid">
+                <div>
+                    <label>Withdraw To</label>
+                    <select id="wdMethod">
+                        <option value="cbe">CBE (Commercial Bank of Ethiopia)</option>
+                        <option value="boa">BOA (Bank of Abyssinia)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Amount (ETB)</label>
+                    <input id="wdAmount" type="number" min="1" placeholder="e.g. 500">
+                </div>
+                <div class="full">
+                    <label>Your Account Number</label>
+                    <input id="wdAccount" placeholder="Enter your CBE or BOA account number">
+                    <p class="hint">Make sure this is correct — money will be sent here.</p>
+                </div>
+                <div class="full">
+                    <button class="main-button" onclick="submitWithdraw()">📤 SUBMIT WITHDRAWAL REQUEST</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>My Withdrawal History</h2><br>
+            ${!w.withdrawals.length ? `<p class="muted">No withdrawal requests yet.</p>` : w.withdrawals.map(x => `
+                <div class="req-card">
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(x.amount)}</span></div>
+                    <div class="row"><b>Method:</b> <span>${x.method.toUpperCase()}</span></div>
+                    <div class="row"><b>Account:</b> <span>${escapeHTML(x.account_number)}</span></div>
+                    <div class="row"><b>Date:</b> <span class="muted">${formatDate(x.created_at)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${x.status}">${x.status.toUpperCase()}</span></div>
+                    ${x.admin_comment ? `<div class="row"><b>Admin Note:</b> <span>${escapeHTML(x.admin_comment)}</span></div>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+async function submitWithdraw() {
+    const method = document.getElementById('wdMethod').value;
+    const amount = Number(document.getElementById('wdAmount').value);
+    const accountNumber = document.getElementById('wdAccount').value.trim();
+    if (!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+    if (!accountNumber) { alert('Enter your account number'); return; }
+    if (amount > Number(ME.balance)) { alert('Insufficient balance'); return; }
+    const ok = confirm(`Withdraw ${money(amount)} to ${method.toUpperCase()} account ${accountNumber}?\n\nYour balance will be held until admin approves.`);
+    if (!ok) return;
+    try {
+        await api('/user/withdrawals', { method: 'POST', body: { method, amount, accountNumber } });
+        alert('✅ Withdrawal request submitted!\n\nAdmin will review it and send the money.');
+        await refreshState();
+        withdrawPage();
+    } catch (e) { alert(e.message); }
+}
+
+/* ================= REFERRALS ================= */
+async function referralsPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Referrals are for users only.</p></div>`; return; }
+    const data = await api('/referrals');
+    const goal = SETTINGS.referral_goal || 8;
+    const refs = ME.active_referrals || 0;
+    document.getElementById('main').innerHTML = `
+        <img src="image4.jpg" alt="Referrals" class="banner-img">
+        <h1 class="title">🎁 My Referrals</h1>
+        <div class="referral-card">
+            <h2 style="color:#fbbf24">Your Invite Code</h2>
+            <div class="referral-code-box">
+                <div class="referral-code">${ME.referral_code || '—'}</div>
+                <button class="copy-btn" onclick="copyReferral()">📋 Copy</button>
+                <button class="copy-btn" onclick="copyInviteLink()">🔗 Copy Link</button>
+            </div>
+            <p class="muted" style="margin-top:12px">Every <b class="gold">${goal}</b> friends who <b class="gold">buy a ticket</b> earn you <b class="gold">1 FREE ticket</b>.</p>
+            <p style="margin-top:10px"><b>Progress:</b> ${refs} active / ${goal} goal ${refs > 0 && refs % goal === 0 ? ' · 🎉 Reward unlocked!' : ''}</p>
+        </div>
+        <div class="card"><h2>Referred Friends (${data.referrals.length})</h2><br>
+            ${data.referrals.length ? data.referrals.map(r => `
+                <div class="ref-row">
+                    <div><b>${escapeHTML(r.name)}</b><br><span class="muted" style="font-size:12px">${escapeHTML(r.phone)}</span></div>
+                    <div>${r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>'}</div>
+                </div>`).join('') : `<p class="muted">No referrals yet. Share your code to start earning!</p>`}
+        </div>`;
+}
+
+/* ================= USERS (admin) ================= */
+async function usersPage() {
+    const data = await api('/admin/users');
+    const list = data.users;
+    document.getElementById('main').innerHTML = `
+        <img src="image4.jpg" alt="Users" class="banner-img">
+        <h1 class="title">👥 Registered Users</h1>
+        <div class="card"><div class="table-box"><table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Balance</th><th>Tickets</th><th>Refs</th><th>Free</th><th>Action</th></tr></thead>
+            <tbody>${list.length ? list.map(u => `
+                <tr>
+                    <td>${escapeHTML(u.name)}</td><td>${escapeHTML(u.phone)}</td>
+                    <td class="gold">${money(u.balance)}</td><td>${userTickets(u.id) || '-'}</td>
+                    <td>${u.active_referrals || 0}</td><td class="gold">${u.free_tickets || 0}</td>
+                    <td><button class="small-button gold-button" onclick="adjustBalance('${u.id}')">Balance</button></td>
+                </tr>`).join('') : `<tr><td colspan="7" class="muted">No users yet.</td></tr>`}</tbody>
+        </table></div></div>`;
+}
+async function adjustBalance(id) {
+    const amount = prompt('Enter amount to ADD.\nUse - to subtract.\nExample: 500 or -200');
+    if (amount === null) return;
+    const value = Number(amount);
+    if (!Number.isFinite(value)) { alert('Invalid amount'); return; }
+    try { await api('/admin/users/balance', { method: 'POST', body: { userId: id, amount: value } }); await refreshState(); usersPage(); }
+    catch (e) { alert(e.message); }
+}
+
+/* ================= ASSIGN TICKETS (admin) ================= */
+let selectedTickets = [];
+function ticketsPage() {
+    selectedTickets = [];
+    document.getElementById('main').innerHTML = `
+        <img src="image3.jpg" alt="Tickets" class="banner-img">
+        <h1 class="title">🎟️ Assign Tickets (Admin)</h1>
+        <div class="card">
+            <h2>Assign Ticket To User</h2>
+            <p class="muted" style="margin-top:8px">Enter the user's name and phone. If the user does not exist, you can create the account here.</p><br>
+            <div class="form-grid">
+                <div><label>User Name</label><input id="assignName" placeholder="Enter full name"></div>
+                <div><label>Phone Number</label><input id="assignPhone" placeholder="Enter phone number"></div>
+                <div><label>Password</label><input id="assignPassword" type="password" placeholder="For new user only"></div>
+                <div><label>Balance Adjustment</label><input id="assignBalance" type="number" value="0"></div>
+                <div class="full"><div class="checkbox-row"><input type="checkbox" id="useFreeTicket"><label for="useFreeTicket">🎁 Use a FREE ticket (if user has one)</label></div></div>
+                <div class="full"><label>Select Ticket Numbers</label><div id="ticketSelector" class="ticket-selector">${ticketButtons()}</div></div>
+                <div class="full"><button class="main-button" onclick="assignTickets()">🎟️ ASSIGN TICKET(S)</button></div>
+            </div>
+        </div>
+        <div class="card"><h2>Current Ticket Status</h2><br><div class="ticket-grid">${ticketStatus()}</div></div>`;
+}
+function ticketButtons() {
+    return TICKETS.map(t => {
+        const sold = t.user_id !== null;
+        return `<button type="button" class="ticket-select ${sold ? 'sold' : ''}" ${sold ? 'disabled' : ''} onclick="selectTicket(${t.number}, this)">#${t.number}<br><small>${sold ? 'SOLD' : 'AVAILABLE'}</small></button>`;
+    }).join('');
+}
+function selectTicket(number, element) {
+    if (selectedTickets.includes(number)) { selectedTickets = selectedTickets.filter(n => n !== number); element.classList.remove('selected'); }
+    else { selectedTickets.push(number); element.classList.add('selected'); }
+}
+async function assignTickets() {
+    const name = document.getElementById('assignName').value.trim();
+    const phone = document.getElementById('assignPhone').value.trim();
+    const password = document.getElementById('assignPassword').value;
+    const balance = Number(document.getElementById('assignBalance').value) || 0;
+    const useFreeTicket = document.getElementById('useFreeTicket').checked;
+    if (!name)  { alert('Please enter user name'); return; }
+    if (!phone) { alert('Please enter phone number'); return; }
+    if (!selectedTickets.length) { alert('Select at least one ticket'); return; }
+    try {
+        const result = await api('/admin/tickets/assign', { method: 'POST', body: { name, phone, password, balance, numbers: selectedTickets, useFreeTicket } });
+        let msg = 'SUCCESS!\nUser: ' + result.user.name + '\nPhone: ' + result.user.phone + '\nBalance: ' + money(result.user.balance) + '\nTickets: ' + result.numbers.map(n => '#' + n).join(', ');
+        if (result.usedFreeTicket) msg += '\n\n🎁 FREE ticket used';
+        if (result.referralMessage) { msg += '\n\n' + result.referralMessage; toast(result.referralMessage); }
+        alert(msg);
+        await refreshState(); ticketsPage();
+    } catch (e) { alert(e.message); }
+}
+function ticketStatus() {
+    return TICKETS.map(t => {
+        const sold = t.user_id !== null;
+        return `<div class="ticket ${sold ? 'sold' : ''} ${t.used_free_ticket ? 'free' : ''}">
+            <div class="ticket-number">#${t.number}</div>
+            ${sold ? `<p class="sold-text">SOLD</p>${t.used_free_ticket ? '<p class="free-badge">🎁 FREE</p>' : ''}<br><p>${escapeHTML(t.user_name || '')}</p><p>${escapeHTML(t.phone || '')}</p>` : `<p class="available">AVAILABLE</p>`}
+        </div>`;
+    }).join('');
+}
+
+/* ================= ADMIN: REQUESTS (deposits + withdrawals) ================= */
+async function requestsPage() {
+    const [dep, wd] = await Promise.all([
+        api('/admin/deposits'),
+        api('/admin/withdrawals')
+    ]);
+    const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
+    const pendingWds  = wd.withdrawals.filter(w => w.status === 'pending');
+
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Requests" class="banner-img">
+        <h1 class="title">📥 Manage Requests</h1>
+
+        <div class="stats">
+            <div class="stat"><small>Pending Deposits</small><h2>${pendingDeps.length}</h2></div>
+            <div class="stat"><small>Pending Withdrawals</small><h2>${pendingWds.length}</h2></div>
+            <div class="stat"><small>Total Deposits</small><h2>${dep.deposits.length}</h2></div>
+            <div class="stat"><small>Total Withdrawals</small><h2>${wd.withdrawals.length}</h2></div>
+        </div>
+
+        <div class="card">
+            <h2>💰 Deposit Requests</h2><br>
+            ${!dep.deposits.length ? `<p class="muted">No deposit requests yet.</p>` : dep.deposits.map(d => `
+                <div class="req-card">
+                    <div class="row"><b>User:</b> <span>${escapeHTML(d.user_name)} (${escapeHTML(d.phone)})</span></div>
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div>
+                    <div class="row"><b>Method:</b> <span>${d.method.toUpperCase()}</span></div>
+                    <div class="row"><b>Transaction ID:</b> <span>${escapeHTML(d.transaction_id)}</span></div>
+                    <div class="row"><b>Date:</b> <span class="muted">${formatDate(d.created_at)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>
+                    ${d.admin_comment ? `<div class="row"><b>Comment:</b> <span>${escapeHTML(d.admin_comment)}</span></div>` : ''}
+                    ${d.status === 'pending' ? `
+                        <div class="req-actions">
+                            <button class="small-button green-button" onclick="decideDeposit(${d.id}, 'approve')">✓ Approve</button>
+                            <button class="small-button red-button" onclick="decideDeposit(${d.id}, 'reject')">✗ Reject</button>
+                        </div>` : ''}
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="card">
+            <h2>💸 Withdrawal Requests</h2><br>
+            ${!wd.withdrawals.length ? `<p class="muted">No withdrawal requests yet.</p>` : wd.withdrawals.map(w => `
+                <div class="req-card">
+                    <div class="row"><b>User:</b> <span>${escapeHTML(w.user_name)} (${escapeHTML(w.phone)})</span></div>
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(w.amount)}</span></div>
+                    <div class="row"><b>Method:</b> <span>${w.method.toUpperCase()}</span></div>
+                    <div class="row"><b>Account No:</b> <span>${escapeHTML(w.account_number)}</span></div>
+                    <div class="row"><b>Date:</b> <span class="muted">${formatDate(w.created_at)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${w.status}">${w.status.toUpperCase()}</span></div>
+                    ${w.admin_comment ? `<div class="row"><b>Comment:</b> <span>${escapeHTML(w.admin_comment)}</span></div>` : ''}
+                    ${w.status === 'pending' ? `
+                        <div class="req-actions">
+                            <button class="small-button green-button" onclick="decideWithdraw(${w.id}, 'approve')">✓ Approve</button>
+                            <button class="small-button red-button" onclick="decideWithdraw(${w.id}, 'reject')">✗ Reject</button>
+                        </div>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+async function decideDeposit(id, action) {
+    const comment = prompt(
+        action === 'approve'
+        ? 'Approve this deposit? Add an optional comment:'
+        : 'Reject this deposit? Add an optional reason:'
+    );
+    if (comment === null) return;
+    try {
+        await api(`/admin/deposits/${id}/decide`, { method: 'POST', body: { action, comment } });
+        toast(action === 'approve' ? '✅ Deposit approved' : '❌ Deposit rejected');
+        await refreshState();
+        requestsPage();
+    } catch (e) { alert(e.message); }
+}
+
+async function decideWithdraw(id, action) {
+    const comment = prompt(
+        action === 'approve'
+        ? 'Approve this withdrawal? (money will be sent) Add an optional comment:'
+        : 'Reject this withdrawal? (amount will be refunded to user) Add an optional reason:'
+    );
+    if (comment === null) return;
+    try {
+        await api(`/admin/withdrawals/${id}/decide`, { method: 'POST', body: { action, comment } });
+        toast(action === 'approve' ? '✅ Withdrawal approved' : '❌ Withdrawal rejected & refunded');
+        await refreshState();
+        requestsPage();
+    } catch (e) { alert(e.message); }
+}
+
+/* ================= WHEEL ================= */
+function wheelPage() {
+    const isAdmin = ME.role === 'admin';
+    const spinning = SETTINGS.round_state === 'spinning';
+    document.getElementById('main').innerHTML = `
+        <img src="image3.jpg" alt="Play" class="banner-img">
+        <h1 class="title">🎡 Lucky Wheel</h1>
+        <div class="card"><div class="wheel-layout">
+            <div class="wheel-container">
+                <div id="wheel" class="wheel"><div class="wheel-labels" id="wheelLabels"></div></div>
+                <div id="arrowOrbit" class="arrow-orbit hidden"><div class="arrow-tip"></div></div>
+                <div id="topPointer" class="pointer"></div>
+                <div class="center" id="wheelCenter">SPIN</div>
+            </div>
+            <div>
+                <div id="timer" class="timer">${formatTime(SETTINGS.duration)}</div>
+                <p id="status" class="status">${SETTINGS.round_state === 'spinning' ? '🎡 Wheel spinning...' : SETTINGS.round_state === 'finished' ? 'Round completed.' : isAdmin ? 'Ready to start a round.' : 'Waiting for admin to start.'}</p>
+                ${isAdmin ? `
+                    <button id="spinButton" class="main-button" onclick="startSpin()" ${spinning ? 'disabled' : ''}>🎡 START WHEEL</button>
+                    <button class="main-button red-button" onclick="newRound()" ${spinning ? 'disabled' : ''}>🔄 NEW ROUND</button>
+                ` : `<div class="card"><h3>My Tickets</h3><br>${myTicketList()}</div>`}
+                <div id="winnerArea"></div>
+            </div>
+        </div></div>`;
+    buildWheel();
+    applyWheelState();
+}
+function buildWheel() {
+    const wheel = document.getElementById('wheel');
+    const labels = document.getElementById('wheelLabels');
+    if (!wheel || !labels) return;
+    const n = SETTINGS.ticket_count;
+    const angle = 360 / n;
+    const winners = SETTINGS.round_state === 'finished' ? (SETTINGS.winner_numbers || []) : [];
+    const stops = [];
+    for (let i = 1; i <= n; i++) {
+        const start = (i - 1) * angle, end = i * angle;
+        let color;
+        if (winners.includes(i)) color = '#fbbf24';
+        else if (i % 2 === 1) color = `hsl(${(i * 37) % 360}, 62%, 38%)`;
+        else color = `hsl(${(i * 37) % 360}, 55%, 27%)`;
+        stops.push(`${color} ${start}deg ${end}deg`);
+    }
+    wheel.style.background = `conic-gradient(from 0deg, ${stops.join(',')})`;
+    wheel.classList.toggle('has-winners', winners.length > 0);
+    const fontSize = Math.max(9, Math.min(20, 190 / n));
+    let html = '';
+    for (let i = 1; i <= n; i++) {
+        const rot = (i - 1) * angle + angle / 2;
+        const isWinner = winners.includes(i);
+        html += `<div class="wl" style="transform:rotate(${rot}deg)"><span style="font-size:${fontSize}px;color:${isWinner ? '#111827' : '#ffffff'}">${i}</span></div>`;
+    }
+    labels.innerHTML = html;
+}
+function applyWheelState() {
+    const wheel = document.getElementById('wheel');
+    if (!wheel) return;
+    const s = SETTINGS;
+    const target = Number(s.target_rotation || 0);
+    const pointer = document.getElementById('topPointer');
+    const orbit = document.getElementById('arrowOrbit');
+    if (s.round_state === 'idle') {
+        stopCountdown(); wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
+        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
+        const c = document.getElementById('wheelCenter'); if (c) c.textContent = 'SPIN';
+        const a = document.getElementById('winnerArea'); if (a) a.innerHTML = '';
+        return;
+    }
+    if (s.round_state === 'spinning') {
+        const startedAt = new Date(s.spin_started_at).getTime();
+        const elapsed = (Date.now() - startedAt) / 1000;
+        const remaining = Math.max(0, s.duration - elapsed);
+        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
+        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)'; void wheel.offsetWidth;
+        requestAnimationFrame(() => { wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`; wheel.style.transform = `rotate(${target}deg)`; });
+        startCountdown(startedAt, s.duration);
+        return;
+    }
+    if (s.round_state === 'finished') {
+        stopCountdown(); wheel.style.transition = 'none'; wheel.style.transform = `rotate(${target}deg)`;
+        if (pointer) pointer.classList.add('winner');
+        const winners = s.winner_numbers || [];
+        if (orbit && winners.length) {
+            const angle = 360 / s.ticket_count, number = winners[0], center = (number - 1) * angle + angle / 2;
+            const screen = ((center + target) % 360 + 360) % 360;
+            orbit.classList.remove('hidden'); orbit.style.transform = `rotate(${screen}deg)`;
+        }
+        const centerEl = document.getElementById('wheelCenter');
+        if (centerEl) centerEl.innerHTML = winners.length ? `🏆<br>#${winners[0]}` : 'DONE';
+        const timerEl = document.getElementById('timer'); if (timerEl) timerEl.textContent = '00:00';
+        const statusEl = document.getElementById('status'); if (statusEl) statusEl.textContent = 'Round completed.';
+        showWinners(s.winners || []);
+    }
+}
+function startCountdown(startedAt, duration) {
+    stopCountdown(); settleCalled = false;
+    const tick = () => {
+        const elapsed = (Date.now() - startedAt) / 1000;
+        const remaining = Math.max(0, Math.ceil(duration - elapsed));
+        const el = document.getElementById('timer'); if (el) el.textContent = formatTime(remaining);
+        if (remaining <= 0) { stopCountdown(); if (!settleCalled) { settleCalled = true; api('/spin/settle', { method: 'POST' }).catch(() => {}); } }
+    };
+    tick(); countdownId = setInterval(tick, 250);
+}
+function stopCountdown() { if (countdownId) { clearInterval(countdownId); countdownId = null; } }
+async function startSpin() {
+    const btn = document.getElementById('spinButton'); if (btn) btn.disabled = true;
+    try { await api('/admin/spin/start', { method: 'POST' }); await refreshState(); await renderPage(); }
+    catch (e) { alert(e.message); if (btn) btn.disabled = false; }
+}
+async function newRound() {
+    const sold = TICKETS.filter(t => t.user_id !== null).length;
+    if (sold === 0) { alert('No tickets are currently sold.'); return; }
+    const ok = confirm('Start a new round?\n\nPrevious round stays in History.\nAll ' + SETTINGS.ticket_count + ' tickets become AVAILABLE.');
+    if (!ok) return;
+    try { await api('/admin/round/reset', { method: 'POST' }); await refreshState(); await renderPage(); alert('New round created!'); }
+    catch (e) { alert(e.message); }
+}
+function showWinners(winners) {
+    const area = document.getElementById('winnerArea'); if (!area) return;
+    if (!winners || !winners.length) { area.innerHTML = ''; return; }
+    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `
+        <div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Phone: ${escapeHTML(w.phone)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+}
+
+/* ================= HISTORY ================= */
+async function historyPage() {
+    const data = await api('/rounds');
+    document.getElementById('main').innerHTML = `
+        <img src="image4.jpg" alt="History" class="banner-img">
+        <h1 class="title">📜 Round History</h1>
+        ${!data.rounds.length ? `<div class="card"><p class="muted">No completed rounds yet.</p></div>` : data.rounds.map(r => `
+            <div class="history"><h3>Round #${r.round_number}</h3><p class="muted">${formatDate(r.date)}</p><br>
+                <strong>Sold Tickets:</strong><br><br><p>${(r.sold_tickets || []).map(t => '#' + t.number).join(', ') || '-'}</p><br>
+                <strong>Winners:</strong><br><br>
+                ${(r.winners || []).map(w => `<div class="winner">🏆 Winner ${w.place} - ${escapeHTML(w.name)} - Ticket #${w.ticket} - <span class="gold">${money(w.prize)}</span></div>`).join('') || '<p class="muted">No winners</p>'}
+            </div>`).join('')}`;
+}
+
+/* ================= SETTINGS ================= */
+function settingsPage() {
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Settings" class="banner-img">
+        <h1 class="title">⚙️ Wheel Settings</h1>
+        <div class="card">
+            <h2>Wheel Configuration</h2><br>
+            <label>Number Of Wheel Sections (Tickets)</label>
+            <input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
+            <p class="muted" style="margin:-6px 0 12px">Change to any number of sections (less or more than 12).</p>
+            <label>Duration / Seconds</label><input id="duration" type="number" min="5" value="${SETTINGS.duration}">
+            <label>Number Of Winners</label><input id="winnerCount" type="number" min="1" max="60" value="${SETTINGS.winner_count}">
+            <label>Prize Per Winner</label><input id="prize" type="number" min="0" value="${SETTINGS.prize}">
+            <label>Ticket Price</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
+            <br><hr style="border-color:#334155;margin:20px 0"><br>
+            <h3 style="color:#fbbf24">🎁 Referral Rewards</h3><br>
+            <label>Referrals Needed For Free Ticket</label><input id="referralGoal" type="number" min="1" value="${SETTINGS.referral_goal || 8}">
+            <label>Free Tickets Given Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
+            <button class="main-button" onclick="saveSettingsPage()">Save Settings</button>
+        </div>`;
+}
+async function saveSettingsPage() {
+    const ticketCount = Number(document.getElementById('ticketCount').value);
+    const duration = Number(document.getElementById('duration').value);
+    const winners = Number(document.getElementById('winnerCount').value);
+    const prize = Number(document.getElementById('prize').value);
+    const price = Number(document.getElementById('ticketPrice').value);
+    const referralGoal = Number(document.getElementById('referralGoal').value);
+    const referralReward = Number(document.getElementById('referralReward').value);
+    try {
+        if (ticketCount !== SETTINGS.ticket_count) await api('/admin/tickets/count', { method: 'POST', body: { count: ticketCount } });
+        await api('/admin/settings', { method: 'POST', body: { duration, winners, prize, ticketPrice: price, referralGoal, referralReward } });
+        await refreshState(); alert('Settings saved.'); settingsPage();
+    } catch (e) { alert(e.message); }
+}
+
+/* ================= HELPERS ================= */
+function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
+function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets assigned.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
+function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); showLoginPage(); }
+function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
+function formatTime(s) { s = Math.max(0, Number(s)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); }
+function formatDate(d) { return new Date(d).toLocaleString(); }
+function escapeHTML(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
+
+boot();
+</script>
+</body>
+</html>
