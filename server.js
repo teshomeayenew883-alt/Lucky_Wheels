@@ -19,15 +19,18 @@ app.use(express.json());
 /* ============= STATIC FILES ============= */
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* Serve index.html for root URL */
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 /* ============= SUPABASE ============= */
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+  console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_KEY env vars');
+}
+
 const sb = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+  process.env.SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_KEY || 'placeholder'
 );
 
 const JWT_SECRET     = process.env.JWT_SECRET;
@@ -95,49 +98,75 @@ app.get('/api/config', (req, res) => {
 /* ============= AUTH ============= */
 
 app.post('/api/auth/register', async (req, res) => {
-  const { name, phone, password, referralCode } = req.body;
-  if (!name || !phone || !password) return res.status(400).json({ error: 'Please fill all fields' });
-  if (phone === ADMIN_PHONE) return res.status(400).json({ error: 'This phone number is reserved' });
+  try {
+    const { name, phone, password, referralCode } = req.body;
+    if (!name || !phone || !password) return res.status(400).json({ error: 'Please fill all fields' });
 
-  const { data: exists } = await sb.from('users').select('id').eq('phone', phone).maybeSingle();
-  if (exists) return res.status(400).json({ error: 'This phone is already registered' });
+    const cleanName     = String(name).trim();
+    const cleanPhone    = String(phone).trim();
+    const cleanPassword = String(password).trim();
 
-  let referredBy = null;
-  if (referralCode && referralCode.trim()) {
-    const { data: referrer } = await sb.from('users')
-      .select('id').eq('referral_code', referralCode.trim().toUpperCase()).maybeSingle();
-    if (referrer) referredBy = referrer.id;
+    if (cleanPhone === ADMIN_PHONE) return res.status(400).json({ error: 'This phone number is reserved' });
+    if (cleanPassword.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
+
+    const { data: exists } = await sb.from('users').select('id').eq('phone', cleanPhone).maybeSingle();
+    if (exists) return res.status(400).json({ error: 'This phone is already registered' });
+
+    let referredBy = null;
+    if (referralCode && String(referralCode).trim()) {
+      const { data: referrer } = await sb.from('users')
+        .select('id').eq('referral_code', String(referralCode).trim().toUpperCase()).maybeSingle();
+      if (referrer) referredBy = referrer.id;
+    }
+
+    const hash = await bcrypt.hash(cleanPassword, 10);
+    const myCode = await generateReferralCode();
+
+    const { error } = await sb.from('users').insert({
+      name: cleanName,
+      phone: cleanPhone,
+      password_hash: hash,
+      password_plain: cleanPassword,
+      role: 'user',
+      balance: 0,
+      referral_code: myCode,
+      referred_by: referredBy,
+      banned: false
+    });
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, referral_code: myCode, referred: !!referredBy });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  const hash = await bcrypt.hash(password, 10);
-  const myCode = await generateReferralCode();
-
-  const { error } = await sb.from('users').insert({
-    name, phone, password_hash: hash, role: 'user', balance: 0,
-    referral_code: myCode, referred_by: referredBy
-  });
-
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ ok: true, referral_code: myCode, referred: !!referredBy });
 });
 
 app.post('/api/auth/login', async (req, res) => {
-  const { phone, password } = req.body;
-  if (!phone || !password) return res.status(400).json({ error: 'Phone and password required' });
+  try {
+    const { phone, password } = req.body;
+    if (!phone || !password) return res.status(400).json({ error: 'Phone and password required' });
 
-  if (phone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
-    const token = sign({ id: 'ADMIN', role: 'admin', phone });
-    return res.json({ token, role: 'admin' });
+    const cleanPhone    = String(phone).trim();
+    const cleanPassword = String(password).trim();
+
+    if (cleanPhone === ADMIN_PHONE && cleanPassword === ADMIN_PASSWORD) {
+      const token = sign({ id: 'ADMIN', role: 'admin', phone: cleanPhone });
+      return res.json({ token, role: 'admin' });
+    }
+
+    const { data: user, error } = await sb.from('users').select('*').eq('phone', cleanPhone).maybeSingle();
+    if (error || !user) return res.status(401).json({ error: 'Invalid phone number or password' });
+
+    if (user.banned) return res.status(403).json({ error: 'Your account has been banned. Contact admin.' });
+
+    const ok = await bcrypt.compare(cleanPassword, user.password_hash);
+    if (!ok) return res.status(401).json({ error: 'Invalid phone number or password' });
+
+    const token = sign({ id: user.id, role: user.role, phone: user.phone });
+    res.json({ token, role: user.role });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  const { data: user, error } = await sb.from('users').select('*').eq('phone', phone).maybeSingle();
-  if (error || !user) return res.status(401).json({ error: 'Invalid phone number or password' });
-
-  const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ error: 'Invalid phone number or password' });
-
-  const token = sign({ id: user.id, role: user.role, phone: user.phone });
-  res.json({ token, role: user.role });
 });
 
 /* ============= STATE ============= */
@@ -162,13 +191,17 @@ app.get('/api/state', auth, async (req, res) => {
 /* ============= REFERRALS ============= */
 
 app.get('/api/referrals', auth, async (req, res) => {
-  if (req.user.role === 'admin') return res.json({ referrals: [], activeCount: 0 });
-  const { data } = await sb.from('users')
-    .select('id,name,phone,has_bought_ticket,created_at')
-    .eq('referred_by', req.user.id).order('created_at', { ascending: false });
-  const referrals = data || [];
-  const activeCount = referrals.filter(r => r.has_bought_ticket).length;
-  res.json({ referrals, activeCount });
+  try {
+    if (req.user.role === 'admin') return res.json({ referrals: [], activeCount: 0 });
+    const { data } = await sb.from('users')
+      .select('id,name,phone,has_bought_ticket,created_at')
+      .eq('referred_by', req.user.id).order('created_at', { ascending: false });
+    const referrals = data || [];
+    const activeCount = referrals.filter(r => r.has_bought_ticket).length;
+    res.json({ referrals, activeCount });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 /* ============= ADMIN: USERS ============= */
@@ -179,6 +212,46 @@ app.get('/api/admin/users', auth, adminOnly, async (req, res) => {
     .eq('role', 'user').order('created_at');
   if (error) return res.status(500).json({ error: error.message });
   res.json({ users: data });
+});
+
+/* ADMIN: Full user list with passwords + ban status */
+app.get('/api/admin/users/full', auth, adminOnly, async (req, res) => {
+  const { data, error } = await sb.from('users')
+    .select('id,name,phone,balance,role,referral_code,active_referrals,free_tickets,has_bought_ticket,banned,password_plain')
+    .eq('role', 'user').order('created_at');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ users: data });
+});
+
+/* ADMIN: Reset user password */
+app.post('/api/admin/users/reset-password', auth, adminOnly, async (req, res) => {
+  try {
+    const { userId, newPassword } = req.body;
+    if (!userId || !newPassword) return res.status(400).json({ error: 'Missing fields' });
+    const clean = String(newPassword).trim();
+    if (clean.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
+    const hash = await bcrypt.hash(clean, 10);
+    const { error } = await sb.from('users')
+      .update({ password_hash: hash, password_plain: clean }).eq('id', userId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/* ADMIN: Ban or restore user */
+app.post('/api/admin/users/ban', auth, adminOnly, async (req, res) => {
+  try {
+    const { userId, banned } = req.body;
+    if (!userId) return res.status(400).json({ error: 'Missing userId' });
+    const { error } = await sb.from('users')
+      .update({ banned: !!banned }).eq('id', userId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/admin/users/balance', auth, adminOnly, async (req, res) => {
@@ -195,138 +268,165 @@ app.post('/api/admin/users/balance', auth, adminOnly, async (req, res) => {
 /* ============= ADMIN: ASSIGN TICKETS ============= */
 
 app.post('/api/admin/tickets/assign', auth, adminOnly, async (req, res) => {
-  const { name, phone, password, balance, numbers, useFreeTicket } = req.body;
-  if (!name || !phone || !numbers?.length) return res.status(400).json({ error: 'Missing fields' });
+  try {
+    const { name, phone, password, balance, numbers, useFreeTicket } = req.body;
+    if (!name || !phone || !numbers?.length) return res.status(400).json({ error: 'Missing fields' });
 
-  let { data: user } = await sb.from('users').select('*').eq('phone', phone).maybeSingle();
-  const isFirstPurchase = !user || !user.has_bought_ticket;
+    const cleanName  = String(name).trim();
+    const cleanPhone = String(phone).trim();
 
-  if (!user) {
-    if (!password) return res.status(400).json({ error: 'Password needed for new user' });
-    const hash = await bcrypt.hash(password, 10);
-    const newCode = await generateReferralCode();
-    const { data: created, error } = await sb.from('users').insert({
-      name, phone, password_hash: hash, role: 'user',
-      balance: Math.max(0, Number(balance) || 0), referral_code: newCode
-    }).select().single();
-    if (error) return res.status(500).json({ error: error.message });
-    user = created;
-  } else {
-    const newBalance = Number(user.balance) + (Number(balance) || 0);
-    if (newBalance < 0) return res.status(400).json({ error: 'Balance cannot be negative' });
-    await sb.from('users').update({ name, balance: newBalance }).eq('id', user.id);
-    user.name = name;
-    user.balance = newBalance;
-  }
+    let { data: user } = await sb.from('users').select('*').eq('phone', cleanPhone).maybeSingle();
+    const isFirstPurchase = !user || !user.has_bought_ticket;
 
-  const settings = await getSettings();
-  const { data: current } = await sb.from('tickets')
-    .select('*').eq('round_number', settings.round_number).in('number', numbers);
-
-  const sold = (current || []).filter(t => t.user_id);
-  if (sold.length) return res.status(400).json({ error: 'Some tickets are already sold' });
-
-  let usedFreeTicket = false;
-  if (useFreeTicket && (user.free_tickets || 0) > 0) {
-    await sb.from('users').update({ free_tickets: user.free_tickets - 1 }).eq('id', user.id);
-    user.free_tickets = user.free_tickets - 1;
-    usedFreeTicket = true;
-  }
-
-  for (const n of numbers) {
-    const existing = (current || []).find(t => t.number === n);
-    const soldDate = new Date().toISOString();
-    if (existing) {
-      await sb.from('tickets').update({
-        user_id: user.id, user_name: name, phone, sold_date: soldDate, used_free_ticket: usedFreeTicket
-      }).eq('id', existing.id);
+    if (!user) {
+      if (!password) return res.status(400).json({ error: 'Password needed for new user' });
+      const cleanPassword = String(password).trim();
+      const hash = await bcrypt.hash(cleanPassword, 10);
+      const newCode = await generateReferralCode();
+      const { data: created, error } = await sb.from('users').insert({
+        name: cleanName,
+        phone: cleanPhone,
+        password_hash: hash,
+        password_plain: cleanPassword,
+        role: 'user',
+        balance: Math.max(0, Number(balance) || 0),
+        referral_code: newCode,
+        banned: false
+      }).select().single();
+      if (error) return res.status(500).json({ error: error.message });
+      user = created;
     } else {
-      await sb.from('tickets').insert({
-        number: n, user_id: user.id, user_name: name, phone,
-        sold_date: soldDate, round_number: settings.round_number, used_free_ticket: usedFreeTicket
-      });
+      const newBalance = Number(user.balance) + (Number(balance) || 0);
+      if (newBalance < 0) return res.status(400).json({ error: 'Balance cannot be negative' });
+      await sb.from('users').update({ name: cleanName, balance: newBalance }).eq('id', user.id);
+      user.name = cleanName;
+      user.balance = newBalance;
     }
-  }
 
-  let referralMessage = null;
-  if (isFirstPurchase) {
-    await sb.from('users').update({ has_bought_ticket: true }).eq('id', user.id);
-    if (user.referred_by) {
-      const { data: referrer } = await sb.from('users')
-        .select('id,name,active_referrals,free_tickets').eq('id', user.referred_by).single();
-      if (referrer) {
-        const newActive = (referrer.active_referrals || 0) + 1;
-        const goal = settings.referral_goal || 8;
-        const reward = settings.referral_reward || 1;
-        let newFree = referrer.free_tickets || 0;
-        if (newActive % goal === 0) {
-          newFree += reward;
-          referralMessage = `🎁 ${referrer.name} earned ${reward} FREE ticket for reaching ${goal} active referrals!`;
-        }
-        await sb.from('users').update({ active_referrals: newActive, free_tickets: newFree }).eq('id', referrer.id);
+    const settings = await getSettings();
+    const { data: current } = await sb.from('tickets')
+      .select('*').eq('round_number', settings.round_number).in('number', numbers);
+
+    const sold = (current || []).filter(t => t.user_id);
+    if (sold.length) return res.status(400).json({ error: 'Some tickets are already sold' });
+
+    let usedFreeTicket = false;
+    if (useFreeTicket && (user.free_tickets || 0) > 0) {
+      await sb.from('users').update({ free_tickets: user.free_tickets - 1 }).eq('id', user.id);
+      user.free_tickets = user.free_tickets - 1;
+      usedFreeTicket = true;
+    }
+
+    for (const n of numbers) {
+      const existing = (current || []).find(t => t.number === n);
+      const soldDate = new Date().toISOString();
+      if (existing) {
+        await sb.from('tickets').update({
+          user_id: user.id, user_name: cleanName, phone: cleanPhone, sold_date: soldDate, used_free_ticket: usedFreeTicket
+        }).eq('id', existing.id);
+      } else {
+        await sb.from('tickets').insert({
+          number: n, user_id: user.id, user_name: cleanName, phone: cleanPhone,
+          sold_date: soldDate, round_number: settings.round_number, used_free_ticket: usedFreeTicket
+        });
       }
     }
-  }
 
-  res.json({ user, numbers, usedFreeTicket, referralMessage });
+    let referralMessage = null;
+    if (isFirstPurchase) {
+      await sb.from('users').update({ has_bought_ticket: true }).eq('id', user.id);
+      if (user.referred_by) {
+        const { data: referrer } = await sb.from('users')
+          .select('id,name,active_referrals,free_tickets').eq('id', user.referred_by).single();
+        if (referrer) {
+          const newActive = (referrer.active_referrals || 0) + 1;
+          const goal = settings.referral_goal || 8;
+          const reward = settings.referral_reward || 1;
+          let newFree = referrer.free_tickets || 0;
+          if (newActive % goal === 0) {
+            newFree += reward;
+            referralMessage = `🎁 ${referrer.name} earned ${reward} FREE ticket for reaching ${goal} active referrals!`;
+          }
+          await sb.from('users').update({ active_referrals: newActive, free_tickets: newFree }).eq('id', referrer.id);
+        }
+      }
+    }
+
+    res.json({ user, numbers, usedFreeTicket, referralMessage });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 /* ============= ADMIN: SETTINGS ============= */
 
 app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
-  const { duration, winners, prize, ticketPrice, referralGoal, referralReward } = req.body;
-  const update = {
-    duration: Math.max(5, Number(duration) || 60),
-    winner_count: Math.min(60, Math.max(1, Number(winners) || 1)),
-    prize: Math.max(0, Number(prize) || 0),
-    ticket_price: Math.max(0, Number(ticketPrice) || 0)
-  };
-  if (referralGoal !== undefined) update.referral_goal = Math.max(1, Number(referralGoal) || 8);
-  if (referralReward !== undefined) update.referral_reward = Math.max(1, Number(referralReward) || 1);
+  try {
+    const { duration, winners, prize, ticketPrice, referralGoal, referralReward, prizes } = req.body;
+    const update = {
+      duration: Math.max(5, Number(duration) || 60),
+      winner_count: Math.min(60, Math.max(1, Number(winners) || 1)),
+      prize: Math.max(0, Number(prize) || 0),
+      ticket_price: Math.max(0, Number(ticketPrice) || 0)
+    };
+    if (referralGoal !== undefined) update.referral_goal = Math.max(1, Number(referralGoal) || 8);
+    if (referralReward !== undefined) update.referral_reward = Math.max(1, Number(referralReward) || 1);
+    if (Array.isArray(prizes)) update.prizes = prizes.map(p => Math.max(0, Number(p) || 0));
 
-  const { error } = await sb.from('settings').update(update).eq('id', 1);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ ok: true });
+    const { error } = await sb.from('settings').update(update).eq('id', 1);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/admin/tickets/count', auth, adminOnly, async (req, res) => {
-  const count = Math.min(60, Math.max(2, Number(req.body.count) || 12));
-  const settings = await getSettings();
-  const { data: sold } = await sb.from('tickets')
-    .select('id').eq('round_number', settings.round_number).not('user_id', 'is', null);
-  if (sold?.length) return res.status(400).json({ error: 'Reset the round before changing the ticket count' });
+  try {
+    const count = Math.min(60, Math.max(2, Number(req.body.count) || 12));
+    const settings = await getSettings();
+    const { data: sold } = await sb.from('tickets')
+      .select('id').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    if (sold?.length) return res.status(400).json({ error: 'Reset the round before changing the ticket count' });
 
-  await sb.from('tickets').delete().eq('round_number', settings.round_number);
-  const rows = Array.from({ length: count }, (_, i) => ({ number: i + 1, round_number: settings.round_number }));
-  const { error } = await sb.from('tickets').insert(rows);
-  if (error) return res.status(500).json({ error: error.message });
+    await sb.from('tickets').delete().eq('round_number', settings.round_number);
+    const rows = Array.from({ length: count }, (_, i) => ({ number: i + 1, round_number: settings.round_number }));
+    const { error } = await sb.from('tickets').insert(rows);
+    if (error) return res.status(500).json({ error: error.message });
 
-  await sb.from('settings').update({
-    ticket_count: count, round_state: 'idle', winner_numbers: [], winners: []
-  }).eq('id', 1);
-  res.json({ ok: true });
+    await sb.from('settings').update({
+      ticket_count: count, round_state: 'idle', winner_numbers: [], winners: []
+    }).eq('id', 1);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 /* ============= ADMIN: SPIN ============= */
 
 app.post('/api/admin/spin/start', auth, adminOnly, async (req, res) => {
-  const settings = await getSettings();
-  if (settings.round_state === 'spinning') return res.status(400).json({ error: 'Already spinning' });
+  try {
+    const settings = await getSettings();
+    if (settings.round_state === 'spinning') return res.status(400).json({ error: 'Already spinning' });
 
-  const { data: soldTickets } = await sb.from('tickets')
-    .select('*').eq('round_number', settings.round_number).not('user_id', 'is', null);
-  if (!soldTickets?.length) return res.status(400).json({ error: 'No sold tickets yet' });
+    const { data: soldTickets } = await sb.from('tickets')
+      .select('*').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    if (!soldTickets?.length) return res.status(400).json({ error: 'No sold tickets yet' });
 
-  const shuffled = [...soldTickets].sort(() => Math.random() - 0.5);
-  const winnerNumbers = shuffled.slice(0, Math.min(settings.winner_count, shuffled.length)).map(t => t.number);
-  const targetRotation = 360 * 30 + Math.floor(Math.random() * 360);
+    const shuffled = [...soldTickets].sort(() => Math.random() - 0.5);
+    const winnerNumbers = shuffled.slice(0, Math.min(settings.winner_count, shuffled.length)).map(t => t.number);
+    const targetRotation = 360 * 30 + Math.floor(Math.random() * 360);
 
-  const { error } = await sb.from('settings').update({
-    round_state: 'spinning', spin_started_at: new Date().toISOString(),
-    target_rotation: targetRotation, winner_numbers: winnerNumbers, winners: []
-  }).eq('id', 1);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ ok: true });
+    const { error } = await sb.from('settings').update({
+      round_state: 'spinning', spin_started_at: new Date().toISOString(),
+      target_rotation: targetRotation, winner_numbers: winnerNumbers, winners: []
+    }).eq('id', 1);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/spin/settle', async (req, res) => {
@@ -341,13 +441,24 @@ app.post('/api/spin/settle', async (req, res) => {
     const { data: tickets } = await sb.from('tickets')
       .select('*').eq('round_number', settings.round_number).in('number', winnerNumbers);
 
+    const prizes = Array.isArray(settings.prizes) ? settings.prizes : [];
     const winners = [];
+
     for (let i = 0; i < (tickets || []).length; i++) {
       const t = tickets[i];
       const { data: user } = await sb.from('users').select('*').eq('id', t.user_id).single();
       if (!user) continue;
-      await sb.from('users').update({ balance: Number(user.balance) + Number(settings.prize) }).eq('id', user.id);
-      winners.push({ place: i + 1, ticket: t.number, name: user.name, phone: user.phone, prize: Number(settings.prize) });
+
+      const thisPrize = prizes[i] !== undefined ? Number(prizes[i]) : Number(settings.prize);
+
+      await sb.from('users').update({ balance: Number(user.balance) + thisPrize }).eq('id', user.id);
+      winners.push({
+        place: i + 1,
+        ticket: t.number,
+        name: user.name,
+        phone: user.phone,
+        prize: thisPrize
+      });
     }
 
     const { data: allSold } = await sb.from('tickets')
@@ -363,18 +474,22 @@ app.post('/api/spin/settle', async (req, res) => {
 });
 
 app.post('/api/admin/round/reset', auth, adminOnly, async (req, res) => {
-  const settings = await getSettings();
-  if (settings.round_state === 'spinning') return res.status(400).json({ error: 'Wait for the wheel to finish' });
+  try {
+    const settings = await getSettings();
+    if (settings.round_state === 'spinning') return res.status(400).json({ error: 'Wait for the wheel to finish' });
 
-  const nextRound = settings.round_number + 1;
-  const rows = Array.from({ length: settings.ticket_count }, (_, i) => ({ number: i + 1, round_number: nextRound }));
-  await sb.from('tickets').insert(rows);
+    const nextRound = settings.round_number + 1;
+    const rows = Array.from({ length: settings.ticket_count }, (_, i) => ({ number: i + 1, round_number: nextRound }));
+    await sb.from('tickets').insert(rows);
 
-  await sb.from('settings').update({
-    round_number: nextRound, round_state: 'idle', spin_started_at: null,
-    target_rotation: 0, winner_numbers: [], winners: []
-  }).eq('id', 1);
-  res.json({ ok: true });
+    await sb.from('settings').update({
+      round_number: nextRound, round_state: 'idle', spin_started_at: null,
+      target_rotation: 0, winner_numbers: [], winners: []
+    }).eq('id', 1);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/rounds', auth, async (req, res) => {
@@ -386,30 +501,34 @@ app.get('/api/rounds', auth, async (req, res) => {
 /* ============= DEPOSITS ============= */
 
 app.post('/api/user/deposits', auth, async (req, res) => {
-  if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
-  const { method, amount, transactionId } = req.body;
-  if (!method || !amount || !transactionId)
-    return res.status(400).json({ error: 'All fields required' });
-  if (!['cbe', 'boa'].includes(method.toLowerCase()))
-    return res.status(400).json({ error: 'Invalid method' });
-  const amt = Number(amount);
-  if (!Number.isFinite(amt) || amt <= 0)
-    return res.status(400).json({ error: 'Invalid amount' });
+  try {
+    if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
+    const { method, amount, transactionId } = req.body;
+    if (!method || !amount || !transactionId)
+      return res.status(400).json({ error: 'All fields required' });
+    if (!['cbe', 'boa'].includes(String(method).toLowerCase()))
+      return res.status(400).json({ error: 'Invalid method' });
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0)
+      return res.status(400).json({ error: 'Invalid amount' });
 
-  const { data: user } = await sb.from('users').select('name,phone').eq('id', req.user.id).single();
-  if (!user) return res.status(404).json({ error: 'User not found' });
+    const { data: user } = await sb.from('users').select('name,phone').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-  const { error } = await sb.from('deposits').insert({
-    user_id: req.user.id,
-    user_name: user.name,
-    phone: user.phone,
-    method: method.toLowerCase(),
-    amount: amt,
-    transaction_id: transactionId,
-    status: 'pending'
-  });
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ ok: true });
+    const { error } = await sb.from('deposits').insert({
+      user_id: req.user.id,
+      user_name: user.name,
+      phone: user.phone,
+      method: String(method).toLowerCase(),
+      amount: amt,
+      transaction_id: String(transactionId).trim(),
+      status: 'pending'
+    });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/user/deposits', auth, async (req, res) => {
@@ -423,41 +542,45 @@ app.get('/api/user/deposits', auth, async (req, res) => {
 /* ============= WITHDRAWALS ============= */
 
 app.post('/api/user/withdrawals', auth, async (req, res) => {
-  if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
-  const { method, amount, accountNumber } = req.body;
-  if (!method || !amount || !accountNumber)
-    return res.status(400).json({ error: 'All fields required' });
-  if (!['cbe', 'boa'].includes(method.toLowerCase()))
-    return res.status(400).json({ error: 'Invalid method' });
+  try {
+    if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
+    const { method, amount, accountNumber } = req.body;
+    if (!method || !amount || !accountNumber)
+      return res.status(400).json({ error: 'All fields required' });
+    if (!['cbe', 'boa'].includes(String(method).toLowerCase()))
+      return res.status(400).json({ error: 'Invalid method' });
 
-  const amt = Number(amount);
-  if (!Number.isFinite(amt) || amt <= 0)
-    return res.status(400).json({ error: 'Invalid amount' });
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0)
+      return res.status(400).json({ error: 'Invalid amount' });
 
-  const { data: user } = await sb.from('users').select('name,phone,balance').eq('id', req.user.id).single();
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  if (Number(user.balance) < amt)
-    return res.status(400).json({ error: 'Insufficient balance' });
+    const { data: user } = await sb.from('users').select('name,phone,balance').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (Number(user.balance) < amt)
+      return res.status(400).json({ error: 'Insufficient balance' });
 
-  const newBalance = Number(user.balance) - amt;
-  await sb.from('users').update({ balance: newBalance }).eq('id', req.user.id);
+    const newBalance = Number(user.balance) - amt;
+    await sb.from('users').update({ balance: newBalance }).eq('id', req.user.id);
 
-  const { error } = await sb.from('withdrawals').insert({
-    user_id: req.user.id,
-    user_name: user.name,
-    phone: user.phone,
-    method: method.toLowerCase(),
-    amount: amt,
-    account_number: accountNumber,
-    status: 'pending'
-  });
+    const { error } = await sb.from('withdrawals').insert({
+      user_id: req.user.id,
+      user_name: user.name,
+      phone: user.phone,
+      method: String(method).toLowerCase(),
+      amount: amt,
+      account_number: String(accountNumber).trim(),
+      status: 'pending'
+    });
 
-  if (error) {
-    await sb.from('users').update({ balance: user.balance }).eq('id', req.user.id);
-    return res.status(500).json({ error: error.message });
+    if (error) {
+      await sb.from('users').update({ balance: user.balance }).eq('id', req.user.id);
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ ok: true, newBalance });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  res.json({ ok: true, newBalance });
 });
 
 app.get('/api/user/withdrawals', auth, async (req, res) => {
@@ -477,30 +600,34 @@ app.get('/api/admin/deposits', auth, adminOnly, async (req, res) => {
 });
 
 app.post('/api/admin/deposits/:id/decide', auth, adminOnly, async (req, res) => {
-  const id = Number(req.params.id);
-  const { action, comment } = req.body;
-  if (!['approve', 'reject'].includes(action))
-    return res.status(400).json({ error: 'Invalid action' });
+  try {
+    const id = Number(req.params.id);
+    const { action, comment } = req.body;
+    if (!['approve', 'reject'].includes(action))
+      return res.status(400).json({ error: 'Invalid action' });
 
-  const { data: dep } = await sb.from('deposits').select('*').eq('id', id).single();
-  if (!dep) return res.status(404).json({ error: 'Deposit not found' });
-  if (dep.status !== 'pending') return res.status(400).json({ error: 'Already processed' });
+    const { data: dep } = await sb.from('deposits').select('*').eq('id', id).single();
+    if (!dep) return res.status(404).json({ error: 'Deposit not found' });
+    if (dep.status !== 'pending') return res.status(400).json({ error: 'Already processed' });
 
-  if (action === 'approve') {
-    const { data: user } = await sb.from('users').select('balance').eq('id', dep.user_id).single();
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    await sb.from('users').update({
-      balance: Number(user.balance) + Number(dep.amount)
-    }).eq('id', dep.user_id);
+    if (action === 'approve') {
+      const { data: user } = await sb.from('users').select('balance').eq('id', dep.user_id).single();
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      await sb.from('users').update({
+        balance: Number(user.balance) + Number(dep.amount)
+      }).eq('id', dep.user_id);
+    }
+
+    await sb.from('deposits').update({
+      status: action === 'approve' ? 'approved' : 'rejected',
+      admin_comment: comment || '',
+      processed_at: new Date().toISOString()
+    }).eq('id', id);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  await sb.from('deposits').update({
-    status: action === 'approve' ? 'approved' : 'rejected',
-    admin_comment: comment || '',
-    processed_at: new Date().toISOString()
-  }).eq('id', id);
-
-  res.json({ ok: true });
 });
 
 app.get('/api/admin/withdrawals', auth, adminOnly, async (req, res) => {
@@ -510,107 +637,115 @@ app.get('/api/admin/withdrawals', auth, adminOnly, async (req, res) => {
 });
 
 app.post('/api/admin/withdrawals/:id/decide', auth, adminOnly, async (req, res) => {
-  const id = Number(req.params.id);
-  const { action, comment } = req.body;
-  if (!['approve', 'reject'].includes(action))
-    return res.status(400).json({ error: 'Invalid action' });
+  try {
+    const id = Number(req.params.id);
+    const { action, comment } = req.body;
+    if (!['approve', 'reject'].includes(action))
+      return res.status(400).json({ error: 'Invalid action' });
 
-  const { data: w } = await sb.from('withdrawals').select('*').eq('id', id).single();
-  if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
-  if (w.status !== 'pending') return res.status(400).json({ error: 'Already processed' });
+    const { data: w } = await sb.from('withdrawals').select('*').eq('id', id).single();
+    if (!w) return res.status(404).json({ error: 'Withdrawal not found' });
+    if (w.status !== 'pending') return res.status(400).json({ error: 'Already processed' });
 
-  if (action === 'reject') {
-    const { data: user } = await sb.from('users').select('balance').eq('id', w.user_id).single();
-    if (user) {
-      await sb.from('users').update({
-        balance: Number(user.balance) + Number(w.amount)
-      }).eq('id', w.user_id);
+    if (action === 'reject') {
+      const { data: user } = await sb.from('users').select('balance').eq('id', w.user_id).single();
+      if (user) {
+        await sb.from('users').update({
+          balance: Number(user.balance) + Number(w.amount)
+        }).eq('id', w.user_id);
+      }
     }
+
+    await sb.from('withdrawals').update({
+      status: action === 'approve' ? 'approved' : 'rejected',
+      admin_comment: comment || '',
+      processed_at: new Date().toISOString()
+    }).eq('id', id);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
-
-  await sb.from('withdrawals').update({
-    status: action === 'approve' ? 'approved' : 'rejected',
-    admin_comment: comment || '',
-    processed_at: new Date().toISOString()
-  }).eq('id', id);
-
-  res.json({ ok: true });
 });
 
 /* ============= USER: BUY TICKETS ============= */
 
 app.post('/api/user/tickets/buy', auth, async (req, res) => {
-  if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
-  const { numbers, useFreeTicket } = req.body;
-  if (!numbers?.length) return res.status(400).json({ error: 'Select at least one ticket' });
+  try {
+    if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
+    const { numbers, useFreeTicket } = req.body;
+    if (!numbers?.length) return res.status(400).json({ error: 'Select at least one ticket' });
 
-  const settings = await getSettings();
-  const { data: user } = await sb.from('users').select('*').eq('id', req.user.id).single();
-  if (!user) return res.status(404).json({ error: 'User not found' });
+    const settings = await getSettings();
+    const { data: user } = await sb.from('users').select('*').eq('id', req.user.id).single();
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-  const { data: current } = await sb.from('tickets')
-    .select('*').eq('round_number', settings.round_number).in('number', numbers);
+    const { data: current } = await sb.from('tickets')
+      .select('*').eq('round_number', settings.round_number).in('number', numbers);
 
-  const sold = (current || []).filter(t => t.user_id);
-  if (sold.length) return res.status(400).json({ error: 'Some tickets are already sold' });
+    const sold = (current || []).filter(t => t.user_id);
+    if (sold.length) return res.status(400).json({ error: 'Some tickets are already sold' });
 
-  let usedFree = false;
-  let cost = 0;
+    let usedFree = false;
+    let cost = 0;
 
-  if (useFreeTicket) {
-    if ((user.free_tickets || 0) < 1)
-      return res.status(400).json({ error: 'No free tickets available' });
-    if (numbers.length > 1)
-      return res.status(400).json({ error: 'Free ticket can only be used for 1 ticket at a time' });
-    usedFree = true;
-  } else {
-    cost = Number(settings.ticket_price) * numbers.length;
-    if (Number(user.balance) < cost)
-      return res.status(400).json({ error: 'Insufficient balance. Please deposit first.' });
-  }
-
-  const updates = {};
-  if (usedFree) updates.free_tickets = (user.free_tickets || 0) - 1;
-  else updates.balance = Number(user.balance) - cost;
-
-  if (!user.has_bought_ticket) updates.has_bought_ticket = true;
-
-  await sb.from('users').update(updates).eq('id', user.id);
-
-  for (const n of numbers) {
-    const existing = (current || []).find(t => t.number === n);
-    const soldDate = new Date().toISOString();
-    if (existing) {
-      await sb.from('tickets').update({
-        user_id: user.id, user_name: user.name, phone: user.phone,
-        sold_date: soldDate, used_free_ticket: usedFree
-      }).eq('id', existing.id);
+    if (useFreeTicket) {
+      if ((user.free_tickets || 0) < 1)
+        return res.status(400).json({ error: 'No free tickets available' });
+      if (numbers.length > 1)
+        return res.status(400).json({ error: 'Free ticket can only be used for 1 ticket at a time' });
+      usedFree = true;
     } else {
-      await sb.from('tickets').insert({
-        number: n, user_id: user.id, user_name: user.name, phone: user.phone,
-        sold_date: soldDate, round_number: settings.round_number, used_free_ticket: usedFree
-      });
+      cost = Number(settings.ticket_price) * numbers.length;
+      if (Number(user.balance) < cost)
+        return res.status(400).json({ error: 'Insufficient balance. Please deposit first.' });
     }
-  }
 
-  let referralMessage = null;
-  if (!user.has_bought_ticket && user.referred_by) {
-    const { data: referrer } = await sb.from('users')
-      .select('id,name,active_referrals,free_tickets').eq('id', user.referred_by).single();
-    if (referrer) {
-      const newActive = (referrer.active_referrals || 0) + 1;
-      const goal = settings.referral_goal || 8;
-      const reward = settings.referral_reward || 1;
-      let newFree = referrer.free_tickets || 0;
-      if (newActive % goal === 0) {
-        newFree += reward;
-        referralMessage = `🎁 ${referrer.name} earned ${reward} FREE ticket for reaching ${goal} active referrals!`;
+    const updates = {};
+    if (usedFree) updates.free_tickets = (user.free_tickets || 0) - 1;
+    else updates.balance = Number(user.balance) - cost;
+
+    if (!user.has_bought_ticket) updates.has_bought_ticket = true;
+
+    await sb.from('users').update(updates).eq('id', user.id);
+
+    for (const n of numbers) {
+      const existing = (current || []).find(t => t.number === n);
+      const soldDate = new Date().toISOString();
+      if (existing) {
+        await sb.from('tickets').update({
+          user_id: user.id, user_name: user.name, phone: user.phone,
+          sold_date: soldDate, used_free_ticket: usedFree
+        }).eq('id', existing.id);
+      } else {
+        await sb.from('tickets').insert({
+          number: n, user_id: user.id, user_name: user.name, phone: user.phone,
+          sold_date: soldDate, round_number: settings.round_number, used_free_ticket: usedFree
+        });
       }
-      await sb.from('users').update({ active_referrals: newActive, free_tickets: newFree }).eq('id', referrer.id);
     }
-  }
 
-  res.json({ ok: true, cost, usedFree, referralMessage });
+    let referralMessage = null;
+    if (!user.has_bought_ticket && user.referred_by) {
+      const { data: referrer } = await sb.from('users')
+        .select('id,name,active_referrals,free_tickets').eq('id', user.referred_by).single();
+      if (referrer) {
+        const newActive = (referrer.active_referrals || 0) + 1;
+        const goal = settings.referral_goal || 8;
+        const reward = settings.referral_reward || 1;
+        let newFree = referrer.free_tickets || 0;
+        if (newActive % goal === 0) {
+          newFree += reward;
+          referralMessage = `🎁 ${referrer.name} earned ${reward} FREE ticket for reaching ${goal} active referrals!`;
+        }
+        await sb.from('users').update({ active_referrals: newActive, free_tickets: newFree }).eq('id', referrer.id);
+      }
+    }
+
+    res.json({ ok: true, cost, usedFree, referralMessage });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 /* ============= BOOT ============= */
