@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Wheel</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #0f172a; color: white; }
+button, input, select { font-family: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+.banner-img { width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; display: block; background: #1e293b; }
+.login-banner { height: 160px; border-radius: 12px; margin-bottom: 20px; }
+.login-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle, #1e3a5f, #0f172a); }
+.login-card { width: 430px; max-width: 100%; padding: 35px; background: #111827; border: 1px solid #334155; border-radius: 20px; }
+.logo { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 10px; }
+.logo span, .header-logo span { color: #fbbf24; }
+.login-description { text-align: center; color: #94a3b8; margin-bottom: 25px; }
+input, select { width: 100%; padding: 13px; margin: 7px 0 12px; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; outline: none; font-size: 14px; }
+input:focus, select:focus { border-color: #fbbf24; }
+.hint { font-size: 12px; color: #64748b; margin: -6px 0 10px; }
+.main-button { width: 100%; padding: 13px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; margin-top: 8px; }
+.main-button:hover { opacity: .85; }
+.main-button:disabled { opacity: .5; cursor: not-allowed; }
+.login-footer { text-align: center; color: #94a3b8; margin-top: 18px; }
+.link-button { border: none; background: none; color: #fbbf24; font-weight: bold; }
+.header { height: 70px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: #111827; border-bottom: 1px solid #334155; }
+.header-logo { font-size: 25px; font-weight: bold; }
+.header-user { display: flex; align-items: center; gap: 15px; }
+.logout { padding: 9px 14px; border: none; border-radius: 7px; background: #991b1b; color: white; }
+.layout { min-height: calc(100vh - 70px); display: grid; grid-template-columns: 230px 1fr; }
+.sidebar { padding: 20px; background: #111827; border-right: 1px solid #334155; }
+.nav { width: 100%; padding: 13px; margin-bottom: 8px; border: none; border-radius: 8px; background: transparent; color: #94a3b8; text-align: left; }
+.nav:hover { background: #1e293b; color: white; }
+.nav.active { background: #334155; color: #fbbf24; }
+.main { width: 100%; max-width: 1400px; padding: 25px; }
+.card { padding: 20px; margin-bottom: 20px; background: #111827; border: 1px solid #334155; border-radius: 15px; }
+.title { margin-bottom: 20px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+.stat { padding: 20px; background: #172033; border: 1px solid #334155; border-radius: 12px; }
+.stat small { color: #94a3b8; }
+.stat h2 { margin-top: 10px; color: #fbbf24; }
+.referral-card { padding: 22px; margin-bottom: 20px; border-radius: 15px; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #fbbf24; }
+.referral-code-box { display: flex; gap: 10px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+.referral-code { padding: 12px 20px; border-radius: 8px; background: #0b1220; border: 2px dashed #fbbf24; font-size: 22px; font-weight: bold; letter-spacing: 3px; color: #fbbf24; font-family: monospace; }
+.copy-btn { padding: 12px 18px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; }
+.progress-bar { width: 100%; height: 14px; background: #0b1220; border-radius: 7px; overflow: hidden; margin: 10px 0; border: 1px solid #334155; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width .4s ease; }
+.ref-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+.ref-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+.ref-badge.active { background: #166534; color: #86efac; }
+.ref-badge.pending { background: #78350f; color: #fcd34d; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.full { grid-column: 1 / -1; }
+label { color: #cbd5e1; display: block; }
+.ticket-selector, .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; margin-top: 10px; }
+.ticket-select { padding: 15px 5px; border: 1px solid #475569; border-radius: 8px; background: #172033; color: white; }
+.ticket-select.selected { background: #fbbf24; color: #111827; }
+.ticket-select.sold { background: #7f1d1d; color: #fecaca; cursor: not-allowed; }
+.ticket-select.mine { background: #166534; color: #86efac; cursor: not-allowed; border-color: #4ade80; }
+.ticket { padding: 18px; border-radius: 10px; background: #172033; border: 1px solid #475569; }
+.ticket.sold { background: #3f1515; border-color: #991b1b; }
+.ticket.free { background: #14532d; border-color: #4ade80; }
+.ticket-number { font-size: 25px; font-weight: bold; color: #fbbf24; margin-bottom: 10px; }
+.available { color: #4ade80; }
+.sold-text { color: #f87171; }
+.free-badge { color: #4ade80; font-weight: bold; font-size: 12px; }
+.checkbox-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: #0b1220; border-radius: 8px; border: 1px solid #4ade80; margin-bottom: 12px; }
+.checkbox-row input { width: auto; margin: 0; }
+.checkbox-row label { color: #86efac; font-weight: bold; margin: 0; display: inline; }
+.wheel-layout { display: grid; grid-template-columns: minmax(300px, 460px) 1fr; gap: 30px; align-items: center; }
+.wheel-container { position: relative; width: 380px; max-width: 88vw; aspect-ratio: 1; margin: auto; }
+.wheel { width: 100%; height: 100%; position: relative; overflow: hidden; border: 7px solid #fbbf24; border-radius: 50%; background: #334155; box-shadow: 0 0 40px rgba(0,0,0,.5); will-change: transform; }
+.wheel.has-winners { animation: winnerGlow 1.4s ease-in-out infinite; }
+@keyframes winnerGlow { 0%,100% { box-shadow: 0 0 30px rgba(251,191,36,.45); } 50% { box-shadow: 0 0 70px rgba(251,191,36,.95); } }
+.wheel-labels { position: absolute; inset: 0; pointer-events: none; }
+.wl { position: absolute; inset: 0; display: flex; justify-content: center; }
+.wl span { margin-top: 14px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.pointer { position: absolute; z-index: 20; top: -2px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 17px solid transparent; border-right: 17px solid transparent; border-top: 38px solid red; }
+.pointer.winner { border-top-color: #4ade80; animation: bounceP 0.7s infinite alternate; }
+@keyframes bounceP { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(6px); } }
+.center { position: absolute; z-index: 30; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 78px; height: 78px; border-radius: 50%; background: #111827; border: 4px solid #fbbf24; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; text-align: center; line-height: 1.1; pointer-events: none; }
+.arrow-orbit { position: absolute; inset: 0; z-index: 25; pointer-events: none; transition: transform 1s cubic-bezier(.2,.8,.3,1); }
+.arrow-tip { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: translate(-50%, -50%) translateY(-66px); border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 20px solid #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.9)); animation: pulseArrow .8s infinite alternate; }
+@keyframes pulseArrow { from { opacity: .65; } to { opacity: 1; } }
+.timer { text-align: center; font-size: 60px; font-weight: bold; color: #fbbf24; margin-bottom: 15px; font-family: monospace; letter-spacing: 3px; text-shadow: 0 0 20px rgba(251,191,36,0.6); padding: 12px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #334155; transition: all 0.3s ease; }
+.timer.sales { color: #22c55e; text-shadow: 0 0 20px rgba(34,197,94,0.6); border-color: #166534; }
+.timer.spinning { color: #ef4444; animation: timerPulse 0.5s infinite alternate; border-color: #ef4444; }
+.timer.closed { color: #94a3b8; }
+@keyframes timerPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+.status { text-align: center; color: #94a3b8; margin-bottom: 15px; }
+.winners { padding: 20px; margin-top: 20px; border-radius: 12px; background: #14532d; border: 1px solid #4ade80; }
+.winners h2 { color: #4ade80; margin-bottom: 12px; }
+.winner { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+.table-box { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 13px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+th { color: #94a3b8; }
+.small-button { padding: 8px 12px; border: none; border-radius: 7px; background: #334155; color: white; margin: 2px; }
+.gold-button { background: #fbbf24; color: #111827; }
+.red-button { background: #991b1b; color: white; }
+.green-button { background: #166534; color: white; }
+.history { padding: 18px; margin-bottom: 12px; background: #172033; border: 1px solid #334155; border-radius: 10px; }
+.history h3 { color: #fbbf24; margin-bottom: 8px; }
+.muted { color: #94a3b8; }
+.gold { color: #fbbf24; }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #4ade80; margin-right: 6px; animation: livePulse 1.2s infinite; }
+@keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+.toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 24px; border-radius: 10px; background: #166534; color: white; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,.4); transform: translateY(-20px); opacity: 0; transition: all .35s ease; max-width: 380px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { background: #991b1b; }
+.method-box { padding: 20px; border-radius: 12px; border: 2px dashed #fbbf24; background: #0b1220; margin: 12px 0; }
+.method-box h3 { color: #fbbf24; margin-bottom: 8px; }
+.method-box .acct { font-size: 22px; font-weight: bold; font-family: monospace; letter-spacing: 2px; color: #ffffff; margin: 6px 0; }
+.method-box .name { color: #86efac; font-weight: bold; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.status-badge.pending { background: #78350f; color: #fcd34d; }
+.status-badge.approved { background: #166534; color: #86efac; }
+.status-badge.rejected { background: #7f1d1d; color: #fecaca; }
+.req-card { padding: 16px; border-radius: 12px; background: #172033; border: 1px solid #334155; margin-bottom: 12px; }
+.req-card .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; flex-wrap: wrap; gap: 6px; }
+.req-card .row b { color: #cbd5e1; }
+.req-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+.action-btn { padding: 12px 20px; border: 1px solid #475569; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: transform .15s ease; text-decoration: none; }
+.action-btn:hover { transform: translateY(-2px); opacity: .9; }
+.action-btn.blue { background: #0ea5e9; color: white; border-color: #0ea5e9; }
+.action-btn.green { background: #22c55e; color: white; border-color: #22c55e; }
+.action-btn.purple { background: #a855f7; color: white; border-color: #a855f7; }
+.action-btn.red { background: #dc2626; color: white; border-color: #dc2626; }
+.telegram-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: linear-gradient(135deg, #0088cc, #006699); border: 1px solid #4dd0e1; border-radius: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.telegram-banner .icon { font-size: 32px; }
+.telegram-banner .text { flex: 1; min-width: 200px; }
+.telegram-banner .text h3 { color: #fff; margin-bottom: 4px; font-size: 16px; }
+.telegram-banner .text p { color: #e0f7fa; font-size: 13px; }
+.telegram-banner .join-btn { padding: 10px 20px; background: #fff; color: #006699; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; cursor: pointer; }
+.chat-fab { position: fixed; bottom: 24px; right: 24px; z-index: 9998; padding: 14px 20px; border-radius: 30px; background: #fbbf24; border: 2px solid #111827; font-size: 15px; font-weight: bold; color: #111827; box-shadow: 0 8px 24px rgba(0,0,0,.4); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .15s ease; }
+.chat-fab:hover { transform: translateY(-2px) scale(1.03); }
+.chat-panel { position: fixed; bottom: 96px; right: 24px; z-index: 9999; width: 370px; max-width: 92vw; height: 500px; max-height: 70vh; background: #111827; border: 1px solid #334155; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.chat-head { padding: 14px 18px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.chat-head h3 { color: #fbbf24; font-size: 16px; }
+.chat-close { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; line-height: 1; }
+.chat-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; max-width: 85%; word-wrap: break-word; }
+.chat-msg.user { background: #fbbf24; color: #111827; align-self: flex-end; border-bottom-right-radius: 4px; }
+.chat-msg.bot { background: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 4px; }
+.chat-msg.typing { color: #94a3b8; font-style: italic; }
+.chat-input-row { padding: 12px; border-top: 1px solid #334155; display: flex; gap: 8px; background: #0b1220; }
+.chat-input-row input { flex: 1; padding: 10px 12px; margin: 0; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; font-size: 14px; }
+.chat-send { padding: 10px 16px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; cursor: pointer; }
+.chat-send:disabled { opacity: .5; cursor: not-allowed; }
+
+/* LIVE VIEWERS PANEL */
+.live-panel { padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; margin-top: 16px; }
+.live-panel h3 { color: #22c55e; font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.live-viewers-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.viewer-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #172033; border-radius: 8px; font-size: 13px; }
+.viewer-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; flex-shrink: 0; animation: livePulse 1.2s infinite; }
+.viewer-dot.muted { background: #78350f; animation: none; }
+.viewer-dot.admin { background: #fbbf24; }
+.viewer-name { flex: 1; color: #e2e8f0; }
+.viewer-name .speaking { color: #22c55e; font-weight: bold; font-size: 11px; margin-left: 6px; }
+.viewer-actions { display: flex; gap: 4px; }
+.mini-btn { padding: 4px 8px; font-size: 11px; border: none; border-radius: 6px; cursor: pointer; color: white; }
+.mini-btn.mute { background: #78350f; }
+.mini-btn.unmute { background: #166534; }
+.mini-btn.kick { background: #7f1d1d; }
+.live-chat { margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; }
+.live-chat h4 { color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
+.live-chat-messages { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.live-chat-msg { padding: 6px 10px; background: #172033; border-radius: 8px; font-size: 12px; }
+.live-chat-msg b { color: #fbbf24; }
+.live-chat-input { display: flex; gap: 6px; }
+.live-chat-input input { flex: 1; padding: 8px 10px; margin: 0; font-size: 13px; }
+.live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+.live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; margin-left: 8px; }
+
+@keyframes slowSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } }
+@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } }
+@media(max-width:450px) { .wheel-container { width: 280px; } }
+</style>
+</head>
+<body>
+<div id="toast" class="toast hidden"></div>
+
+<button id="chatFab" class="chat-fab hidden" onclick="toggleChat()">💬 AI Assistant</button>
+<div id="chatPanel" class="chat-panel hidden">
+    <div class="chat-head">
+        <h3>🤖 Lucky Assistant</h3>
+        <button class="chat-close" onclick="toggleChat()">×</button>
+    </div>
+    <div id="chatBody" class="chat-body">
+        <div class="chat-msg bot">Hi! 👋 I'm your Lucky Wheel assistant. Ask me anything!</div>
+    </div>
+    <div class="chat-input-row">
+        <input id="chatInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button id="chatSendBtn" class="chat-send" onclick="sendChat()">Send</button>
+    </div>
+</div>
+
+<section id="loginPage" class="login-page">
+<div class="login-card">
+    <div class="login-banner" style="display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center, #1e3a5f 0%, #0f172a 100%);border-radius:12px;margin-bottom:20px;padding:14px">
+      <svg viewBox="0 0 200 200" width="140" height="140" xmlns="http://www.w3.org/2000/svg" style="animation:slowSpin 20s linear infinite">
+        <circle cx="100" cy="100" r="95" fill="none"/>
+        <circle cx="100" cy="100" r="85" fill="#1e293b" stroke="#fbbf24" stroke-width="4"/>
+        <path d="M100,100 L100,15 A85,85 0 0,1 173.6,57.5 Z" fill="#ef4444" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M100,100 L173.6,57.5 A85,85 0 0,1 173.6,142.5 Z" fill="#fbbf24" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M100,100 L173.6,142.5 A85,85 0 0,1 100,185 Z" fill="#22c55e" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M100,100 L100,185 A85,85 0 0,1 26.4,142.5 Z" fill="#3b82f6" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M100,100 L26.4,142.5 A85,85 0 0,1 26.4,57.5 Z" fill="#a855f7" stroke="#0f172a" stroke-width="1.5"/>
+        <path d="M100,100 L26.4,57.5 A85,85 0 0,1 100,15 Z" fill="#f97316" stroke="#0f172a" stroke-width="1.5"/>
+        <text x="145" y="75" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">1</text>
+        <text x="155" y="110" fill="#111827" font-size="14" font-weight="bold" text-anchor="middle">2</text>
+        <text x="145" y="150" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">3</text>
+        <text x="100" y="165" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">4</text>
+        <text x="55" y="150" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">5</text>
+        <text x="45" y="110" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">6</text>
+        <text x="55" y="75" fill="#111827" font-size="14" font-weight="bold" text-anchor="middle">7</text>
+        <text x="100" y="55" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">8</text>
+        <circle cx="100" cy="100" r="22" fill="#111827" stroke="#fbbf24" stroke-width="4"/>
+        <circle cx="100" cy="100" r="8" fill="#fbbf24"/>
+        <path d="M100,10 L108,25 L92,25 Z" fill="#dc2626" stroke="#ffffff" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="logo">LUCKY<span>WHEEL</span></div>
+    <p class="login-description">Teshe Number Lucky Wheel</p>
+    <div id="loginForm">
+        <input id="loginPhone" placeholder="Phone Number">
+        <input id="loginPassword" type="password" placeholder="Password">
+        <button class="main-button" onclick="loginUser()">Login</button>
+        <div class="login-footer">Don't have an account? <button class="link-button" onclick="showRegister()">Register</button></div>
+    </div>
+    <div id="register" class="hidden">
+        <h2 style="margin-bottom:20px">Create Account</h2>
+        <input id="regName" placeholder="Full Name">
+        <input id="regPhone" placeholder="Phone Number">
+        <input id="regPassword" type="password" placeholder="Password">
+        <label>Referral Code (optional)</label>
+        <input id="regReferral" placeholder="e.g. ABC1234" style="text-transform:uppercase">
+        <p class="hint">Got an invite? Paste the code.</p>
+        <button class="main-button" onclick="register()">Register</button>
+        <div class="login-footer">Already registered? <button class="link-button" onclick="showLogin()">Login</button></div>
+    </div>
+</div>
+</section>
+
+<section id="app" class="hidden">
+<header class="header">
+    <div class="header-logo">LUCKY<span>WHEEL</span></div>
+    <div class="header-user">
+        <span class="muted" style="font-size:13px"><span class="live-dot"></span>live</span>
+        <span id="headerName"></span>
+        <button class="logout" onclick="logout()">Logout</button>
+    </div>
+</header>
+<div class="layout">
+<aside class="sidebar" id="sidebar"></aside>
+<main id="main" class="main"></main>
+</div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const API = '/api';
+let TOKEN    = localStorage.getItem('lw_token') || null;
+let ME       = null;
+let SETTINGS = null;
+let TICKETS  = [];
+let PAGE     = 'dashboard';
+let sb           = null;
+let countdownId  = null;
+let settleCalled = false;
+let subscribed   = false;
+let livePingId   = null;
+let viewersPollId = null;
+let chatPollId   = null;
+let CONFIG       = { botUsername: 'Numbers_Betting_bot', channelUsername: '@Lucky21_Wheel' };
+
+function renderSidebar() {
+    const isAdmin = ME.role === 'admin';
+    const sidebar = document.getElementById('sidebar');
+    if (isAdmin) {
+        sidebar.innerHTML = `
+            <button class="nav active" data-page="dashboard" onclick="openPage('dashboard')">🏠 Dashboard</button>
+            <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Wheel</button>
+            <button class="nav" data-page="users" onclick="openPage('users')">👥 Users</button>
+            <button class="nav" data-page="tickets" onclick="openPage('tickets')">🎟️ Assign Tickets</button>
+            <button class="nav" data-page="requests" onclick="openPage('requests')">📥 Requests</button>
+            <button class="nav" data-page="history" onclick="openPage('history')">📜 History</button>
+            <button class="nav" data-page="settings" onclick="openPage('settings')">⚙️ Settings</button>
+        `;
+    } else {
+        sidebar.innerHTML = `
+            <button class="nav active" data-page="dashboard" onclick="openPage('dashboard')">🏠 Dashboard</button>
+            <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Wheel</button>
+            <button class="nav" data-page="buy" onclick="openPage('buy')">🛒 Buy Tickets</button>
+            <button class="nav" data-page="deposit" onclick="openPage('deposit')">💰 Deposit</button>
+            <button class="nav" data-page="withdraw" onclick="openPage('withdraw')">💸 Withdraw</button>
+            <button class="nav" data-page="referrals" onclick="openPage('referrals')">🎁 Referrals</button>
+            <button class="nav" data-page="history" onclick="openPage('history')">📜 History</button>
+        `;
+    }
+}
+
+function toast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 4500);
+}
+
+async function api(path, options = {}) {
+    let res;
+    try {
+        res = await fetch(API + path, {
+            method: options.method || 'GET',
+            headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}) },
+            body: options.body ? JSON.stringify(options.body) : undefined
+        });
+    } catch (err) { throw new Error('Network error.'); }
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+    return data;
+}
+
+async function boot() {
+    try {
+        const cfg = await api('/config');
+        CONFIG = cfg;
+        sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+    } catch (e) { console.error('Realtime init failed', e); }
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    if (urlRef) {
+        const input = document.getElementById('regReferral');
+        if (input) input.value = urlRef.toUpperCase();
+        setTimeout(() => showRegister(), 100);
+    }
+    if (TOKEN) {
+        try { await enterApp(); return; }
+        catch (e) { TOKEN = null; localStorage.removeItem('lw_token'); }
+    }
+    showLoginPage();
+}
+function showLoginPage() { document.getElementById('loginPage').classList.remove('hidden'); document.getElementById('app').classList.add('hidden'); }
+function showRegister() { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('register').classList.remove('hidden'); }
+function showLogin() { document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('register').classList.add('hidden'); }
+
+async function register() {
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const referralCode = document.getElementById('regReferral').value.trim().toUpperCase();
+    if (!name || !phone || !password) { alert('Please fill all fields.'); return; }
+    try {
+        const res = await api('/auth/register', { method: 'POST', body: { name, phone, password, referralCode } });
+        alert('✅ Account created!\n\nYour referral code: ' + res.referral_code);
+        showLogin();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function loginUser() {
+    const phone = document.getElementById('loginPhone').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if (!phone || !password) { alert('Enter phone and password.'); return; }
+    try {
+        const data = await api('/auth/login', { method: 'POST', body: { phone, password } });
+        TOKEN = data.token;
+        localStorage.setItem('lw_token', TOKEN);
+        await enterApp();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function enterApp() {
+    await refreshState();
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    document.getElementById('headerName').textContent = ME.role === 'admin' ? 'Admin' : ME.name;
+    renderSidebar();
+    subscribeRealtime();
+    openPage('dashboard');
+    showChatFab();
+}
+async function refreshState() {
+    const data = await api('/state');
+    SETTINGS = data.settings; TICKETS = data.tickets; ME = data.me;
+}
+function subscribeRealtime() {
+    if (!sb || subscribed) return;
+    subscribed = true;
+    sb.channel('lucky-wheel-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' },  onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rounds' },   onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' },    onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawals' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_viewers' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_chat' }, onLiveUpdate)
+      .subscribe();
+}
+let liveBusy = false;
+async function onLiveUpdate() {
+    if (liveBusy) return; liveBusy = true;
+    try { await refreshState(); await renderPage(); } catch (e) { console.warn(e); }
+    finally { liveBusy = false; }
+}
+function openPage(page) {
+    PAGE = page;
+    document.querySelectorAll('.nav').forEach(btn => btn.classList.toggle('active', btn.dataset.page === page));
+    renderPage();
+}
+async function renderPage() {
+    if (!ME) return;
+    stopLivePolls();
+    if (PAGE === 'dashboard')  return dashboard();
+    if (PAGE === 'wheel')      return wheelPage();
+    if (PAGE === 'buy')        return buyPage();
+    if (PAGE === 'deposit')    return depositPage();
+    if (PAGE === 'withdraw')   return withdrawPage();
+    if (PAGE === 'referrals')  return referralsPage();
+    if (PAGE === 'users')      return usersPage();
+    if (PAGE === 'tickets')    return ticketsPage();
+    if (PAGE === 'requests')   return requestsPage();
+    if (PAGE === 'history')    return historyPage();
+    if (PAGE === 'settings')   return settingsPage();
+}
+
+/* Stop live pollers when leaving the wheel page */
+function stopLivePolls() {
+    if (livePingId) { clearInterval(livePingId); livePingId = null; }
+    if (viewersPollId) { clearInterval(viewersPollId); viewersPollId = null; }
+    if (chatPollId) { clearInterval(chatPollId); chatPollId = null; }
+}
+
+function dashboard() {
+    const sold = TICKETS.filter(t => t.user_id !== null).length;
+    const botUrl = 'https://t.me/' + CONFIG.botUsername;
+    const channelUrl = 'https://t.me/' + CONFIG.channelUsername.replace('@', '');
+
+    if (ME.role === 'admin') {
+        document.getElementById('main').innerHTML = `
+            <h1 class="title">Admin Dashboard</h1>
+
+            <div class="card">
+                <h2>🤖 AI Business Insight</h2>
+                <div id="insightBox" class="muted" style="margin-top:14px;line-height:1.7;white-space:pre-wrap">
+                    <span style="color:#fbbf24">⏳ Analyzing your business...</span>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat"><small>Registered Users</small><h2 id="statUsers">—</h2></div>
+                <div class="stat"><small>Sold Tickets</small><h2>${sold}/${SETTINGS.ticket_count}</h2></div>
+                <div class="stat"><small>Sales State</small><h2>${SETTINGS.sales_state === 'open' ? '🟢 OPEN' : '⚪ ' + (SETTINGS.sales_state || 'idle').toUpperCase()}</h2></div>
+                <div class="stat"><small>Round State</small><h2>${SETTINGS.round_state}</h2></div>
+            </div>
+
+            <div class="card">
+                <h2>Admin Actions</h2>
+                <div class="action-buttons">
+                    <button class="action-btn green" onclick="startSales()">🟢 OPEN SALES</button>
+                    <button class="action-btn red" onclick="closeSales()">🔴 CLOSE SALES</button>
+                    <button class="action-btn" onclick="openPage('tickets')">🎟️ Assign Tickets</button>
+                    <button class="action-btn blue" onclick="openPage('requests')">📥 Manage Requests</button>
+                    <button class="action-btn green" onclick="openPage('wheel')">🎡 Open Wheel</button>
+                    <button class="action-btn purple" onclick="openPage('settings')">⚙️ Settings</button>
+                    <a class="action-btn" href="${botUrl}" target="_blank">🤖 Open Bot</a>
+                    <a class="action-btn blue" href="${channelUrl}" target="_blank">📢 Channel</a>
+                </div>
+            </div>`;
+
+        api('/admin/users').then(list => { const el = document.getElementById('statUsers'); if (el) el.textContent = list.users.length; }).catch(() => {});
+        api('/admin/insights').then(data => {
+            const insightEl = document.getElementById('insightBox');
+            if (insightEl) insightEl.textContent = data.insight;
+        }).catch(() => {
+            const insightEl = document.getElementById('insightBox');
+            if (insightEl) insightEl.textContent = '⚠️ AI insight unavailable.';
+        });
+        return;
+    }
+
+    const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id));
+    const refs = ME.active_referrals || 0;
+    const goal = SETTINGS.referral_goal || 8;
+    const nextReward = goal - (refs % goal);
+    const progressPct = ((refs % goal) / goal) * 100;
+
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">Welcome, ${escapeHTML(ME.name)}</h1>
+
+        <div class="telegram-banner" style="background:linear-gradient(135deg,#22c55e,#16a34a);border-color:#4ade80">
+            <div class="icon">🤖</div>
+            <div class="text">
+                <h3>Open Our Telegram Bot</h3>
+                <p>Get instant help, check balance, and play.</p>
+            </div>
+            <a href="${botUrl}" target="_blank" class="join-btn" style="color:#16a34a">Open Bot</a>
+        </div>
+
+        <div class="telegram-banner">
+            <div class="icon">📢</div>
+            <div class="text">
+                <h3>Join Our Telegram Channel</h3>
+                <p>Winner announcements, new rounds — first!</p>
+            </div>
+            <a href="${channelUrl}" target="_blank" class="join-btn">Join Channel</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
+            <div class="stat"><small>My Tickets</small><h2>${mine.length}</h2></div>
+            <div class="stat"><small>Active Referrals</small><h2>${refs}</h2></div>
+            <div class="stat"><small>Free Tickets</small><h2>${ME.free_tickets || 0}</h2></div>
+        </div>
+
+        <div class="card">
+            <h2>Quick Actions</h2>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="openPage('deposit')">💰 Deposit</button>
+                <button class="action-btn green" onclick="openPage('buy')">🛒 Buy Tickets</button>
+                <button class="action-btn blue" onclick="openPage('withdraw')">💸 Withdraw</button>
+                <a class="action-btn purple" href="${botUrl}" target="_blank">🤖 Open Bot</a>
+            </div>
+        </div>
+
+        <div class="referral-card">
+            <h2 style="color:#fbbf24">🎁 Referral Progress</h2>
+            <p class="muted" style="margin:8px 0 12px">${refs} active · ${nextReward} more for a FREE ticket</p>
+            <div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>
+            <div class="referral-code-box">
+                <div class="referral-code">${ME.referral_code || '—'}</div>
+                <button class="copy-btn" onclick="copyReferral()">📋 Copy</button>
+                <button class="copy-btn" onclick="copyInviteLink()">🔗 Invite</button>
+            </div>
+        </div>
+
+        <div class="card"><h2>🎟️ My Tickets</h2><br>
+            ${mine.length ? mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' ') : `<p class="muted">No tickets yet.</p>`}
+        </div>`;
+}
+
+async function startSales() {
+    try {
+        await api('/admin/start-sales', { method: 'POST' });
+        toast('🟢 Sales opened!');
+        await refreshState(); renderPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+async function closeSales() {
+    try {
+        await api('/admin/close-sales', { method: 'POST' });
+        toast('🔴 Sales closed!');
+        await refreshState(); renderPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+function copyReferral() { if (!ME.referral_code) return; navigator.clipboard.writeText(ME.referral_code); toast('📋 Copied!'); }
+function copyInviteLink() { if (!ME.referral_code) return; const link = window.location.origin + '/?ref=' + ME.referral_code; navigator.clipboard.writeText(link); toast('🔗 Copied!'); }
+
+let buySelected = [];
+function buyPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Admin — use Assign Tickets instead.</p></div>`; return; }
+    buySelected = [];
+    const soldCount = TICKETS.filter(t => t.user_id !== null).length;
+    const availCount = TICKETS.length - soldCount;
+    const salesOpen = SETTINGS.sales_state === 'open';
+
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">🛒 Buy Tickets</h1>
+        ${!salesOpen ? `<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Sales are currently CLOSED.</b> Wait for admin to open ticket sales.</p></div>` : ''}
+        <div class="stats">
+            <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
+            <div class="stat"><small>Ticket Price</small><h2>${money(SETTINGS.ticket_price)}</h2></div>
+            <div class="stat"><small>Available</small><h2>${availCount}</h2></div>
+            <div class="stat"><small>Free Tickets</small><h2>${ME.free_tickets || 0}</h2></div>
+        </div>
+        <div class="card">
+            <h2>Select Tickets</h2>
+            <p class="muted" style="margin-top:8px">Green = yours. Red = sold.</p><br>
+            <div class="ticket-grid">${buyTicketButtons()}</div>
+        </div>
+        <div class="card">
+            <div class="checkbox-row">
+                <input type="checkbox" id="buyUseFree" ${(ME.free_tickets || 0) === 0 ? 'disabled' : ''} onchange="updateBuyTotals()">
+                <label>🎁 Use 1 FREE ticket (${ME.free_tickets || 0} available)</label>
+            </div>
+            <p style="margin-top:10px"><b>Selected:</b> <span id="buyCount">0</span></p>
+            <p><b>Total:</b> <span class="gold" id="buyCost">${money(0)}</span></p><br>
+            <button class="main-button" onclick="buySelectedTickets()" ${!salesOpen ? 'disabled' : ''}>🛒 CONFIRM PURCHASE</button>
+        </div>`;
+}
+function buyTicketButtons() {
+    return TICKETS.map(t => {
+        const sold = t.user_id !== null;
+        const mine = sold && String(t.user_id) === String(ME.id);
+        let cls = 'ticket-select';
+        if (mine) cls += ' mine';
+        else if (sold) cls += ' sold';
+        let label = 'AVAILABLE';
+        if (mine) label = 'YOURS';
+        else if (sold) label = 'SOLD';
+        return `<button type="button" class="${cls}" ${sold ? 'disabled' : ''} onclick="selectBuy(${t.number}, this)">#${t.number}<br><small>${label}</small></button>`;
+    }).join('');
+}
+function selectBuy(number, element) {
+    const useFree = document.getElementById('buyUseFree').checked;
+    if (useFree) {
+        document.querySelectorAll('.ticket-select.selected').forEach(el => el.classList.remove('selected'));
+        buySelected = [number];
+        element.classList.add('selected');
+    } else {
+        if (buySelected.includes(number)) { buySelected = buySelected.filter(n => n !== number); element.classList.remove('selected'); }
+        else { buySelected.push(number); element.classList.add('selected'); }
+    }
+    updateBuyTotals();
+}
+function updateBuyTotals() {
+    const useFree = document.getElementById('buyUseFree').checked;
+    const count = buySelected.length;
+    const cost = useFree ? 0 : count * Number(SETTINGS.ticket_price);
+    const cEl = document.getElementById('buyCount'); if (cEl) cEl.textContent = count;
+    const costEl = document.getElementById('buyCost'); if (costEl) costEl.textContent = money(cost);
+}
+async function buySelectedTickets() {
+    if (!buySelected.length) { alert('Select at least one.'); return; }
+    const useFree = document.getElementById('buyUseFree').checked;
+    if (useFree && buySelected.length > 1) { alert('With free ticket, select only 1.'); return; }
+    const cost = useFree ? 0 : buySelected.length * Number(SETTINGS.ticket_price);
+    if (!useFree && Number(ME.balance) < cost) { alert(`Not enough balance.`); return; }
+    if (!confirm(`Buy ${buySelected.length} ticket(s) for ${money(cost)}?`)) return;
+    try {
+        const res = await api('/user/tickets/buy', { method: 'POST', body: { numbers: buySelected, useFreeTicket: useFree } });
+        alert('✅ Purchased!');
+        await refreshState(); buyPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function depositPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    let dep = { deposits: [] };
+    try { dep = await api('/user/deposits'); } catch (e) {}
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">💰 Deposit Money</h1>
+        <div class="card">
+            <h2>Step 1: Send Money</h2>
+            <div class="method-box"><h3>🏦 CBE</h3><div class="acct">1000676405058</div><div class="name">Teshome Ayenew</div></div>
+            <div class="method-box"><h3>🏦 BOA</h3><div class="acct">189018436</div><div class="name">Teshome Ayenew</div></div>
+        </div>
+        <div class="card">
+            <h2>Step 2: Submit Request</h2><br>
+            <label>Method</label>
+            <select id="depMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
+            <label>Amount (ETB)</label>
+            <input id="depAmount" type="number" min="1" placeholder="e.g. 500">
+            <label>Transaction ID</label>
+            <input id="depTxn" placeholder="From bank SMS">
+            <button class="main-button" onclick="submitDeposit()">📤 SUBMIT DEPOSIT</button>
+        </div>
+        <div class="card"><h2>My Deposits</h2><br>
+            ${!dep.deposits.length ? `<p class="muted">No deposits yet.</p>` : dep.deposits.map(d => `
+                <div class="req-card">
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div>
+                    <div class="row"><b>Method:</b> <span>${d.method.toUpperCase()}</span></div>
+                    <div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>
+                </div>`).join('')}
+        </div>`;
+}
+async function submitDeposit() {
+    const method = document.getElementById('depMethod').value;
+    const amount = Number(document.getElementById('depAmount').value);
+    const transactionId = document.getElementById('depTxn').value.trim();
+    if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
+    if (!transactionId) { alert('Enter transaction ID'); return; }
+    try {
+        await api('/user/deposits', { method: 'POST', body: { method, amount, transactionId } });
+        alert('✅ Submitted!');
+        depositPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function withdrawPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    let w = { withdrawals: [] };
+    try { w = await api('/user/withdrawals'); } catch (e) {}
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">💸 Withdraw Money</h1>
+        <div class="stats"><div class="stat"><small>Balance</small><h2>${money(ME.balance)}</h2></div></div>
+        <div class="card">
+            <h2>Request Withdrawal</h2><br>
+            <label>Method</label>
+            <select id="wdMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
+            <label>Amount (ETB)</label>
+            <input id="wdAmount" type="number" min="1" placeholder="e.g. 500">
+            <label>Your Account Number</label>
+            <input id="wdAccount" placeholder="Your account">
+            <button class="main-button" onclick="submitWithdraw()">📤 SUBMIT WITHDRAWAL</button>
+        </div>
+        <div class="card"><h2>My Withdrawals</h2><br>
+            ${!w.withdrawals.length ? `<p class="muted">No withdrawals yet.</p>` : w.withdrawals.map(x => `
+                <div class="req-card">
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(x.amount)}</span></div>
+                    <div class="row"><b>Method:</b> <span>${x.method.toUpperCase()}</span></div>
+                    <div class="row"><b>Account:</b> <span>${escapeHTML(x.account_number)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${x.status}">${x.status.toUpperCase()}</span></div>
+                </div>`).join('')}
+        </div>`;
+}
+async function submitWithdraw() {
+    const method = document.getElementById('wdMethod').value;
+    const amount = Number(document.getElementById('wdAmount').value);
+    const accountNumber = document.getElementById('wdAccount').value.trim();
+    if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
+    if (!accountNumber) { alert('Enter account number'); return; }
+    if (amount > Number(ME.balance)) { alert('Not enough balance'); return; }
+    if (!confirm(`Withdraw ${money(amount)}?`)) return;
+    try {
+        await api('/user/withdrawals', { method: 'POST', body: { method, amount, accountNumber } });
+        alert('✅ Submitted!');
+        await refreshState(); withdrawPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function referralsPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    const data = await api('/referrals');
+    const goal = SETTINGS.referral_goal || 8;
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">🎁 My Referrals</h1>
+        <div class="referral-card">
+            <h2 style="color:#fbbf24">Your Code</h2>
+            <div class="referral-code-box">
+                <div class="referral-code">${ME.referral_code || '—'}</div>
+                <button class="copy-btn" onclick="copyReferral()">📋 Copy</button>
+                <button class="copy-btn" onclick="copyInviteLink()">🔗 Link</button>
+            </div>
+            <p class="muted" style="margin-top:12px">Every <b class="gold">${goal}</b> friends who buy = <b class="gold">1 FREE ticket</b>.</p>
+        </div>
+        <div class="card"><h2>Friends (${data.referrals.length})</h2><br>
+            ${data.referrals.length ? data.referrals.map(r => `
+                <div class="ref-row">
+                    <div><b>${escapeHTML(r.name)}</b><br><span class="muted" style="font-size:12px">${escapeHTML(r.phone)}</span></div>
+                    <div>${r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>'}</div>
+                </div>`).join('') : `<p class="muted">No referrals yet.</p>`}
+        </div>`;
+}
+
+async function usersPage() {
+    const data = await api('/admin/users/full');
+    const list = data.users;
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">👥 Registered Users</h1>
+        <div class="card"><div class="table-box"><table>
+            <thead><tr>
+                <th>Name</th><th>Phone</th><th>Password</th><th>Balance</th>
+                <th>Tickets</th><th>Refs</th><th>Free</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody>${list.length ? list.map(u => `
+                <tr>
+                    <td>${escapeHTML(u.name)}</td>
+                    <td>${escapeHTML(u.phone)}</td>
+                    <td><span style="font-family:monospace;color:#fbbf24">${escapeHTML(u.password_plain || '—')}</span></td>
+                    <td class="gold">${money(u.balance)}</td>
+                    <td>${userTickets(u.id) || '-'}</td>
+                    <td>${u.active_referrals || 0}</td>
+                    <td class="gold">${u.free_tickets || 0}</td>
+                    <td>${u.banned ? '<span class="status-badge rejected">BANNED</span>' : '<span class="status-badge approved">ACTIVE</span>'}</td>
+                    <td>
+                        <button class="small-button gold-button" onclick="adjustBalance('${u.id}')">Balance</button>
+                        <button class="small-button" onclick="resetPassword('${u.id}', '${escapeHTML(u.name)}')">Reset PW</button>
+                        ${u.banned ? `<button class="small-button green-button" onclick="banUser('${u.id}', false)">Restore</button>` : `<button class="small-button red-button" onclick="banUser('${u.id}', true)">Ban</button>`}
+                    </td>
+                </tr>`).join('') : `<tr><td colspan="9" class="muted">No users yet.</td></tr>`}</tbody>
+        </table></div></div>`;
+}
+async function resetPassword(userId, userName) {
+    const newPw = prompt(`New password for ${userName}:\n(min 4 characters)`);
+    if (newPw === null) return;
+    if (newPw.trim().length < 4) { alert('Min 4 characters'); return; }
+    try { await api('/admin/users/reset-password', { method: 'POST', body: { userId, newPassword: newPw.trim() } }); alert('✅ Updated.'); usersPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function banUser(userId, banned) {
+    if (!confirm(banned ? 'BAN this user?' : 'RESTORE this user?')) return;
+    try { await api('/admin/users/ban', { method: 'POST', body: { userId, banned } }); alert(banned ? '✅ Banned.' : '✅ Restored.'); usersPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function adjustBalance(id) {
+    const amount = prompt('Amount to ADD (use - to subtract):');
+    if (amount === null) return;
+    const value = Number(amount);
+    if (!Number.isFinite(value)) { alert('Invalid'); return; }
+    try { await api('/admin/users/balance', { method: 'POST', body: { userId: id, amount: value } }); await refreshState(); usersPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+let selectedTickets = [];
+function ticketsPage() {
+    selectedTickets = [];
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">🎟️ Assign Tickets</h1>
+        <div class="card">
+            <h2>Assign to User</h2><br>
+            <label>Name</label><input id="assignName" placeholder="Full name">
+            <label>Phone</label><input id="assignPhone" placeholder="Phone">
+            <label>Password (new users only)</label><input id="assignPassword" type="password" placeholder="Password">
+            <label>Balance Adjustment</label><input id="assignBalance" type="number" value="0">
+            <div class="checkbox-row"><input type="checkbox" id="useFreeTicket"><label>🎁 Use a FREE ticket</label></div>
+            <label>Select Ticket Numbers</label>
+            <div id="ticketSelector" class="ticket-selector">${ticketButtons()}</div>
+            <button class="main-button" onclick="assignTickets()">🎟️ ASSIGN</button>
+        </div>
+        <div class="card"><h2>Ticket Status</h2><br><div class="ticket-grid">${ticketStatus()}</div></div>`;
+}
+function ticketButtons() {
+    return TICKETS.map(t => {
+        const sold = t.user_id !== null;
+        return `<button type="button" class="ticket-select ${sold ? 'sold' : ''}" ${sold ? 'disabled' : ''} onclick="selectTicket(${t.number}, this)">#${t.number}<br><small>${sold ? 'SOLD' : 'AVAILABLE'}</small></button>`;
+    }).join('');
+}
+function selectTicket(number, element) {
+    if (selectedTickets.includes(number)) { selectedTickets = selectedTickets.filter(n => n !== number); element.classList.remove('selected'); }
+    else { selectedTickets.push(number); element.classList.add('selected'); }
+}
+async function assignTickets() {
+    const name = document.getElementById('assignName').value.trim();
+    const phone = document.getElementById('assignPhone').value.trim();
+    const password = document.getElementById('assignPassword').value;
+    const balance = Number(document.getElementById('assignBalance').value) || 0;
+    const useFreeTicket = document.getElementById('useFreeTicket').checked;
+    if (!name || !phone) { alert('Enter name and phone'); return; }
+    if (!selectedTickets.length) { alert('Select at least one ticket'); return; }
+    try {
+        const result = await api('/admin/tickets/assign', { method: 'POST', body: { name, phone, password, balance, numbers: selectedTickets, useFreeTicket } });
+        alert('✅ Assigned!');
+        await refreshState(); ticketsPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+function ticketStatus() {
+    return TICKETS.map(t => {
+        const sold = t.user_id !== null;
+        return `<div class="ticket ${sold ? 'sold' : ''} ${t.used_free_ticket ? 'free' : ''}">
+            <div class="ticket-number">#${t.number}</div>
+            ${sold ? `
+                <p class="sold-text">SOLD</p>
+                ${t.used_free_ticket ? '<p class="free-badge">🎁 FREE</p>' : ''}
+                <br>
+                <p>${escapeHTML(t.user_name || '')}</p>
+                <p>${escapeHTML(t.phone || '')}</p>
+                <button class="small-button red-button" style="margin-top:8px;padding:5px 10px;font-size:11px" onclick="resetOneTicket(${t.number})">🔄 Reset</button>
+            ` : `<p class="available">AVAILABLE</p>`}
+        </div>`;
+    }).join('');
+}
+async function resetOneTicket(number) {
+    if (!confirm(`Reset ticket #${number}?`)) return;
+    try { await api('/admin/tickets/reset-one', { method: 'POST', body: { number } }); toast('✅ Reset'); await refreshState(); ticketsPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+async function requestsPage() {
+    const [dep, wd] = await Promise.all([api('/admin/deposits'), api('/admin/withdrawals')]);
+    const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
+    const pendingWds  = wd.withdrawals.filter(w => w.status === 'pending');
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">📥 Manage Requests</h1>
+        <div class="stats">
+            <div class="stat"><small>Pending Deposits</small><h2>${pendingDeps.length}</h2></div>
+            <div class="stat"><small>Pending Withdrawals</small><h2>${pendingWds.length}</h2></div>
+            <div class="stat"><small>Total Deposits</small><h2>${dep.deposits.length}</h2></div>
+            <div class="stat"><small>Total Withdrawals</small><h2>${wd.withdrawals.length}</h2></div>
+        </div>
+        <div class="card"><h2>💰 Deposits</h2><br>
+            ${!dep.deposits.length ? `<p class="muted">None yet.</p>` : dep.deposits.map(d => `
+                <div class="req-card">
+                    <div class="row"><b>User:</b> <span>${escapeHTML(d.user_name)} (${escapeHTML(d.phone)})</span></div>
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div>
+                    <div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>
+                    ${d.status === 'pending' ? `<div class="req-actions">
+                        <button class="small-button green-button" onclick="decideDeposit(${d.id}, 'approve')">✓ Approve</button>
+                        <button class="small-button red-button" onclick="decideDeposit(${d.id}, 'reject')">✗ Reject</button>
+                    </div>` : ''}
+                </div>`).join('')}
+        </div>
+        <div class="card"><h2>💸 Withdrawals</h2><br>
+            ${!wd.withdrawals.length ? `<p class="muted">None yet.</p>` : wd.withdrawals.map(w => `
+                <div class="req-card">
+                    <div class="row"><b>User:</b> <span>${escapeHTML(w.user_name)} (${escapeHTML(w.phone)})</span></div>
+                    <div class="row"><b>Amount:</b> <span class="gold">${money(w.amount)}</span></div>
+                    <div class="row"><b>Account:</b> <span>${escapeHTML(w.account_number)}</span></div>
+                    <div class="row"><b>Status:</b> <span class="status-badge ${w.status}">${w.status.toUpperCase()}</span></div>
+                    ${w.status === 'pending' ? `<div class="req-actions">
+                        <button class="small-button green-button" onclick="decideWithdraw(${w.id}, 'approve')">✓ Approve</button>
+                        <button class="small-button red-button" onclick="decideWithdraw(${w.id}, 'reject')">✗ Reject</button>
+                    </div>` : ''}
+                </div>`).join('')}
+        </div>`;
+}
+async function decideDeposit(id, action) {
+    const comment = prompt(action === 'approve' ? 'Approve? Comment:' : 'Reject? Reason:');
+    if (comment === null) return;
+    try { await api(`/admin/deposits/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function decideWithdraw(id, action) {
+    const comment = prompt(action === 'approve' ? 'Approve? Reference:' : 'Reject? Reason:');
+    if (comment === null) return;
+    try { await api(`/admin/withdrawals/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= WHEEL PAGE with LIVE VIEWERS ============= */
+function wheelPage() {
+    const isAdmin = ME.role === 'admin';
+    const spinning = SETTINGS.round_state === 'spinning';
+    const salesOpen = SETTINGS.sales_state === 'open';
+
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">🎡 Lucky Wheel</h1>
+        <div class="card"><div class="wheel-layout">
+            <div class="wheel-container">
+                <div id="wheel" class="wheel"><div class="wheel-labels" id="wheelLabels"></div></div>
+                <div id="arrowOrbit" class="arrow-orbit hidden"><div class="arrow-tip"></div></div>
+                <div id="topPointer" class="pointer"></div>
+                <div class="center" id="wheelCenter">SPIN</div>
+            </div>
+            <div>
+                <div id="timer" class="timer">${formatTime(SETTINGS.duration)}</div>
+                <p id="status" class="status">${SETTINGS.round_state === 'spinning' ? '🎡 Spinning...' : SETTINGS.round_state === 'finished' ? 'Round completed.' : isAdmin ? 'Ready.' : 'Waiting for admin.'}</p>
+                ${isAdmin ? `
+                    <div class="action-buttons">
+                        <button class="action-btn green" onclick="startSales()" ${salesOpen ? 'disabled' : ''}>🟢 START SALES</button>
+                        <button class="action-btn red" onclick="closeSales()" ${!salesOpen ? 'disabled' : ''}>🔴 CLOSE SALES</button>
+                        <button id="spinButton" class="action-btn" onclick="startSpin()" ${spinning ? 'disabled' : ''}>🎡 SPIN NOW</button>
+                        <button class="action-btn red" onclick="newRound()" ${spinning ? 'disabled' : ''}>🔄 NEW ROUND</button>
+                    </div>
+                ` : `<div class="card"><h3>My Tickets</h3><br>${myTicketList()}</div>`}
+                <div id="winnerArea"></div>
+            </div>
+        </div>
+
+        <!-- LIVE VIEWERS PANEL -->
+        <div class="live-panel">
+            <h3>
+                🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
+                <button class="mini-btn" style="background:#22c55e;margin-left:auto" onclick="joinLive()">Join Live</button>
+                <button class="mini-btn" style="background:#7f1d1d" onclick="leaveLive()">Leave</button>
+            </h3>
+            <div id="viewersList" class="live-viewers-list">
+                <p class="muted" style="font-size:12px">No viewers yet.</p>
+            </div>
+
+            <div class="live-chat">
+                <h4>💬 Live Chat</h4>
+                <div id="liveChatMessages" class="live-chat-messages"></div>
+                <div class="live-chat-input">
+                    <input id="liveChatInput" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendLiveChat()">
+                    <button onclick="sendLiveChat()">Send</button>
+                </div>
+            </div>
+        </div>
+        </div>`;
+
+    buildWheel();
+    applyWheelState();
+    startLivePolls();
+}
+function buildWheel() {
+    const wheel = document.getElementById('wheel');
+    const labels = document.getElementById('wheelLabels');
+    if (!wheel || !labels) return;
+    const soldTickets = TICKETS.filter(t => t.user_id !== null);
+    const n = soldTickets.length;
+    if (n === 0) {
+        wheel.style.background = '#334155';
+        labels.innerHTML = `<div style="position:absolute;inset:0;display:flex;justify-content:center;align-items:center;color:#94a3b8;font-size:16px;text-align:center;padding:0 40px">No tickets sold yet.</div>`;
+        return;
+    }
+    const angle = 360 / n;
+    const winners = SETTINGS.round_state === 'finished' ? (SETTINGS.winner_numbers || []) : [];
+    const stops = [];
+    for (let i = 0; i < n; i++) {
+        const t = soldTickets[i];
+        const start = i * angle, end = (i + 1) * angle;
+        let color;
+        if (winners.includes(t.number)) color = '#fbbf24';
+        else if (i % 2 === 1) color = `hsl(${(t.number * 37) % 360}, 62%, 38%)`;
+        else color = `hsl(${(t.number * 37) % 360}, 55%, 27%)`;
+        stops.push(`${color} ${start}deg ${end}deg`);
+    }
+    wheel.style.background = `conic-gradient(from 0deg, ${stops.join(',')})`;
+    wheel.classList.toggle('has-winners', winners.length > 0);
+    const fontSize = Math.max(9, Math.min(22, 250 / n));
+    let html = '';
+    for (let i = 0; i < n; i++) {
+        const t = soldTickets[i];
+        const rot = i * angle + angle / 2;
+        const isWinner = winners.includes(t.number);
+        html += `<div class="wl" style="transform:rotate(${rot}deg)"><span style="font-size:${fontSize}px;color:${isWinner ? '#111827' : '#ffffff'}">#${t.number}</span></div>`;
+    }
+    labels.innerHTML = html;
+}
+function applyWheelState() {
+    const wheel = document.getElementById('wheel');
+    if (!wheel) return;
+    const s = SETTINGS;
+    const target = Number(s.target_rotation || 0);
+    const pointer = document.getElementById('topPointer');
+    const orbit = document.getElementById('arrowOrbit');
+    const soldTickets = TICKETS.filter(t => t.user_id !== null);
+    const n = soldTickets.length;
+    const timerEl = document.getElementById('timer');
+    if (!timerEl) return;
+
+    if (s.round_state === 'idle' && s.sales_state !== 'open') {
+        stopCountdown();
+        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
+        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
+        const c = document.getElementById('wheelCenter'); if (c) c.textContent = n > 0 ? 'SPIN' : 'EMPTY';
+        const a = document.getElementById('winnerArea'); if (a) a.innerHTML = '';
+        timerEl.classList.remove('spinning', 'sales');
+        timerEl.textContent = formatTime(s.duration);
+        return;
+    }
+
+    if (s.sales_state === 'open' && s.round_state !== 'spinning') {
+        timerEl.classList.remove('spinning');
+        timerEl.classList.add('sales');
+        const startedAt = new Date(s.sales_started_at).getTime();
+        startSalesCountdown(startedAt, s.sales_duration || 120);
+        return;
+    }
+
+    if (s.round_state === 'spinning') {
+        timerEl.classList.remove('sales');
+        timerEl.classList.add('spinning');
+        const startedAt = new Date(s.spin_started_at).getTime();
+        const elapsed = (Date.now() - startedAt) / 1000;
+        const remaining = Math.max(0, s.duration - elapsed);
+        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
+        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)'; void wheel.offsetWidth;
+        requestAnimationFrame(() => {
+            wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`;
+            wheel.style.transform = `rotate(${target}deg)`;
+        });
+        startCountdown(startedAt, s.duration);
+        return;
+    }
+
+    if (s.round_state === 'finished') {
+        stopCountdown();
+        timerEl.classList.remove('spinning', 'sales');
+        wheel.style.transition = 'none'; wheel.style.transform = `rotate(${target}deg)`;
+        if (pointer) pointer.classList.add('winner');
+        const winners = s.winner_numbers || [];
+        if (orbit && winners.length > 0 && n > 0) {
+            const winnerNum = winners[0];
+            const winnerIndex = soldTickets.findIndex(t => t.number === winnerNum);
+            if (winnerIndex !== -1) {
+                const angle = 360 / n;
+                const center = winnerIndex * angle + angle / 2;
+                const screen = ((center + target) % 360 + 360) % 360;
+                orbit.classList.remove('hidden'); orbit.style.transform = `rotate(${screen}deg)`;
+            }
+        }
+        const centerEl = document.getElementById('wheelCenter');
+        if (centerEl) centerEl.innerHTML = winners.length ? `🏆<br>#${winners[0]}` : 'DONE';
+        timerEl.textContent = '00:00';
+        const statusEl = document.getElementById('status'); if (statusEl) statusEl.textContent = 'Round completed.';
+        showWinners(s.winners || []);
+    }
+}
+function startSalesCountdown(startedAt, durationMin) {
+    if (countdownId) { clearInterval(countdownId); countdownId = null; }
+    const durationSec = durationMin * 60;
+    const tick = () => {
+        const elapsed = (Date.now() - startedAt) / 1000;
+        const remaining = Math.max(0, Math.ceil(durationSec - elapsed));
+        const el = document.getElementById('timer');
+        if (el) el.textContent = formatTime(remaining);
+        if (remaining <= 0) {
+            clearInterval(countdownId); countdownId = null;
+            const statusEl = document.getElementById('status');
+            if (statusEl) statusEl.textContent = '⏰ Sales closed. Waiting for admin to spin.';
+        }
+    };
+    tick(); countdownId = setInterval(tick, 500);
+}
+function startCountdown(startedAt, duration) {
+    stopCountdown(); settleCalled = false;
+    const tick = () => {
+        const elapsed = (Date.now() - startedAt) / 1000;
+        const remaining = Math.max(0, Math.ceil(duration - elapsed));
+        const el = document.getElementById('timer'); if (el) el.textContent = formatTime(remaining);
+        if (remaining <= 0) { stopCountdown(); if (!settleCalled) { settleCalled = true; api('/spin/settle', { method: 'POST' }).catch(() => {}); } }
+    };
+    tick(); countdownId = setInterval(tick, 250);
+}
+function stopCountdown() { if (countdownId) { clearInterval(countdownId); countdownId = null; } }
+async function startSpin() {
+    const btn = document.getElementById('spinButton'); if (btn) btn.disabled = true;
+    try { await api('/admin/spin/start', { method: 'POST' }); await refreshState(); await renderPage(); }
+    catch (e) { alert('❌ ' + e.message); if (btn) btn.disabled = false; }
+}
+async function newRound() {
+    const sold = TICKETS.filter(t => t.user_id !== null).length;
+    if (sold === 0 && SETTINGS.sales_state !== 'open') { alert('Nothing to reset.'); return; }
+    if (!confirm('Start new round?')) return;
+    try { await api('/admin/round/reset', { method: 'POST' }); await refreshState(); await renderPage(); alert('✅ New round!'); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+function showWinners(winners) {
+    const area = document.getElementById('winnerArea'); if (!area) return;
+    if (!winners || !winners.length) { area.innerHTML = ''; return; }
+    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `
+        <div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+}
+
+/* ============= LIVE VIEWERS LOGIC ============= */
+function startLivePolls() {
+    refreshViewers();
+    refreshLiveChat();
+    viewersPollId = setInterval(refreshViewers, 4000);
+    chatPollId = setInterval(refreshLiveChat, 4000);
+    livePingId = setInterval(async () => {
+        try { await api('/live/heartbeat', { method: 'POST' }); } catch (e) {}
+    }, 20000);
+}
+
+async function joinLive() {
+    try {
+        await api('/live/join', { method: 'POST' });
+        toast('✅ Joined live');
+        refreshViewers();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+async function leaveLive() {
+    try {
+        await api('/live/leave', { method: 'POST' });
+        toast('👋 Left live');
+        refreshViewers();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function refreshViewers() {
+    try {
+        const data = await api('/live/viewers');
+        const list = data.viewers || [];
+        const listEl = document.getElementById('viewersList');
+        const countEl = document.getElementById('viewerCount');
+        if (!listEl || !countEl) return;
+        countEl.textContent = list.length;
+
+        if (!list.length) {
+            listEl.innerHTML = `<p class="muted" style="font-size:12px">No viewers yet. Tap "Join Live" to appear.</p>`;
+            return;
+        }
+
+        listEl.innerHTML = list.map(v => {
+            const isMe = (ME.role === 'admin' && v.role === 'admin') || (ME.role !== 'admin' && String(v.user_id) === String(ME.id));
+            const dotCls = v.role === 'admin' ? 'viewer-dot admin' : (v.muted ? 'viewer-dot muted' : 'viewer-dot');
+            const micIcon = v.muted ? '🔇' : '🎤';
+            const speakingHtml = v.speaking ? '<span class="speaking">speaking...</span>' : '';
+            const adminActions = ME.role === 'admin' && v.role !== 'admin' ? `
+                <div class="viewer-actions">
+                    <button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">
+                        ${v.muted ? 'Unmute' : 'Mute'}
+                    </button>
+                    <button class="mini-btn kick" onclick="kickViewer(${v.id})">Kick</button>
+                </div>` : '';
+            return `<div class="viewer-row">
+                <div class="${dotCls}"></div>
+                <div class="viewer-name">${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''} ${speakingHtml}</div>
+                <div style="font-size:16px">${micIcon}</div>
+                ${adminActions}
+            </div>`;
+        }).join('');
+    } catch (e) { /* silent */ }
+}
+
+async function toggleMute(viewerId, muted) {
+    try { await api('/live/mute', { method: 'POST', body: { viewerId, muted } }); refreshViewers(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function kickViewer(viewerId) {
+    if (!confirm('Kick this viewer?')) return;
+    try { await api('/live/kick', { method: 'POST', body: { viewerId } }); toast('👋 Kicked'); refreshViewers(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+async function refreshLiveChat() {
+    try {
+        const data = await api('/live/chat');
+        const el = document.getElementById('liveChatMessages');
+        if (!el) return;
+        const msgs = data.messages || [];
+        el.innerHTML = msgs.length ? msgs.map(m => `<div class="live-chat-msg"><b>${escapeHTML(m.user_name)}:</b> ${escapeHTML(m.message)}</div>`).join('') : `<p class="muted" style="font-size:12px">No messages yet.</p>`;
+        el.scrollTop = el.scrollHeight;
+    } catch (e) { /* silent */ }
+}
+async function sendLiveChat() {
+    const input = document.getElementById('liveChatInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    try { await api('/live/chat', { method: 'POST', body: { message: text } }); input.value = ''; refreshLiveChat(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= HISTORY ============= */
+async function historyPage() {
+    const data = await api('/rounds');
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">📜 Round History</h1>
+        ${!data.rounds.length ? `<div class="card"><p class="muted">No rounds yet.</p></div>` : data.rounds.map(r => `
+            <div class="history"><h3>Round #${r.round_number}</h3><p class="muted">${formatDate(r.date)}</p><br>
+                <strong>Sold:</strong><br><p>${(r.sold_tickets || []).map(t => '#' + t.number).join(', ') || '-'}</p><br>
+                <strong>Winners:</strong><br>
+                ${(r.winners || []).map(w => `<div class="winner">🏆 ${w.place}. ${escapeHTML(w.name)} - #${w.ticket} - <span class="gold">${money(w.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
+            </div>`).join('')}`;
+}
+
+/* ============= SETTINGS (with password change) ============= */
+function settingsPage() {
+    const wc = SETTINGS.winner_count || 1;
+    const prizes = SETTINGS.prizes || [];
+    let prizeInputs = '';
+    for (let i = 0; i < wc; i++) {
+        const val = prizes[i] !== undefined ? prizes[i] : SETTINGS.prize;
+        prizeInputs += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${val}">`;
+    }
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">⚙️ Settings</h1>
+        <div class="card">
+            <h2>Round Configuration</h2><br>
+            <label>Number Of Sections</label><input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
+            <label>Sales Duration (minutes) — how long users can buy</label>
+            <input id="salesDuration" type="number" min="1" value="${SETTINGS.sales_duration || 120}">
+            <label>Spin Duration (seconds) — how long the wheel spins</label>
+            <input id="duration" type="number" min="5" value="${SETTINGS.duration}">
+            <label>Number Of Winners</label><input id="winnerCount" type="number" min="1" max="60" value="${wc}" onchange="reloadPrizeInputs()">
+            <label>Default Prize Per Winner</label><input id="prize" type="number" min="0" value="${SETTINGS.prize}">
+            <label>Ticket Price</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
+            <br><hr style="border-color:#334155;margin:20px 0"><br>
+            <h3 style="color:#fbbf24">🏆 Prizes Per Winner</h3>
+            <div id="prizeList">${prizeInputs}</div>
+            <br><hr style="border-color:#334155;margin:20px 0"><br>
+            <h3 style="color:#fbbf24">🎁 Referral Rewards</h3><br>
+            <label>Referrals For Free Ticket</label><input id="referralGoal" type="number" min="1" value="${SETTINGS.referral_goal || 8}">
+            <label>Free Tickets Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
+            <button class="main-button" onclick="saveSettingsPage()">Save Settings</button>
+        </div>
+
+        <div class="card" style="border-color:#dc2626">
+            <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
+            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
+            <label>New Password</label>
+            <input id="newAdminPw" type="password" placeholder="New admin password">
+            <label>Secret Reset Code</label>
+            <input id="resetCode" type="password" placeholder="Enter secret code">
+            <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword()">🔐 Change Password</button>
+        </div>`;
+}
+function reloadPrizeInputs() {
+    const wc = Math.max(1, Math.min(60, Number(document.getElementById('winnerCount').value) || 1));
+    const defaultPrize = Number(document.getElementById('prize').value) || 0;
+    let html = '';
+    for (let i = 0; i < wc; i++) html += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${defaultPrize}">`;
+    document.getElementById('prizeList').innerHTML = html;
+}
+async function saveSettingsPage() {
+    const ticketCount = Number(document.getElementById('ticketCount').value);
+    const salesDuration = Number(document.getElementById('salesDuration').value);
+    const duration = Number(document.getElementById('duration').value);
+    const winners = Number(document.getElementById('winnerCount').value);
+    const prize = Number(document.getElementById('prize').value);
+    const price = Number(document.getElementById('ticketPrice').value);
+    const referralGoal = Number(document.getElementById('referralGoal').value);
+    const referralReward = Number(document.getElementById('referralReward').value);
+    const prizes = Array.from(document.querySelectorAll('.prize-input')).map(inp => Number(inp.value) || 0);
+    try {
+        if (ticketCount !== SETTINGS.ticket_count) await api('/admin/tickets/count', { method: 'POST', body: { count: ticketCount } });
+        await api('/admin/settings', { method: 'POST', body: { duration, winners, prize, ticketPrice: price, referralGoal, referralReward, prizes, salesDuration } });
+        await refreshState(); alert('✅ Saved.'); settingsPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+async function changeAdminPassword() {
+    const pw = document.getElementById('newAdminPw').value.trim();
+    const code = document.getElementById('resetCode').value.trim();
+    if (!pw || pw.length < 4) { alert('Password must be at least 4 characters'); return; }
+    if (!code) { alert('Enter secret code'); return; }
+    if (!confirm('Change admin password? You will need to use it next login.')) return;
+    try {
+        await api('/admin/change-password', { method: 'POST', body: { newPassword: pw, code } });
+        alert('✅ Admin password changed! Use new password next login.');
+        document.getElementById('newAdminPw').value = '';
+        document.getElementById('resetCode').value = '';
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
+function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
+function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); hideChatFab(); }
+function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
+function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = s % 60; if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
+function formatDate(d) { return new Date(d).toLocaleString(); }
+function escapeHTML(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
+
+let chatHistory = [];
+function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('hidden'); if (!p.classList.contains('hidden')) setTimeout(() => document.getElementById('chatInput').focus(), 100); }
+function showChatFab() { document.getElementById('chatFab').classList.remove('hidden'); }
+function hideChatFab() { document.getElementById('chatFab').classList.add('hidden'); document.getElementById('chatPanel').classList.add('hidden'); }
+async function sendChat() {
+    const input = document.getElementById('chatInput'); const btn = document.getElementById('chatSendBtn'); const body = document.getElementById('chatBody');
+    const text = input.value.trim(); if (!text) return;
+    body.innerHTML += `<div class="chat-msg user">${escapeHTML(text)}</div>`; input.value = ''; btn.disabled = true;
+    const typingId = 'typing-' + Date.now();
+    body.innerHTML += `<div id="${typingId}" class="chat-msg bot typing">typing...</div>`;
+    body.scrollTop = body.scrollHeight;
+    try {
+        const res = await api('/chat', { method: 'POST', body: { message: text, history: chatHistory } });
+        document.getElementById(typingId)?.remove();
+        const reply = res.reply || 'No response.';
+        body.innerHTML += `<div class="chat-msg bot">${escapeHTML(reply)}</div>`;
+        chatHistory.push({ role: 'user', content: text }); chatHistory.push({ role: 'assistant', content: reply });
+        if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+    } catch (e) {
+        document.getElementById(typingId)?.remove();
+        body.innerHTML += `<div class="chat-msg bot" style="color:#f87171">❌ ${escapeHTML(e.message)}</div>`;
+    } finally { btn.disabled = false; body.scrollTop = body.scrollHeight; }
+}
+
+boot();
+</script>
+</body>
+</html>
