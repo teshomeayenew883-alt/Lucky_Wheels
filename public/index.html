@@ -184,7 +184,7 @@ th { color: #94a3b8; }
 .live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
 
 /* =========================================================
-   NUMBER BETTING — 10 cols × 8 rows, fits viewport height
+   NUMBER BETTING
    ========================================================= */
 .nb-board { width: 100%; }
 .nb-grid {
@@ -207,7 +207,6 @@ th { color: #94a3b8; }
   background: #172033;
   border: 2px solid #334155;
   color: #94a3b8;
-  transition: all .25s ease;
   position: relative;
   user-select: none;
   min-height: 0;
@@ -219,22 +218,24 @@ th { color: #94a3b8; }
 .nb-cell.taken { background: #0d1220; border-color: #1e293b; color: #475569; cursor: not-allowed; }
 .nb-cell.mine-picked { background: #fbbf24; color: #111827; border-color: #fbbf24; }
 
-/* Drawn — during or after draw */
+/* Drawn cells — smooth pop-in once, then stay still (no vibration) */
 .nb-cell.drawn-win {
   background: #16a34a;
   border-color: #22c55e;
   color: #ffffff;
-  box-shadow: 0 0 20px rgba(34,197,94,.9);
-  animation: nbReveal .55s ease;
+  animation: nbRevealOnce .5s ease-out;
+  animation-fill-mode: both;
 }
 .nb-cell.drawn-lose {
   background: #991b1b;
   border-color: #dc2626;
   color: #fecaca;
+  animation: nbRevealOnce .5s ease-out;
+  animation-fill-mode: both;
 }
-@keyframes nbReveal {
-  0% { transform: scale(0.35); opacity: 0; }
-  60% { transform: scale(1.18); opacity: 1; }
+@keyframes nbRevealOnce {
+  0% { transform: scale(0.4); opacity: 0.3; }
+  70% { transform: scale(1.08); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -379,12 +380,12 @@ let CONFIG       = { botUsername: 'Numbers_Betting_bot', channelUsername: '@Luck
 let buyGame = 'wheel';
 let assignGame = 'wheel';
 let historyGame = 'wheel';
+let settingsGame = 'wheel';
 let buySelected = [];
 let nbBuyPicked = [];
 let assignSelectedWheel = [];
 let assignSelectedNB = [];
 
-/* Client-side draw clock — the "source of truth" for one-by-one reveal */
 let _drawStartClient = null;
 let _drawRoundKey = null;
 let _lastShown = -1;
@@ -919,7 +920,7 @@ async function assignTicketsNB() {
 }
 
 /* =========================================================
-   NB PAGE — with fixed client-side draw clock
+   NB PAGE
    ========================================================= */
 async function nbPage() {
     try {
@@ -977,18 +978,12 @@ function nbStatusText(s) {
     if (s.sales_state === 'closed') return '🔴 SALES CLOSED';
     return '⚪ IDLE';
 }
-
-/* How many numbers should be visible right now?
-   Uses whichever start time is MORE RECENT: server time OR client detection time.
-   This guarantees one-by-one reveal even if server timestamp is stale. */
 function nbDrawnSoFar(s) {
     if (!s.winning_numbers || !s.winning_numbers.length) return 0;
     if (s.round_state === 'finished') return s.winning_numbers.length;
     if (s.round_state !== 'drawing') return 0;
     const serverStart = new Date(s.drawing_started_at).getTime();
-    const effectiveStart = _drawStartClient
-        ? Math.max(serverStart, _drawStartClient - 500)
-        : serverStart;
+    const effectiveStart = _drawStartClient ? Math.max(serverStart, _drawStartClient - 500) : serverStart;
     const elapsed = (Date.now() - effectiveStart) / 1000;
     const shown = Math.floor(elapsed / Math.max(1, s.draw_delay_seconds)) + 1;
     return Math.min(s.winning_numbers.length, Math.max(0, shown));
@@ -1019,7 +1014,6 @@ function nbAdminPanel(s) {
     const drawing = s.round_state === 'drawing';
     const salesOpen = s.sales_state === 'open';
     const finished = s.round_state === 'finished';
-    const prizes = s.prizes || [];
     let winnersHtml = '';
     if (finished && s.winners && s.winners.length) {
         winnersHtml = `<div class="winners"><h2>🏆 Winners</h2>${s.winners.map(w => `<div class="winner"><b>#${w.place} — ${escapeHTML(w.name)}</b><br>Matches: ${w.matches}<br>Shown: ${(w.shown_numbers || []).map(n => '#' + n).join(', ')}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
@@ -1033,20 +1027,6 @@ function nbAdminPanel(s) {
             <button class="action-btn" onclick="nbDraw()" ${drawing || !salesOpen ? 'disabled' : ''}>🎬 DRAW NUMBERS</button>
             <button class="action-btn red" onclick="nbNewRound()" ${drawing ? 'disabled' : ''}>🔄 NEW ROUND</button>
         </div>
-    </div>
-    <div class="card">
-        <h2>⚙️ Number Betting Settings</h2><br>
-        <label>Total Numbers</label><input id="nbTotal" type="number" min="10" max="200" value="${s.total_numbers}">
-        <label>Drawn per Round</label><input id="nbDrawn" type="number" min="1" max="50" value="${s.drawn_count}">
-        <label>Tickets per Purchase</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
-        <label>Price per Purchase (ETB)</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
-        <label>Draw Speed (seconds between each number)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
-        <label>Round Duration (minutes)</label><input id="nbDuration" type="number" min="1" max="120" value="${s.round_duration_minutes}">
-        <label>Number of Winners</label><input id="nbWinners" type="number" min="1" max="20" value="${s.winner_count}" onchange="nbReloadPrizes()">
-        <br><hr style="border-color:#334155;margin:16px 0"><br>
-        <h3 style="color:#fbbf24">🏆 Prizes per Winner</h3>
-        <div id="nbPrizeList">${prizes.map((p, i) => `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="${p}">`).join('')}</div>
-        <button class="main-button" onclick="nbSaveSettings()">Save Number Betting Settings</button>
     </div>
     ${winnersHtml}`;
 }
@@ -1107,30 +1087,13 @@ function nbPageAttachGrid(s) {
     };
     grid.addEventListener('click', grid._nbpHandler);
 }
-function nbReloadPrizes() {
-    const count = Math.max(1, Math.min(20, Number(document.getElementById('nbWinners').value) || 1));
-    let html = '';
-    for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
-    document.getElementById('nbPrizeList').innerHTML = html;
-}
 function nbStartPolls(s) {
     if (nbPollId) clearInterval(nbPollId);
     if (nbSettleId) clearInterval(nbSettleId);
-
-    // Detect a fresh draw event and start the client-side clock
     if (s.round_state === 'drawing' && s.drawing_started_at) {
         const key = s.round_number + ':' + s.drawing_started_at;
-        if (_drawRoundKey !== key) {
-            _drawRoundKey = key;
-            _drawStartClient = Date.now();
-            _lastShown = -1;
-        }
-    } else {
-        _drawStartClient = null;
-        _drawRoundKey = null;
-        _lastShown = -1;
-    }
-
+        if (_drawRoundKey !== key) { _drawRoundKey = key; _drawStartClient = Date.now(); _lastShown = -1; }
+    } else { _drawStartClient = null; _drawRoundKey = null; _lastShown = -1; }
     nbTickTimer();
     nbPollId = setInterval(() => { nbTickTimer(); nbRevealTick(); }, 200);
     nbSettleId = setInterval(async () => {
@@ -1144,15 +1107,8 @@ function nbRevealTick() {
     if (!nbState) return;
     const s = nbState.settings;
     if (s.round_state !== 'drawing') { _lastShown = -1; return; }
-
-    // If a brand new draw just appeared (e.g., via realtime), start the clock
     const key = s.round_number + ':' + s.drawing_started_at;
-    if (_drawRoundKey !== key) {
-        _drawRoundKey = key;
-        _drawStartClient = Date.now();
-        _lastShown = -1;
-    }
-
+    if (_drawRoundKey !== key) { _drawRoundKey = key; _drawStartClient = Date.now(); _lastShown = -1; }
     const shown = nbDrawnSoFar(s);
     if (shown !== _lastShown) {
         _lastShown = shown;
@@ -1168,9 +1124,7 @@ function nbTickTimer() {
     const el = document.getElementById('nbTimer');
     if (!el) return;
     if (s.round_state === 'drawing' && s.drawing_started_at) {
-        const start = _drawStartClient
-            ? Math.max(new Date(s.drawing_started_at).getTime(), _drawStartClient - 500)
-            : new Date(s.drawing_started_at).getTime();
+        const start = _drawStartClient ? Math.max(new Date(s.drawing_started_at).getTime(), _drawStartClient - 500) : new Date(s.drawing_started_at).getTime();
         const elapsed = (Date.now() - start) / 1000;
         const shown = nbDrawnSoFar(s);
         const total = s.drawn_count * s.draw_delay_seconds;
@@ -1190,14 +1144,9 @@ async function nbRefreshSilent() {
     try {
         const s = await api('/nb/state');
         nbState = s;
-        // If a new draw just started, reset the client clock
         if (s.settings.round_state === 'drawing' && s.settings.drawing_started_at) {
             const key = s.settings.round_number + ':' + s.settings.drawing_started_at;
-            if (_drawRoundKey !== key) {
-                _drawRoundKey = key;
-                _drawStartClient = Date.now();
-                _lastShown = -1;
-            }
+            if (_drawRoundKey !== key) { _drawRoundKey = key; _drawStartClient = Date.now(); _lastShown = -1; }
         }
         const grid = document.getElementById('nbGrid');
         if (grid) grid.innerHTML = nbGridHtml(s.settings);
@@ -1215,7 +1164,7 @@ async function nbDraw() {
     try {
         await api('/admin/nb/draw', { method: 'POST' });
         _drawStartClient = Date.now();
-        _drawRoundKey = null;   // force fresh detection
+        _drawRoundKey = null;
         _lastShown = -1;
         toast('🎬 Drawing started');
         await nbPage();
@@ -1231,18 +1180,6 @@ async function nbNewRound() {
         toast('🔄 New round');
         await nbPage();
     } catch (e) { alert('❌ ' + e.message); }
-}
-async function nbSaveSettings() {
-    const total_numbers = Number(document.getElementById('nbTotal').value);
-    const drawn_count = Number(document.getElementById('nbDrawn').value);
-    const tickets_per_purchase = Number(document.getElementById('nbTpp').value);
-    const price_per_purchase = Number(document.getElementById('nbPrice').value);
-    const draw_delay_seconds = Number(document.getElementById('nbDelay').value);
-    const round_duration_minutes = Number(document.getElementById('nbDuration').value);
-    const winner_count = Number(document.getElementById('nbWinners').value);
-    const prizes = Array.from(document.querySelectorAll('.nb-prize-input')).map(i => Number(i.value) || 0);
-    try { await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } }); alert('✅ Saved'); await nbPage(); }
-    catch (e) { alert('❌ ' + e.message); }
 }
 
 /* ============= WHEEL ============= */
@@ -1518,8 +1455,27 @@ async function historyPage() {
 }
 function historySwitchGame(game) { if (historyGame === game) return; historyGame = game; historyPage(); }
 
-/* ============= SETTINGS ============= */
-function settingsPage() {
+/* ============= SETTINGS (with game chooser) ============= */
+async function settingsPage() {
+    // Ensure NB settings are loaded
+    let nbSettings = null;
+    try { nbSettings = await api('/nb/config'); } catch (e) {}
+
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Settings" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">⚙️ Settings</h1>
+        <div class="game-tabs">
+            <button class="game-tab ${settingsGame === 'wheel' ? 'active' : ''}" onclick="settingsSwitchGame('wheel')">🎡 Lucky Wheel</button>
+            <button class="game-tab ${settingsGame === 'nb' ? 'active' : ''}" onclick="settingsSwitchGame('nb')">🎰 Number Betting</button>
+        </div>
+        <div id="settingsContent"></div>
+    `;
+    if (settingsGame === 'wheel') renderWheelSettings();
+    else renderNBSettings(nbSettings);
+}
+function settingsSwitchGame(game) { if (settingsGame === game) return; settingsGame = game; settingsPage(); }
+
+function renderWheelSettings() {
     const wc = SETTINGS.winner_count || 1;
     const prizes = SETTINGS.prizes || [];
     let prizeInputs = '';
@@ -1527,9 +1483,7 @@ function settingsPage() {
         const val = prizes[i] !== undefined ? prizes[i] : SETTINGS.prize;
         prizeInputs += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${val}">`;
     }
-    document.getElementById('main').innerHTML = `
-        <img src="image1.jpg" alt="Settings" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">⚙️ Settings</h1>
+    document.getElementById('settingsContent').innerHTML = `
         <div class="card">
             <h2>🎡 Lucky Wheel Configuration</h2><br>
             <label>Number Of Sections</label><input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
@@ -1537,7 +1491,7 @@ function settingsPage() {
             <label>Spin Duration (seconds)</label><input id="duration" type="number" min="5" value="${SETTINGS.duration}">
             <label>Number Of Winners</label><input id="winnerCount" type="number" min="1" max="60" value="${wc}" onchange="reloadPrizeInputs()">
             <label>Default Prize Per Winner</label><input id="prize" type="number" min="0" value="${SETTINGS.prize}">
-            <label>Ticket Price</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
+            <label>Ticket Price (per ticket)</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
             <br><hr style="border-color:#334155;margin:20px 0"><br>
             <h3 style="color:#fbbf24">🏆 Prizes Per Winner</h3>
             <div id="prizeList">${prizeInputs}</div>
@@ -1545,12 +1499,7 @@ function settingsPage() {
             <h3 style="color:#fbbf24">🎁 Referral Rewards</h3><br>
             <label>Referrals For Free Ticket</label><input id="referralGoal" type="number" min="1" value="${SETTINGS.referral_goal || 8}">
             <label>Free Tickets Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
-            <button class="main-button" onclick="saveSettingsPage()">Save Wheel Settings</button>
-        </div>
-        <div class="card">
-            <h2>🎰 Number Betting Configuration</h2>
-            <p class="muted" style="margin-top:8px">Manage Number Betting settings from its own page.</p>
-            <div class="action-buttons"><button class="action-btn purple" onclick="openPage('nb')">Open Number Betting Page</button></div>
+            <button class="main-button" onclick="saveWheelSettings()">Save Wheel Settings</button>
         </div>
         <div class="card" style="border-color:#dc2626">
             <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
@@ -1567,7 +1516,7 @@ function reloadPrizeInputs() {
     for (let i = 0; i < wc; i++) html += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${defaultPrize}">`;
     document.getElementById('prizeList').innerHTML = html;
 }
-async function saveSettingsPage() {
+async function saveWheelSettings() {
     const ticketCount = Number(document.getElementById('ticketCount').value);
     const salesDuration = Number(document.getElementById('salesDuration').value);
     const duration = Number(document.getElementById('duration').value);
@@ -1580,17 +1529,78 @@ async function saveSettingsPage() {
     try {
         if (ticketCount !== SETTINGS.ticket_count) await api('/admin/tickets/count', { method: 'POST', body: { count: ticketCount } });
         await api('/admin/settings', { method: 'POST', body: { duration, winners, prize, ticketPrice: price, referralGoal, referralReward, prizes, salesDuration } });
-        await refreshState(); alert('✅ Saved.'); settingsPage();
+        await refreshState(); alert('✅ Wheel settings saved.'); settingsPage();
     } catch (e) { alert('❌ ' + e.message); }
 }
-async function changeAdminPassword() {
-    const pw = document.getElementById('newAdminPw').value.trim();
-    const code = document.getElementById('resetCode').value.trim();
+
+function renderNBSettings(s) {
+    if (!s) { document.getElementById('settingsContent').innerHTML = `<div class="card"><p class="muted">Number Betting settings not available.</p></div>`; return; }
+    const prizes = s.prizes || [];
+    const wc = s.winner_count || 1;
+    let prizeInputs = '';
+    for (let i = 0; i < wc; i++) {
+        const val = prizes[i] !== undefined ? prizes[i] : 0;
+        prizeInputs += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="${val}">`;
+    }
+    document.getElementById('settingsContent').innerHTML = `
+        <div class="card">
+            <h2>🎰 Number Betting Configuration</h2><br>
+            <label>Total Numbers</label><input id="nbTotal" type="number" min="10" max="200" value="${s.total_numbers}">
+            <label>Drawn per Round</label><input id="nbDrawn" type="number" min="1" max="50" value="${s.drawn_count}">
+            <label>Tickets per Purchase (bundle size)</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
+            <label>Price per Purchase (ETB) — one bundle price</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
+            <label>Draw Speed (seconds between each number)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
+            <label>Round Duration (minutes)</label><input id="nbDuration" type="number" min="1" max="120" value="${s.round_duration_minutes}">
+            <label>Number of Winners</label><input id="nbWinners" type="number" min="1" max="20" value="${wc}" onchange="nbSettingsReloadPrizes()">
+            <br><hr style="border-color:#334155;margin:16px 0"><br>
+            <h3 style="color:#fbbf24">🏆 Prizes per Winner</h3>
+            <div id="nbPrizeList">${prizeInputs}</div>
+            <button class="main-button" onclick="saveNBSettings()">Save Number Betting Settings</button>
+        </div>
+        <div class="card" style="border-color:#dc2626">
+            <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
+            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
+            <label>New Password</label><input id="newAdminPwNb" type="password" placeholder="New admin password">
+            <label>Secret Reset Code</label><input id="resetCodeNb" type="password" placeholder="Enter secret code">
+            <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword('Nb')">🔐 Change Password</button>
+        </div>`;
+}
+function nbSettingsReloadPrizes() {
+    const count = Math.max(1, Math.min(20, Number(document.getElementById('nbWinners').value) || 1));
+    let html = '';
+    for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
+    document.getElementById('nbPrizeList').innerHTML = html;
+}
+async function saveNBSettings() {
+    const total_numbers = Number(document.getElementById('nbTotal').value);
+    const drawn_count = Number(document.getElementById('nbDrawn').value);
+    const tickets_per_purchase = Number(document.getElementById('nbTpp').value);
+    const price_per_purchase = Number(document.getElementById('nbPrice').value);
+    const draw_delay_seconds = Number(document.getElementById('nbDelay').value);
+    const round_duration_minutes = Number(document.getElementById('nbDuration').value);
+    const winner_count = Number(document.getElementById('nbWinners').value);
+    const prizes = Array.from(document.querySelectorAll('.nb-prize-input')).map(i => Number(i.value) || 0);
+    try {
+        await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } });
+        alert('✅ Number Betting settings saved');
+        await settingsPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function changeAdminPassword(suffix = '') {
+    const pwEl = document.getElementById('newAdminPw' + suffix);
+    const codeEl = document.getElementById('resetCode' + suffix);
+    const pw = pwEl.value.trim();
+    const code = codeEl.value.trim();
     if (!pw || pw.length < 4) { alert('Password must be at least 4 characters'); return; }
     if (!code) { alert('Enter secret code'); return; }
     if (!confirm('Change admin password?')) return;
-    try { await api('/admin/change-password', { method: 'POST', body: { newPassword: pw, code } }); alert('✅ Admin password changed!'); document.getElementById('newAdminPw').value = ''; document.getElementById('resetCode').value = ''; }
-    catch (e) { alert('❌ ' + e.message); }
+    try {
+        await api('/admin/change-password', { method: 'POST', body: { newPassword: pw, code } });
+        alert('✅ Admin password changed!');
+        pwEl.value = '';
+        codeEl.value = '';
+    } catch (e) { alert('❌ ' + e.message); }
 }
 async function startSales() { try { await api('/admin/start-sales', { method: 'POST' }); toast('🟢 Sales opened!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 async function closeSales() { try { await api('/admin/close-sales', { method: 'POST' }); toast('🔴 Sales closed!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
