@@ -153,8 +153,6 @@ th { color: #94a3b8; }
 .chat-input-row input { flex: 1; padding: 10px 12px; margin: 0; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; font-size: 14px; }
 .chat-send { padding: 10px 16px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; cursor: pointer; }
 .chat-send:disabled { opacity: .5; cursor: not-allowed; }
-
-/* LIVE VIEWERS PANEL */
 .live-panel { padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; margin-top: 16px; }
 .live-panel h3 { color: #22c55e; font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .live-viewers-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
@@ -182,63 +180,16 @@ th { color: #94a3b8; }
 .live-chat-input input { flex: 1; padding: 8px 10px; margin: 0; font-size: 13px; }
 .live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
 .live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
-
-/* =========================================================
-   NUMBER BETTING
-   ========================================================= */
 .nb-board { width: 100%; }
-.nb-grid {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  gap: 5px;
-  width: 100%;
-  height: 62vh;
-  max-height: 560px;
-  min-height: 320px;
-}
-.nb-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  font-size: clamp(11px, 1.5vw, 20px);
-  border-radius: 8px;
-  background: #172033;
-  border: 2px solid #334155;
-  color: #94a3b8;
-  position: relative;
-  user-select: none;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
+.nb-grid { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(8, 1fr); gap: 5px; width: 100%; height: 62vh; max-height: 560px; min-height: 320px; }
+.nb-cell { display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: clamp(11px, 1.5vw, 20px); border-radius: 8px; background: #172033; border: 2px solid #334155; color: #94a3b8; position: relative; user-select: none; min-height: 0; min-width: 0; overflow: hidden; }
 .nb-cell:hover:not(.taken):not(.drawn-win):not(.drawn-lose):not(.mine) { transform: scale(1.05); cursor: pointer; border-color: #fbbf24; }
 .nb-cell.mine { border-color: #fbbf24; color: #fbbf24; background: #1a1308; }
 .nb-cell.taken { background: #0d1220; border-color: #1e293b; color: #475569; cursor: not-allowed; }
 .nb-cell.mine-picked { background: #fbbf24; color: #111827; border-color: #fbbf24; }
-
-/* Drawn cells — smooth pop-in once, then stay still (no vibration) */
-.nb-cell.drawn-win {
-  background: #16a34a;
-  border-color: #22c55e;
-  color: #ffffff;
-  animation: nbRevealOnce .5s ease-out;
-  animation-fill-mode: both;
-}
-.nb-cell.drawn-lose {
-  background: #991b1b;
-  border-color: #dc2626;
-  color: #fecaca;
-  animation: nbRevealOnce .5s ease-out;
-  animation-fill-mode: both;
-}
-@keyframes nbRevealOnce {
-  0% { transform: scale(0.4); opacity: 0.3; }
-  70% { transform: scale(1.08); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
+.nb-cell.drawn-win { background: #16a34a; border-color: #22c55e; color: #ffffff; animation: nbRevealOnce .5s ease-out; animation-fill-mode: both; }
+.nb-cell.drawn-lose { background: #991b1b; border-color: #dc2626; color: #fecaca; animation: nbRevealOnce .5s ease-out; animation-fill-mode: both; }
+@keyframes nbRevealOnce { 0% { transform: scale(0.4); opacity: 0.3; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 .nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .nb-stats .stat h2 { font-size: 18px; }
 .nb-timer { text-align: center; font-size: 42px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 14px; }
@@ -247,47 +198,17 @@ th { color: #94a3b8; }
 .nb-pick-info { padding: 12px; background: #0b1220; border: 1px dashed #fbbf24; border-radius: 10px; margin: 12px 0; font-size: 14px; }
 .nb-pick-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .nb-pick-chip { display: inline-block; padding: 6px 12px; background: #fbbf24; color: #111827; border-radius: 20px; font-weight: bold; font-size: 13px; }
-
-/* GAME CHOOSER TABS */
 .game-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .game-tab { flex: 1; min-width: 140px; padding: 16px; border: 2px solid #334155; border-radius: 12px; background: #172033; color: #94a3b8; font-weight: bold; font-size: 15px; text-align: center; cursor: pointer; transition: all .2s ease; }
 .game-tab:hover { border-color: #fbbf24; color: #fbbf24; }
 .game-tab.active { background: #fbbf24; border-color: #fbbf24; color: #111827; box-shadow: 0 0 20px rgba(251,191,36,.5); }
-
-/* RESPONSIVE */
-@media(max-width:1000px) {
-  .stats { grid-template-columns: repeat(2,1fr); }
-  .wheel-layout { grid-template-columns: 1fr; }
-  .nb-stats { grid-template-columns: repeat(2, 1fr); }
-}
-@media(max-width:700px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { display: flex; overflow-x: auto; padding: 10px; }
-  .nav { min-width: 130px; margin-right: 5px; }
-  .main { padding: 12px; }
-  .form-grid { grid-template-columns: 1fr; }
-  .full { grid-column: auto; }
-  .stats { grid-template-columns: 1fr; }
-  .wheel-container { width: 320px; }
-  .timer { font-size: 40px; }
-  .banner-img { height: 160px; }
-  .login-wheel-overlay { width: 130px; height: 130px; }
-  .login-banner-wrap img { height: 180px; }
-  .nb-timer { font-size: 30px; }
-  .nb-stats { grid-template-columns: 1fr 1fr; }
-  .nb-grid { gap: 3px; height: 55vh; }
-  .nb-cell { font-size: 11px; border-radius: 6px; }
-}
-@media(max-width:450px) {
-  .wheel-container { width: 280px; }
-  .nb-grid { gap: 2px; height: 50vh; }
-  .nb-cell { font-size: 10px; border-radius: 4px; border-width: 1.5px; }
-}
+@media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } .nb-stats { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 12px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .login-wheel-overlay { width: 130px; height: 130px; } .login-banner-wrap img { height: 180px; } .nb-timer { font-size: 30px; } .nb-stats { grid-template-columns: 1fr 1fr; } .nb-grid { gap: 3px; height: 55vh; } .nb-cell { font-size: 11px; border-radius: 6px; } }
+@media(max-width:450px) { .wheel-container { width: 280px; } .nb-grid { gap: 2px; height: 50vh; } .nb-cell { font-size: 10px; border-radius: 4px; border-width: 1.5px; } }
 </style>
 </head>
 <body>
 <div id="toast" class="toast hidden"></div>
-
 <button id="chatFab" class="chat-fab hidden" onclick="toggleChat()">💬 AI Assistant</button>
 <div id="chatPanel" class="chat-panel hidden">
     <div class="chat-head">
@@ -302,22 +223,10 @@ th { color: #94a3b8; }
         <button id="chatSendBtn" class="chat-send" onclick="sendChat()">Send</button>
     </div>
 </div>
-
 <section id="loginPage" class="login-page">
 <div class="login-card">
     <div class="login-banner-wrap">
         <img src="image4.jpg" alt="Lucky Wheel" onerror="this.style.display='none'">
-        <svg class="login-wheel-overlay" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="95" fill="#0f172a" stroke="#fbbf24" stroke-width="4"/>
-            <path d="M100,100 L100,15 A85,85 0 0,1 173.6,57.5 Z" fill="#ef4444" stroke="#0f172a" stroke-width="1.5"/>
-            <path d="M100,100 L173.6,57.5 A85,85 0 0,1 173.6,142.5 Z" fill="#fbbf24" stroke="#0f172a" stroke-width="1.5"/>
-            <path d="M100,100 L173.6,142.5 A85,85 0 0,1 100,185 Z" fill="#22c55e" stroke="#0f172a" stroke-width="1.5"/>
-            <path d="M100,100 L100,185 A85,85 0 0,1 26.4,142.5 Z" fill="#3b82f6" stroke="#0f172a" stroke-width="1.5"/>
-            <path d="M100,100 L26.4,142.5 A85,85 0 0,1 26.4,57.5 Z" fill="#a855f7" stroke="#0f172a" stroke-width="1.5"/>
-            <path d="M100,100 L26.4,57.5 A85,85 0 0,1 100,15 Z" fill="#f97316" stroke="#0f172a" stroke-width="1.5"/>
-            <circle cx="100" cy="100" r="22" fill="#111827" stroke="#fbbf24" stroke-width="4"/>
-            <circle cx="100" cy="100" r="8" fill="#fbbf24"/>
-        </svg>
         <div class="login-wheel-pointer"></div>
     </div>
     <div class="logo">LUCKY<span>WHEEL</span></div>
@@ -341,7 +250,6 @@ th { color: #94a3b8; }
     </div>
 </div>
 </section>
-
 <section id="app" class="hidden">
 <header class="header">
     <div class="header-logo">LUCKY<span>WHEEL</span></div>
@@ -356,7 +264,6 @@ th { color: #94a3b8; }
 <main id="main" class="main"></main>
 </div>
 </section>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const API = '/api';
@@ -376,7 +283,6 @@ let nbState      = null;
 let nbPollId     = null;
 let nbSettleId   = null;
 let CONFIG       = { botUsername: 'Numbers_Betting_bot', channelUsername: '@Lucky21_Wheel' };
-
 let buyGame = 'wheel';
 let assignGame = 'wheel';
 let historyGame = 'wheel';
@@ -385,7 +291,6 @@ let buySelected = [];
 let nbBuyPicked = [];
 let assignSelectedWheel = [];
 let assignSelectedNB = [];
-
 let _drawStartClient = null;
 let _drawRoundKey = null;
 let _lastShown = -1;
@@ -417,7 +322,6 @@ function renderSidebar() {
         `;
     }
 }
-
 function toast(msg, isError = false) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -425,7 +329,6 @@ function toast(msg, isError = false) {
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 4500);
 }
-
 async function api(path, options = {}) {
     let res;
     try {
@@ -440,7 +343,6 @@ async function api(path, options = {}) {
     if (!res.ok) throw new Error(data.error || 'Something went wrong.');
     return data;
 }
-
 async function boot() {
     try {
         const cfg = await api('/config');
@@ -462,7 +364,6 @@ async function boot() {
 function showLoginPage() { document.getElementById('loginPage').classList.remove('hidden'); document.getElementById('app').classList.add('hidden'); }
 function showRegister() { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('register').classList.remove('hidden'); }
 function showLogin() { document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('register').classList.add('hidden'); }
-
 async function register() {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
@@ -475,7 +376,6 @@ async function register() {
         showLogin();
     } catch (e) { alert('❌ ' + e.message); }
 }
-
 async function loginUser() {
     const phone = document.getElementById('loginPhone').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
@@ -487,7 +387,6 @@ async function loginUser() {
         await enterApp();
     } catch (e) { alert('❌ ' + e.message); }
 }
-
 async function enterApp() {
     await refreshState();
     document.getElementById('loginPage').classList.add('hidden');
@@ -550,7 +449,6 @@ function stopLivePolls() {
     if (nbPollId) { clearInterval(nbPollId); nbPollId = null; }
     if (nbSettleId) { clearInterval(nbSettleId); nbSettleId = null; }
 }
-
 function dashboard() {
     const sold = TICKETS.filter(t => t.user_id !== null).length;
     const botUrl = 'https://t.me/' + CONFIG.botUsername;
@@ -919,9 +817,7 @@ async function assignTicketsNB() {
     catch (e) { alert('❌ ' + e.message); }
 }
 
-/* =========================================================
-   NB PAGE
-   ========================================================= */
+/* ============= NB PAGE ============= */
 async function nbPage() {
     try {
         const s = await api('/nb/state');
@@ -934,7 +830,6 @@ async function nbPage() {
     const isAdmin = ME.role === 'admin';
     const drawing = s.round_state === 'drawing';
     const salesOpen = s.sales_state === 'open';
-
     document.getElementById('main').innerHTML = `
         <h1 class="title">🎰 Number Betting — Round #${s.round_number}</h1>
         <div class="nb-stats">
@@ -946,9 +841,7 @@ async function nbPage() {
         <div id="nbTimer" class="nb-timer ${drawing ? 'drawing' : salesOpen ? 'sales' : 'idle'}">--:--</div>
         <div class="card">
             <h2>Numbers Board</h2>
-            <p class="muted" style="margin-top:6px;font-size:13px">
-                ⏳ Waiting · 🟡 Your pick · 🟢 Drawn (winning) · 🔴 Not drawn (losing)
-            </p>
+            <p class="muted" style="margin-top:6px;font-size:13px">⏳ Waiting · 🟡 Your pick · 🟢 Drawn (winning) · 🔴 Not drawn (losing)</p>
             <div class="nb-board" style="margin-top:12px"><div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div></div>
         </div>
         ${isAdmin ? nbAdminPanel(s) : nbUserPanel(s)}
@@ -1161,28 +1054,16 @@ async function nbStartSales() { try { await api('/admin/nb/start-sales', { metho
 async function nbCloseSales() { try { await api('/admin/nb/close-sales', { method: 'POST' }); toast('🔴 NB sales closed'); await nbPage(); } catch (e) { alert('❌ ' + e.message); } }
 async function nbDraw() {
     if (!confirm('Start drawing winning numbers?')) return;
-    try {
-        await api('/admin/nb/draw', { method: 'POST' });
-        _drawStartClient = Date.now();
-        _drawRoundKey = null;
-        _lastShown = -1;
-        toast('🎬 Drawing started');
-        await nbPage();
-    } catch (e) { alert('❌ ' + e.message); }
+    try { await api('/admin/nb/draw', { method: 'POST' }); _drawStartClient = Date.now(); _drawRoundKey = null; _lastShown = -1; toast('🎬 Drawing started'); await nbPage(); }
+    catch (e) { alert('❌ ' + e.message); }
 }
 async function nbNewRound() {
     if (!confirm('Start new Number Betting round?')) return;
-    try {
-        await api('/admin/nb/new-round', { method: 'POST' });
-        _drawStartClient = null;
-        _drawRoundKey = null;
-        _lastShown = -1;
-        toast('🔄 New round');
-        await nbPage();
-    } catch (e) { alert('❌ ' + e.message); }
+    try { await api('/admin/nb/new-round', { method: 'POST' }); _drawStartClient = null; _drawRoundKey = null; _lastShown = -1; toast('🔄 New round'); await nbPage(); }
+    catch (e) { alert('❌ ' + e.message); }
 }
 
-/* ============= WHEEL ============= */
+/* ============= WHEEL PAGE ============= */
 function wheelPage() {
     const isAdmin = ME.role === 'admin';
     const spinning = SETTINGS.round_state === 'spinning';
@@ -1275,8 +1156,7 @@ function applyWheelState() {
     const spinKey = s.round_number + ':' + s.spin_started_at;
     if (s.round_state === 'spinning' && wheel._spinKey === spinKey) { const startedAt = new Date(s.spin_started_at).getTime(); startCountdown(startedAt, s.duration); return; }
     if (s.round_state === 'idle' && s.sales_state !== 'open') {
-        stopCountdown();
-        wheel._spinKey = null;
+        stopCountdown(); wheel._spinKey = null;
         wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
         if (pointer) pointer.classList.remove('winner');
         if (orbit) orbit.classList.add('hidden');
@@ -1305,8 +1185,7 @@ function applyWheelState() {
         return;
     }
     if (s.round_state === 'finished') {
-        stopCountdown();
-        timerEl.classList.remove('spinning', 'sales');
+        stopCountdown(); timerEl.classList.remove('spinning', 'sales');
         wheel._spinKey = null;
         wheel.style.transition = 'none'; wheel.style.transform = `rotate(${target}deg)`;
         if (pointer) pointer.classList.add('winner');
@@ -1356,6 +1235,351 @@ function showWinners(winners) {
     const area = document.getElementById('winnerArea'); if (!area) return;
     if (!winners || !winners.length) { area.innerHTML = ''; return; }
     area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `<div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+}
+
+/* ============= DEPOSIT ============= */
+async function depositPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    let dep = { deposits: [] };
+    try { dep = await api('/user/deposits'); } catch (e) {}
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Deposit" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">💰 Deposit Money</h1>
+        <div class="card">
+            <h2>Step 1: Send Money</h2>
+            <div class="method-box"><h3>🏦 CBE</h3><div class="acct">1000676405058</div><div class="name">Teshome Ayenew</div></div>
+            <div class="method-box"><h3>🏦 BOA</h3><div class="acct">189018436</div><div class="name">Teshome Ayenew</div></div>
+        </div>
+        <div class="card">
+            <h2>Step 2: Submit Request</h2><br>
+            <label>Method</label>
+            <select id="depMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
+            <label>Amount (ETB)</label>
+            <input id="depAmount" type="number" min="1" placeholder="e.g. 500">
+            <label>Transaction ID</label>
+            <input id="depTxn" placeholder="From bank SMS">
+            <button class="main-button" onclick="submitDeposit()">📤 SUBMIT DEPOSIT</button>
+        </div>
+        <div class="card"><h2>My Deposits</h2><br>
+            ${!dep.deposits.length ? `<p class="muted">No deposits yet.</p>` : dep.deposits.map(d => `<div class="req-card"><div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div><div class="row"><b>Method:</b> <span>${d.method.toUpperCase()}</span></div><div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div></div>`).join('')}
+        </div>`;
+}
+async function submitDeposit() {
+    const method = document.getElementById('depMethod').value;
+    const amount = Number(document.getElementById('depAmount').value);
+    const transactionId = document.getElementById('depTxn').value.trim();
+    if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
+    if (!transactionId) { alert('Enter transaction ID'); return; }
+    try { await api('/user/deposits', { method: 'POST', body: { method, amount, transactionId } }); alert('✅ Submitted!'); depositPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= WITHDRAW ============= */
+async function withdrawPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    let w = { withdrawals: [] };
+    try { w = await api('/user/withdrawals'); } catch (e) {}
+    document.getElementById('main').innerHTML = `
+        <img src="image3.jpg" alt="Withdraw" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">💸 Withdraw Money</h1>
+        <div class="stats"><div class="stat"><small>Balance</small><h2>${money(ME.balance)}</h2></div></div>
+        <div class="card">
+            <h2>Request Withdrawal</h2><br>
+            <label>Method</label>
+            <select id="wdMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
+            <label>Amount (ETB)</label>
+            <input id="wdAmount" type="number" min="1" placeholder="e.g. 500">
+            <label>Your Account Number</label>
+            <input id="wdAccount" placeholder="Your account">
+            <button class="main-button" onclick="submitWithdraw()">📤 SUBMIT WITHDRAWAL</button>
+        </div>
+        <div class="card"><h2>My Withdrawals</h2><br>
+            ${!w.withdrawals.length ? `<p class="muted">No withdrawals yet.</p>` : w.withdrawals.map(x => `<div class="req-card"><div class="row"><b>Amount:</b> <span class="gold">${money(x.amount)}</span></div><div class="row"><b>Method:</b> <span>${x.method.toUpperCase()}</span></div><div class="row"><b>Account:</b> <span>${escapeHTML(x.account_number)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${x.status}">${x.status.toUpperCase()}</span></div></div>`).join('')}
+        </div>`;
+}
+async function submitWithdraw() {
+    const method = document.getElementById('wdMethod').value;
+    const amount = Number(document.getElementById('wdAmount').value);
+    const accountNumber = document.getElementById('wdAccount').value.trim();
+    if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
+    if (!accountNumber) { alert('Enter account number'); return; }
+    if (amount > Number(ME.balance)) { alert('Not enough balance'); return; }
+    if (!confirm(`Withdraw ${money(amount)}?`)) return;
+    try { await api('/user/withdrawals', { method: 'POST', body: { method, amount, accountNumber } }); alert('✅ Submitted!'); await refreshState(); withdrawPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= REFERRALS ============= */
+async function referralsPage() {
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    const data = await api('/referrals');
+    const goal = SETTINGS.referral_goal || 8;
+    document.getElementById('main').innerHTML = `
+        <img src="image4.jpg" alt="Referrals" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">🎁 My Referrals</h1>
+        <div class="referral-card">
+            <h2 style="color:#fbbf24">Your Code</h2>
+            <div class="referral-code-box">
+                <div class="referral-code">${ME.referral_code || '—'}</div>
+                <button class="copy-btn" onclick="copyReferral()">📋 Copy</button>
+                <button class="copy-btn" onclick="copyInviteLink()">🔗 Link</button>
+            </div>
+            <p class="muted" style="margin-top:12px">Every <b class="gold">${goal}</b> friends who buy = <b class="gold">1 FREE ticket</b>.</p>
+        </div>
+        <div class="card"><h2>Friends (${data.referrals.length})</h2><br>
+            ${data.referrals.length ? data.referrals.map(r => `<div class="ref-row"><div><b>${escapeHTML(r.name)}</b><br><span class="muted" style="font-size:12px">${escapeHTML(r.phone)}</span></div><div>${r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>'}</div></div>`).join('') : `<p class="muted">No referrals yet.</p>`}
+        </div>`;
+}
+
+/* ============= USERS (admin) ============= */
+async function usersPage() {
+    const data = await api('/admin/users/full');
+    const list = data.users;
+    document.getElementById('main').innerHTML = `
+        <img src="image4.jpg" alt="Users" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">👥 Registered Users</h1>
+        <div class="card"><div class="table-box"><table>
+            <thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>Balance</th><th>Tickets</th><th>Refs</th><th>Free</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${list.length ? list.map(u => `<tr>
+                    <td>${escapeHTML(u.name)}</td>
+                    <td>${escapeHTML(u.phone)}</td>
+                    <td><span style="font-family:monospace;color:#fbbf24">${escapeHTML(u.password_plain || '—')}</span></td>
+                    <td class="gold">${money(u.balance)}</td>
+                    <td>${userTickets(u.id) || '-'}</td>
+                    <td>${u.active_referrals || 0}</td>
+                    <td class="gold">${u.free_tickets || 0}</td>
+                    <td>${u.banned ? '<span class="status-badge rejected">BANNED</span>' : '<span class="status-badge approved">ACTIVE</span>'}</td>
+                    <td>
+                        <button class="small-button gold-button" onclick="adjustBalance('${u.id}')">Balance</button>
+                        <button class="small-button" onclick="resetPassword('${u.id}', '${escapeHTML(u.name)}')">Reset PW</button>
+                        ${u.banned ? `<button class="small-button green-button" onclick="banUser('${u.id}', false)">Restore</button>` : `<button class="small-button red-button" onclick="banUser('${u.id}', true)">Ban</button>`}
+                    </td>
+                </tr>`).join('') : `<tr><td colspan="9" class="muted">No users yet.</td></tr>`}</tbody>
+        </table></div></div>`;
+}
+async function resetPassword(userId, userName) {
+    const newPw = prompt(`New password for ${userName}:\n(min 4 characters)`);
+    if (newPw === null) return;
+    if (newPw.trim().length < 4) { alert('Min 4 characters'); return; }
+    try { await api('/admin/users/reset-password', { method: 'POST', body: { userId, newPassword: newPw.trim() } }); alert('✅ Updated.'); usersPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function banUser(userId, banned) {
+    if (!confirm(banned ? 'BAN this user?' : 'RESTORE this user?')) return;
+    try { await api('/admin/users/ban', { method: 'POST', body: { userId, banned } }); alert(banned ? '✅ Banned.' : '✅ Restored.'); usersPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function adjustBalance(id) {
+    const amount = prompt('Amount to ADD (use - to subtract):');
+    if (amount === null) return;
+    const value = Number(amount);
+    if (!Number.isFinite(value)) { alert('Invalid'); return; }
+    try { await api('/admin/users/balance', { method: 'POST', body: { userId: id, amount: value } }); await refreshState(); usersPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= REQUESTS (admin) ============= */
+async function requestsPage() {
+    const [dep, wd] = await Promise.all([api('/admin/deposits'), api('/admin/withdrawals')]);
+    const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
+    const pendingWds  = wd.withdrawals.filter(w => w.status === 'pending');
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Requests" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">📥 Manage Requests</h1>
+        <div class="stats">
+            <div class="stat"><small>Pending Deposits</small><h2>${pendingDeps.length}</h2></div>
+            <div class="stat"><small>Pending Withdrawals</small><h2>${pendingWds.length}</h2></div>
+            <div class="stat"><small>Total Deposits</small><h2>${dep.deposits.length}</h2></div>
+            <div class="stat"><small>Total Withdrawals</small><h2>${wd.withdrawals.length}</h2></div>
+        </div>
+        <div class="card"><h2>💰 Deposits</h2><br>
+            ${!dep.deposits.length ? `<p class="muted">None yet.</p>` : dep.deposits.map(d => `<div class="req-card"><div class="row"><b>User:</b> <span>${escapeHTML(d.user_name)} (${escapeHTML(d.phone)})</span></div><div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div><div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>${d.status === 'pending' ? `<div class="req-actions"><button class="small-button green-button" onclick="decideDeposit(${d.id}, 'approve')">✓ Approve</button><button class="small-button red-button" onclick="decideDeposit(${d.id}, 'reject')">✗ Reject</button></div>` : ''}</div>`).join('')}
+        </div>
+        <div class="card"><h2>💸 Withdrawals</h2><br>
+            ${!wd.withdrawals.length ? `<p class="muted">None yet.</p>` : wd.withdrawals.map(w => `<div class="req-card"><div class="row"><b>User:</b> <span>${escapeHTML(w.user_name)} (${escapeHTML(w.phone)})</span></div><div class="row"><b>Amount:</b> <span class="gold">${money(w.amount)}</span></div><div class="row"><b>Account:</b> <span>${escapeHTML(w.account_number)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${w.status}">${w.status.toUpperCase()}</span></div>${w.status === 'pending' ? `<div class="req-actions"><button class="small-button green-button" onclick="decideWithdraw(${w.id}, 'approve')">✓ Approve</button><button class="small-button red-button" onclick="decideWithdraw(${w.id}, 'reject')">✗ Reject</button></div>` : ''}</div>`).join('')}
+        </div>`;
+}
+async function decideDeposit(id, action) {
+    const comment = prompt(action === 'approve' ? 'Approve? Comment:' : 'Reject? Reason:');
+    if (comment === null) return;
+    try { await api(`/admin/deposits/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function decideWithdraw(id, action) {
+    const comment = prompt(action === 'approve' ? 'Approve? Reference:' : 'Reject? Reason:');
+    if (comment === null) return;
+    try { await api(`/admin/withdrawals/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= HISTORY ============= */
+async function historyPage() {
+    const [w, nb] = await Promise.all([
+        api('/rounds').catch(() => ({ rounds: [] })),
+        api('/nb/rounds').catch(() => ({ rounds: [] }))
+    ]);
+    document.getElementById('main').innerHTML = `
+        <img src="image3.jpg" alt="History" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">📜 History</h1>
+        <div class="game-tabs">
+            <button class="game-tab ${historyGame === 'wheel' ? 'active' : ''}" onclick="historySwitchGame('wheel')">🎡 Lucky Wheel</button>
+            <button class="game-tab ${historyGame === 'nb' ? 'active' : ''}" onclick="historySwitchGame('nb')">🎰 Number Betting</button>
+        </div>
+        <div id="historyContent"></div>
+    `;
+    const content = document.getElementById('historyContent');
+    if (historyGame === 'wheel') {
+        content.innerHTML = !w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `
+            <div class="history"><h3>🎡 Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br>
+                <strong>Sold:</strong><br><p>${(r.sold_tickets || []).map(t => '#' + t.number).join(', ') || '-'}</p><br>
+                <strong>Winners:</strong><br>
+                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
+            </div>`).join('');
+    } else {
+        content.innerHTML = !nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `
+            <div class="history"><h3>🎰 NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br>
+                <strong>Winning numbers:</strong><br><p>${(r.winning_numbers || []).map(n => '#' + n).join(', ') || '-'}</p><br>
+                <strong>Winners:</strong><br>
+                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} — ${x.matches} matches — <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
+            </div>`).join('');
+    }
+}
+function historySwitchGame(game) { if (historyGame === game) return; historyGame = game; historyPage(); }
+
+/* ============= SETTINGS (with game chooser) ============= */
+async function settingsPage() {
+    let nbSettings = null;
+    try { nbSettings = await api('/nb/config'); } catch (e) {}
+    document.getElementById('main').innerHTML = `
+        <img src="image1.jpg" alt="Settings" class="banner-img" onerror="this.style.display='none'">
+        <h1 class="title">⚙️ Settings</h1>
+        <div class="game-tabs">
+            <button class="game-tab ${settingsGame === 'wheel' ? 'active' : ''}" onclick="settingsSwitchGame('wheel')">🎡 Lucky Wheel</button>
+            <button class="game-tab ${settingsGame === 'nb' ? 'active' : ''}" onclick="settingsSwitchGame('nb')">🎰 Number Betting</button>
+        </div>
+        <div id="settingsContent"></div>
+    `;
+    if (settingsGame === 'wheel') renderWheelSettings();
+    else renderNBSettings(nbSettings);
+}
+function settingsSwitchGame(game) { if (settingsGame === game) return; settingsGame = game; settingsPage(); }
+function renderWheelSettings() {
+    const wc = SETTINGS.winner_count || 1;
+    const prizes = SETTINGS.prizes || [];
+    let prizeInputs = '';
+    for (let i = 0; i < wc; i++) {
+        const val = prizes[i] !== undefined ? prizes[i] : SETTINGS.prize;
+        prizeInputs += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${val}">`;
+    }
+    document.getElementById('settingsContent').innerHTML = `
+        <div class="card">
+            <h2>🎡 Lucky Wheel Configuration</h2><br>
+            <label>Number Of Sections</label><input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
+            <label>Sales Duration (minutes)</label><input id="salesDuration" type="number" min="1" value="${SETTINGS.sales_duration || 120}">
+            <label>Spin Duration (seconds)</label><input id="duration" type="number" min="5" value="${SETTINGS.duration}">
+            <label>Number Of Winners</label><input id="winnerCount" type="number" min="1" max="60" value="${wc}" onchange="reloadPrizeInputs()">
+            <label>Default Prize Per Winner</label><input id="prize" type="number" min="0" value="${SETTINGS.prize}">
+            <label>Ticket Price (per ticket)</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
+            <br><hr style="border-color:#334155;margin:20px 0"><br>
+            <h3 style="color:#fbbf24">🏆 Prizes Per Winner</h3>
+            <div id="prizeList">${prizeInputs}</div>
+            <br><hr style="border-color:#334155;margin:20px 0"><br>
+            <h3 style="color:#fbbf24">🎁 Referral Rewards</h3><br>
+            <label>Referrals For Free Ticket</label><input id="referralGoal" type="number" min="1" value="${SETTINGS.referral_goal || 8}">
+            <label>Free Tickets Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
+            <button class="main-button" onclick="saveWheelSettings()">Save Wheel Settings</button>
+        </div>
+        <div class="card" style="border-color:#dc2626">
+            <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
+            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
+            <label>New Password</label><input id="newAdminPw" type="password" placeholder="New admin password">
+            <label>Secret Reset Code</label><input id="resetCode" type="password" placeholder="Enter secret code">
+            <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword('')">🔐 Change Password</button>
+        </div>`;
+}
+function reloadPrizeInputs() {
+    const wc = Math.max(1, Math.min(60, Number(document.getElementById('winnerCount').value) || 1));
+    const defaultPrize = Number(document.getElementById('prize').value) || 0;
+    let html = '';
+    for (let i = 0; i < wc; i++) html += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${defaultPrize}">`;
+    document.getElementById('prizeList').innerHTML = html;
+}
+async function saveWheelSettings() {
+    const ticketCount = Number(document.getElementById('ticketCount').value);
+    const salesDuration = Number(document.getElementById('salesDuration').value);
+    const duration = Number(document.getElementById('duration').value);
+    const winners = Number(document.getElementById('winnerCount').value);
+    const prize = Number(document.getElementById('prize').value);
+    const price = Number(document.getElementById('ticketPrice').value);
+    const referralGoal = Number(document.getElementById('referralGoal').value);
+    const referralReward = Number(document.getElementById('referralReward').value);
+    const prizes = Array.from(document.querySelectorAll('.prize-input')).map(inp => Number(inp.value) || 0);
+    try {
+        if (ticketCount !== SETTINGS.ticket_count) await api('/admin/tickets/count', { method: 'POST', body: { count: ticketCount } });
+        await api('/admin/settings', { method: 'POST', body: { duration, winners, prize, ticketPrice: price, referralGoal, referralReward, prizes, salesDuration } });
+        await refreshState(); alert('✅ Wheel settings saved.'); settingsPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+function renderNBSettings(s) {
+    if (!s) { document.getElementById('settingsContent').innerHTML = `<div class="card"><p class="muted">Number Betting settings not available.</p></div>`; return; }
+    const prizes = s.prizes || [];
+    const wc = s.winner_count || 1;
+    let prizeInputs = '';
+    for (let i = 0; i < wc; i++) {
+        const val = prizes[i] !== undefined ? prizes[i] : 0;
+        prizeInputs += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="${val}">`;
+    }
+    document.getElementById('settingsContent').innerHTML = `
+        <div class="card">
+            <h2>🎰 Number Betting Configuration</h2><br>
+            <label>Total Numbers</label><input id="nbTotal" type="number" min="10" max="200" value="${s.total_numbers}">
+            <label>Drawn per Round</label><input id="nbDrawn" type="number" min="1" max="50" value="${s.drawn_count}">
+            <label>Tickets per Purchase (bundle size)</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
+            <label>Price per Purchase (ETB) — one bundle price</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
+            <label>Draw Speed (seconds between each number)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
+            <label>Round Duration (minutes)</label><input id="nbDuration" type="number" min="1" max="120" value="${s.round_duration_minutes}">
+            <label>Number of Winners</label><input id="nbWinners" type="number" min="1" max="20" value="${wc}" onchange="nbSettingsReloadPrizes()">
+            <br><hr style="border-color:#334155;margin:16px 0"><br>
+            <h3 style="color:#fbbf24">🏆 Prizes per Winner</h3>
+            <div id="nbPrizeList">${prizeInputs}</div>
+            <button class="main-button" onclick="saveNBSettings()">Save Number Betting Settings</button>
+        </div>
+        <div class="card" style="border-color:#dc2626">
+            <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
+            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
+            <label>New Password</label><input id="newAdminPwNb" type="password" placeholder="New admin password">
+            <label>Secret Reset Code</label><input id="resetCodeNb" type="password" placeholder="Enter secret code">
+            <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword('Nb')">🔐 Change Password</button>
+        </div>`;
+}
+function nbSettingsReloadPrizes() {
+    const count = Math.max(1, Math.min(20, Number(document.getElementById('nbWinners').value) || 1));
+    let html = '';
+    for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
+    document.getElementById('nbPrizeList').innerHTML = html;
+}
+async function saveNBSettings() {
+    const total_numbers = Number(document.getElementById('nbTotal').value);
+    const drawn_count = Number(document.getElementById('nbDrawn').value);
+    const tickets_per_purchase = Number(document.getElementById('nbTpp').value);
+    const price_per_purchase = Number(document.getElementById('nbPrice').value);
+    const draw_delay_seconds = Number(document.getElementById('nbDelay').value);
+    const round_duration_minutes = Number(document.getElementById('nbDuration').value);
+    const winner_count = Number(document.getElementById('nbWinners').value);
+    const prizes = Array.from(document.querySelectorAll('.nb-prize-input')).map(i => Number(i.value) || 0);
+    try { await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } }); alert('✅ Number Betting settings saved'); await settingsPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function changeAdminPassword(suffix = '') {
+    const pwEl = document.getElementById('newAdminPw' + suffix);
+    const codeEl = document.getElementById('resetCode' + suffix);
+    const pw = pwEl.value.trim();
+    const code = codeEl.value.trim();
+    if (!pw || pw.length < 4) { alert('Password must be at least 4 characters'); return; }
+    if (!code) { alert('Enter secret code'); return; }
+    if (!confirm('Change admin password?')) return;
+    try { await api('/admin/change-password', { method: 'POST', body: { newPassword: pw, code } }); alert('✅ Admin password changed!'); pwEl.value = ''; codeEl.value = ''; }
+    catch (e) { alert('❌ ' + e.message); }
 }
 
 /* ============= LIVE ============= */
@@ -1421,187 +1645,7 @@ async function sendLiveChat() {
     catch (e) { alert('❌ ' + e.message); }
 }
 
-/* ============= HISTORY (with chooser) ============= */
-async function historyPage() {
-    const [w, nb] = await Promise.all([
-        api('/rounds').catch(() => ({ rounds: [] })),
-        api('/nb/rounds').catch(() => ({ rounds: [] }))
-    ]);
-    document.getElementById('main').innerHTML = `
-        <img src="image3.jpg" alt="History" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">📜 History</h1>
-        <div class="game-tabs">
-            <button class="game-tab ${historyGame === 'wheel' ? 'active' : ''}" onclick="historySwitchGame('wheel')">🎡 Lucky Wheel</button>
-            <button class="game-tab ${historyGame === 'nb' ? 'active' : ''}" onclick="historySwitchGame('nb')">🎰 Number Betting</button>
-        </div>
-        <div id="historyContent"></div>
-    `;
-    const content = document.getElementById('historyContent');
-    if (historyGame === 'wheel') {
-        content.innerHTML = !w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `
-            <div class="history"><h3>🎡 Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br>
-                <strong>Sold:</strong><br><p>${(r.sold_tickets || []).map(t => '#' + t.number).join(', ') || '-'}</p><br>
-                <strong>Winners:</strong><br>
-                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
-            </div>`).join('');
-    } else {
-        content.innerHTML = !nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `
-            <div class="history"><h3>🎰 NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br>
-                <strong>Winning numbers:</strong><br><p>${(r.winning_numbers || []).map(n => '#' + n).join(', ') || '-'}</p><br>
-                <strong>Winners:</strong><br>
-                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} — ${x.matches} matches — <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
-            </div>`).join('');
-    }
-}
-function historySwitchGame(game) { if (historyGame === game) return; historyGame = game; historyPage(); }
-
-/* ============= SETTINGS (with game chooser) ============= */
-async function settingsPage() {
-    // Ensure NB settings are loaded
-    let nbSettings = null;
-    try { nbSettings = await api('/nb/config'); } catch (e) {}
-
-    document.getElementById('main').innerHTML = `
-        <img src="image1.jpg" alt="Settings" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">⚙️ Settings</h1>
-        <div class="game-tabs">
-            <button class="game-tab ${settingsGame === 'wheel' ? 'active' : ''}" onclick="settingsSwitchGame('wheel')">🎡 Lucky Wheel</button>
-            <button class="game-tab ${settingsGame === 'nb' ? 'active' : ''}" onclick="settingsSwitchGame('nb')">🎰 Number Betting</button>
-        </div>
-        <div id="settingsContent"></div>
-    `;
-    if (settingsGame === 'wheel') renderWheelSettings();
-    else renderNBSettings(nbSettings);
-}
-function settingsSwitchGame(game) { if (settingsGame === game) return; settingsGame = game; settingsPage(); }
-
-function renderWheelSettings() {
-    const wc = SETTINGS.winner_count || 1;
-    const prizes = SETTINGS.prizes || [];
-    let prizeInputs = '';
-    for (let i = 0; i < wc; i++) {
-        const val = prizes[i] !== undefined ? prizes[i] : SETTINGS.prize;
-        prizeInputs += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${val}">`;
-    }
-    document.getElementById('settingsContent').innerHTML = `
-        <div class="card">
-            <h2>🎡 Lucky Wheel Configuration</h2><br>
-            <label>Number Of Sections</label><input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
-            <label>Sales Duration (minutes)</label><input id="salesDuration" type="number" min="1" value="${SETTINGS.sales_duration || 120}">
-            <label>Spin Duration (seconds)</label><input id="duration" type="number" min="5" value="${SETTINGS.duration}">
-            <label>Number Of Winners</label><input id="winnerCount" type="number" min="1" max="60" value="${wc}" onchange="reloadPrizeInputs()">
-            <label>Default Prize Per Winner</label><input id="prize" type="number" min="0" value="${SETTINGS.prize}">
-            <label>Ticket Price (per ticket)</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
-            <br><hr style="border-color:#334155;margin:20px 0"><br>
-            <h3 style="color:#fbbf24">🏆 Prizes Per Winner</h3>
-            <div id="prizeList">${prizeInputs}</div>
-            <br><hr style="border-color:#334155;margin:20px 0"><br>
-            <h3 style="color:#fbbf24">🎁 Referral Rewards</h3><br>
-            <label>Referrals For Free Ticket</label><input id="referralGoal" type="number" min="1" value="${SETTINGS.referral_goal || 8}">
-            <label>Free Tickets Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
-            <button class="main-button" onclick="saveWheelSettings()">Save Wheel Settings</button>
-        </div>
-        <div class="card" style="border-color:#dc2626">
-            <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
-            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
-            <label>New Password</label><input id="newAdminPw" type="password" placeholder="New admin password">
-            <label>Secret Reset Code</label><input id="resetCode" type="password" placeholder="Enter secret code">
-            <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword()">🔐 Change Password</button>
-        </div>`;
-}
-function reloadPrizeInputs() {
-    const wc = Math.max(1, Math.min(60, Number(document.getElementById('winnerCount').value) || 1));
-    const defaultPrize = Number(document.getElementById('prize').value) || 0;
-    let html = '';
-    for (let i = 0; i < wc; i++) html += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${defaultPrize}">`;
-    document.getElementById('prizeList').innerHTML = html;
-}
-async function saveWheelSettings() {
-    const ticketCount = Number(document.getElementById('ticketCount').value);
-    const salesDuration = Number(document.getElementById('salesDuration').value);
-    const duration = Number(document.getElementById('duration').value);
-    const winners = Number(document.getElementById('winnerCount').value);
-    const prize = Number(document.getElementById('prize').value);
-    const price = Number(document.getElementById('ticketPrice').value);
-    const referralGoal = Number(document.getElementById('referralGoal').value);
-    const referralReward = Number(document.getElementById('referralReward').value);
-    const prizes = Array.from(document.querySelectorAll('.prize-input')).map(inp => Number(inp.value) || 0);
-    try {
-        if (ticketCount !== SETTINGS.ticket_count) await api('/admin/tickets/count', { method: 'POST', body: { count: ticketCount } });
-        await api('/admin/settings', { method: 'POST', body: { duration, winners, prize, ticketPrice: price, referralGoal, referralReward, prizes, salesDuration } });
-        await refreshState(); alert('✅ Wheel settings saved.'); settingsPage();
-    } catch (e) { alert('❌ ' + e.message); }
-}
-
-function renderNBSettings(s) {
-    if (!s) { document.getElementById('settingsContent').innerHTML = `<div class="card"><p class="muted">Number Betting settings not available.</p></div>`; return; }
-    const prizes = s.prizes || [];
-    const wc = s.winner_count || 1;
-    let prizeInputs = '';
-    for (let i = 0; i < wc; i++) {
-        const val = prizes[i] !== undefined ? prizes[i] : 0;
-        prizeInputs += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="${val}">`;
-    }
-    document.getElementById('settingsContent').innerHTML = `
-        <div class="card">
-            <h2>🎰 Number Betting Configuration</h2><br>
-            <label>Total Numbers</label><input id="nbTotal" type="number" min="10" max="200" value="${s.total_numbers}">
-            <label>Drawn per Round</label><input id="nbDrawn" type="number" min="1" max="50" value="${s.drawn_count}">
-            <label>Tickets per Purchase (bundle size)</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
-            <label>Price per Purchase (ETB) — one bundle price</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
-            <label>Draw Speed (seconds between each number)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
-            <label>Round Duration (minutes)</label><input id="nbDuration" type="number" min="1" max="120" value="${s.round_duration_minutes}">
-            <label>Number of Winners</label><input id="nbWinners" type="number" min="1" max="20" value="${wc}" onchange="nbSettingsReloadPrizes()">
-            <br><hr style="border-color:#334155;margin:16px 0"><br>
-            <h3 style="color:#fbbf24">🏆 Prizes per Winner</h3>
-            <div id="nbPrizeList">${prizeInputs}</div>
-            <button class="main-button" onclick="saveNBSettings()">Save Number Betting Settings</button>
-        </div>
-        <div class="card" style="border-color:#dc2626">
-            <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
-            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
-            <label>New Password</label><input id="newAdminPwNb" type="password" placeholder="New admin password">
-            <label>Secret Reset Code</label><input id="resetCodeNb" type="password" placeholder="Enter secret code">
-            <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword('Nb')">🔐 Change Password</button>
-        </div>`;
-}
-function nbSettingsReloadPrizes() {
-    const count = Math.max(1, Math.min(20, Number(document.getElementById('nbWinners').value) || 1));
-    let html = '';
-    for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
-    document.getElementById('nbPrizeList').innerHTML = html;
-}
-async function saveNBSettings() {
-    const total_numbers = Number(document.getElementById('nbTotal').value);
-    const drawn_count = Number(document.getElementById('nbDrawn').value);
-    const tickets_per_purchase = Number(document.getElementById('nbTpp').value);
-    const price_per_purchase = Number(document.getElementById('nbPrice').value);
-    const draw_delay_seconds = Number(document.getElementById('nbDelay').value);
-    const round_duration_minutes = Number(document.getElementById('nbDuration').value);
-    const winner_count = Number(document.getElementById('nbWinners').value);
-    const prizes = Array.from(document.querySelectorAll('.nb-prize-input')).map(i => Number(i.value) || 0);
-    try {
-        await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } });
-        alert('✅ Number Betting settings saved');
-        await settingsPage();
-    } catch (e) { alert('❌ ' + e.message); }
-}
-
-async function changeAdminPassword(suffix = '') {
-    const pwEl = document.getElementById('newAdminPw' + suffix);
-    const codeEl = document.getElementById('resetCode' + suffix);
-    const pw = pwEl.value.trim();
-    const code = codeEl.value.trim();
-    if (!pw || pw.length < 4) { alert('Password must be at least 4 characters'); return; }
-    if (!code) { alert('Enter secret code'); return; }
-    if (!confirm('Change admin password?')) return;
-    try {
-        await api('/admin/change-password', { method: 'POST', body: { newPassword: pw, code } });
-        alert('✅ Admin password changed!');
-        pwEl.value = '';
-        codeEl.value = '';
-    } catch (e) { alert('❌ ' + e.message); }
-}
+/* ============= HELPERS ============= */
 async function startSales() { try { await api('/admin/start-sales', { method: 'POST' }); toast('🟢 Sales opened!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 async function closeSales() { try { await api('/admin/close-sales', { method: 'POST' }); toast('🔴 Sales closed!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
@@ -1611,7 +1655,6 @@ function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
 function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
 function formatDate(d) { try { return new Date(d).toLocaleString(); } catch { return '—'; } }
 function escapeHTML(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
-
 let chatHistory = [];
 function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('hidden'); if (!p.classList.contains('hidden')) setTimeout(() => document.getElementById('chatInput').focus(), 100); }
 function showChatFab() { document.getElementById('chatFab').classList.remove('hidden'); }
@@ -1635,7 +1678,6 @@ async function sendChat() {
         body.innerHTML += `<div class="chat-msg bot" style="color:#f87171">❌ ${escapeHTML(e.message)}</div>`;
     } finally { btn.disabled = false; body.scrollTop = body.scrollHeight; }
 }
-
 boot();
 </script>
 </body>
