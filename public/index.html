@@ -1001,6 +1001,13 @@ function buildWheel() {
     }
     labels.innerHTML = html;
 }
+
+/* =========================================================
+   ✅ FIXED applyWheelState()
+   - Wheel now spins continuously for the FULL duration.
+   - Only starts once per round (uses wheel._spinKey guard).
+   - Admin clicking "SPIN NOW" triggers the spin cleanly.
+   ========================================================= */
 function applyWheelState() {
     const wheel = document.getElementById('wheel');
     if (!wheel) return;
@@ -1013,16 +1020,30 @@ function applyWheelState() {
     const timerEl = document.getElementById('timer');
     if (!timerEl) return;
 
+    const spinKey = s.round_number + ':' + s.spin_started_at;
+
+    // 🔒 If this same spin is already running, DO NOT reset the wheel.
+    if (s.round_state === 'spinning' && wheel._spinKey === spinKey) {
+        const startedAt = new Date(s.spin_started_at).getTime();
+        startCountdown(startedAt, s.duration);
+        return;
+    }
+
     if (s.round_state === 'idle' && s.sales_state !== 'open') {
         stopCountdown();
-        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
-        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
-        const c = document.getElementById('wheelCenter'); if (c) c.textContent = n > 0 ? 'SPIN' : 'EMPTY';
+        wheel._spinKey = null;
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        if (pointer) pointer.classList.remove('winner');
+        if (orbit) orbit.classList.add('hidden');
+        const c = document.getElementById('wheelCenter');
+        if (c) c.textContent = n > 0 ? 'SPIN' : 'EMPTY';
         const a = document.getElementById('winnerArea'); if (a) a.innerHTML = '';
         timerEl.classList.remove('spinning', 'sales');
         timerEl.textContent = formatTime(s.duration);
         return;
     }
+
     if (s.sales_state === 'open' && s.round_state !== 'spinning') {
         timerEl.classList.remove('spinning');
         timerEl.classList.add('sales');
@@ -1030,30 +1051,37 @@ function applyWheelState() {
         startSalesCountdown(startedAt, s.sales_duration || 120);
         return;
     }
+
     if (s.round_state === 'spinning') {
         timerEl.classList.remove('sales');
         timerEl.classList.add('spinning');
+
         const startedAt = new Date(s.spin_started_at).getTime();
-        const elapsed = (Date.now() - startedAt) / 1000;
-        const remaining = Math.max(0, s.duration - elapsed);
         if (pointer) pointer.classList.remove('winner');
         if (orbit) orbit.classList.add('hidden');
 
-        /* IMPORTANT: Set transition THEN trigger rotation */
+        // 🎡 START THE SPIN — only once per round
+        wheel._spinKey = spinKey;
+
+        // Reset to 0 instantly (no transition)
         wheel.style.transition = 'none';
         wheel.style.transform = 'rotate(0deg)';
-        void wheel.offsetWidth;   /* force browser to apply the 0deg state */
+        void wheel.offsetWidth; // force reflow
 
-        /* Now apply the spin transition for the remaining time */
-        wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`;
-        wheel.style.transform = `rotate(${target}deg)`;
+        // On next frame, apply the full-duration spin
+        requestAnimationFrame(() => {
+            wheel.style.transition = `transform ${s.duration}s cubic-bezier(.15,.7,.2,1)`;
+            wheel.style.transform = `rotate(${target}deg)`;
+        });
 
         startCountdown(startedAt, s.duration);
         return;
     }
+
     if (s.round_state === 'finished') {
         stopCountdown();
         timerEl.classList.remove('spinning', 'sales');
+        wheel._spinKey = null;
         wheel.style.transition = 'none';
         wheel.style.transform = `rotate(${target}deg)`;
         if (pointer) pointer.classList.add('winner');
@@ -1076,6 +1104,7 @@ function applyWheelState() {
         showWinners(s.winners || []);
     }
 }
+
 function startSalesCountdown(startedAt, durationMin) {
     if (countdownId) { clearInterval(countdownId); countdownId = null; }
     const durationSec = durationMin * 60;
