@@ -908,6 +908,7 @@ app.post('/api/nb/settle', async (req, res) => {
     const tickets = await getNbTickets(s.round_number);
     const tpp = Number(s.tickets_per_purchase) || 3;
 
+    // Group matched tickets per user
     const userMatched = {};
     for (const t of tickets) {
       if (!t.user_id) continue;
@@ -916,55 +917,57 @@ app.post('/api/nb/settle', async (req, res) => {
       userMatched[t.user_id].numbers.push(t.number);
     }
 
-    const allUsers = {};
-    for (const t of tickets) {
-      if (!t.user_id) continue;
-      if (!allUsers[t.user_id]) allUsers[t.user_id] = { user_id: t.user_id, name: t.user_name, phone: t.phone, numbers: [] };
+    // Group users by match count
+    const byMatchCount = {};
+    for (const u of Object.values(userMatched)) {
+      const mc = u.numbers.length;
+      if (!byMatchCount[mc]) byMatchCount[mc] = [];
+      byMatchCount[mc].push(u);
     }
-
-    const ranked = Object.values(allUsers).map(u => ({
-      ...u,
-      matches: (userMatched[u.user_id]?.numbers || []).length,
-      matched_numbers: userMatched[u.user_id]?.numbers || []
-    })).sort((a, b) => {
-      if (b.matches !== a.matches) return b.matches - a.matches;
-      return String(a.name || '').localeCompare(String(b.name || ''));
-    });
+    // Sort each bucket alphabetically for deterministic ties
+    for (const k of Object.keys(byMatchCount)) {
+      byMatchCount[k].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    }
 
     const prizes = Array.isArray(s.prizes) ? s.prizes : [];
     const wantedWinners = Math.max(1, Number(s.winner_count) || 1);
     const winners = [];
-    const usedUserIds = new Set();
 
+    // STRICT RULE:
+    // 1st place → EXACTLY tpp matches
+    // 2nd place → EXACTLY (tpp - 1) matches
+    // 3rd place → EXACTLY (tpp - 2) matches
+    // If nobody qualifies for a place → place is EMPTY (no winner, no prize, no substitute)
     for (let place = 1; place <= wantedWinners; place++) {
-      const idealMatches = tpp - (place - 1);
-      let chosen = ranked.find(u => !usedUserIds.has(u.user_id) && u.matches === idealMatches);
-      if (!chosen) chosen = ranked.find(u => !usedUserIds.has(u.user_id));
-      if (!chosen) break;
-      usedUserIds.add(chosen.user_id);
+      const requiredMatches = tpp - (place - 1);
+      if (requiredMatches < 0) continue;
 
+      const candidates = byMatchCount[requiredMatches] || [];
+      if (!candidates.length) continue; // EMPTY - skip this place, but still try others
+
+      const u = candidates.shift();
       const prize = Number(prizes[place - 1] ?? 0);
-      const shownCount = Math.max(0, chosen.matches - (place - 1));
-      const shownNumbers = chosen.matched_numbers.slice(0, shownCount);
+      const shownCount = Math.max(0, u.numbers.length - (place - 1));
+      const shownNumbers = u.numbers.slice(0, shownCount);
 
-      const { data: dbUser } = await sb.from('users').select('balance,telegram_id,public_id').eq('id', chosen.user_id).single();
+      const { data: dbUser } = await sb.from('users').select('balance,telegram_id,public_id').eq('id', u.user_id).single();
 
       winners.push({
         place,
-        name: chosen.name,
+        name: u.name,
         public_id: dbUser?.public_id ?? null,
         public_code: publicUserId(dbUser?.public_id),
-        phone: chosen.phone,
-        phone_masked: maskPhone(chosen.phone),
-        matches: chosen.matches,
+        phone: u.phone,
+        phone_masked: maskPhone(u.phone),
+        matches: u.numbers.length,
         shown_numbers: shownNumbers,
         prize
       });
 
       if (prize > 0 && dbUser) {
-        await sb.from('users').update({ balance: Number(dbUser.balance) + prize }).eq('id', chosen.user_id);
+        await sb.from('users').update({ balance: Number(dbUser.balance) + prize }).eq('id', u.user_id);
         if (dbUser.telegram_id) {
-          await sendTelegram(dbUser.telegram_id, `🏆 <b>Congratulations!</b>\n\nYou won in Number Betting Round #${s.round_number}!\n\nPlace: <b>#${place}</b>\nMatches: <b>${chosen.matches}</b>\nPrize: <b>${prize} ETB</b>`);
+          await sendTelegram(dbUser.telegram_id, `🏆 <b>Congratulations!</b>\n\nYou won in Number Betting Round #${s.round_number}!\n\nPlace: <b>#${place}</b>\nMatches: <b>${u.numbers.length}</b>\nPrize: <b>${prize} ETB</b>`);
         }
       }
     }
