@@ -10,30 +10,12 @@ body { font-family: Arial, sans-serif; background: #0f172a; color: white; }
 button, input, select { font-family: inherit; }
 button { cursor: pointer; }
 .hidden { display: none !important; }
-
-/* BANNER IMAGES */
 .banner-img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; margin-bottom: 20px; display: block; background: #1e293b; box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 2px solid #334155; }
-
-/* LOGIN PAGE with rotating wheel overlay */
 .login-banner-wrap { position: relative; margin-bottom: 20px; border-radius: 15px; overflow: hidden; border: 2px solid #fbbf24; box-shadow: 0 0 30px rgba(251,191,36,0.3); }
 .login-banner-wrap img { display: block; width: 100%; height: 220px; object-fit: cover; }
-.login-wheel-overlay {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 170px; height: 170px;
-    animation: spinWheel 12s linear infinite;
-    filter: drop-shadow(0 0 20px rgba(251,191,36,0.9));
-}
+.login-wheel-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 170px; height: 170px; animation: spinWheel 12s linear infinite; filter: drop-shadow(0 0 20px rgba(251,191,36,0.9)); }
 @keyframes spinWheel { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-.login-wheel-pointer {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 5; pointer-events: none;
-    width: 0; height: 0;
-    border-left: 14px solid transparent;
-    border-right: 14px solid transparent;
-    border-top: 26px solid #dc2626;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
-}
-
+.login-wheel-pointer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid #dc2626; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
 .login-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle, #1e3a5f, #0f172a); }
 .login-card { width: 430px; max-width: 100%; padding: 35px; background: #111827; border: 1px solid #334155; border-radius: 20px; }
 .logo { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 10px; }
@@ -171,6 +153,36 @@ th { color: #94a3b8; }
 .chat-input-row input { flex: 1; padding: 10px 12px; margin: 0; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; font-size: 14px; }
 .chat-send { padding: 10px 16px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; cursor: pointer; }
 .chat-send:disabled { opacity: .5; cursor: not-allowed; }
+
+/* LIVE VIEWERS PANEL */
+.live-panel { padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; margin-top: 16px; }
+.live-panel h3 { color: #22c55e; font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.live-viewers-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.viewer-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #172033; border-radius: 8px; font-size: 13px; }
+.viewer-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; flex-shrink: 0; animation: livePulse 1.2s infinite; }
+.viewer-dot.muted { background: #78350f; animation: none; }
+.viewer-dot.admin { background: #fbbf24; }
+.viewer-name { flex: 1; color: #e2e8f0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.viewer-actions { display: flex; gap: 4px; }
+.mini-btn { padding: 4px 8px; font-size: 11px; border: none; border-radius: 6px; cursor: pointer; color: white; }
+.mini-btn.mute { background: #78350f; }
+.mini-btn.unmute { background: #166534; }
+.mini-btn.kick { background: #7f1d1d; }
+.voice-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+.voice-badge.speaking { background: #22c55e; color: white; animation: voicePulse 0.6s infinite; }
+.voice-badge.muted { background: #78350f; color: #fcd34d; }
+.voice-badge.ready { background: #166534; color: #86efac; }
+@keyframes voicePulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.85; } }
+.live-chat { margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; }
+.live-chat h4 { color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
+.live-chat-messages { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.live-chat-msg { padding: 6px 10px; background: #172033; border-radius: 8px; font-size: 12px; }
+.live-chat-msg b { color: #fbbf24; }
+.live-chat-input { display: flex; gap: 6px; }
+.live-chat-input input { flex: 1; padding: 8px 10px; margin: 0; font-size: 13px; }
+.live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+.live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
+
 @media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } }
 @media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .login-wheel-overlay { width: 130px; height: 130px; } .login-banner-wrap img { height: 180px; } }
 @media(max-width:450px) { .wheel-container { width: 280px; } }
@@ -268,6 +280,9 @@ let sb           = null;
 let countdownId  = null;
 let settleCalled = false;
 let subscribed   = false;
+let livePingId   = null;
+let viewersPollId = null;
+let chatPollId   = null;
 let CONFIG       = { botUsername: 'Numbers_Betting_bot', channelUsername: '@Lucky21_Wheel' };
 
 function renderSidebar() {
@@ -405,6 +420,7 @@ function openPage(page) {
 }
 async function renderPage() {
     if (!ME) return;
+    stopLivePolls();
     if (PAGE === 'dashboard')  return dashboard();
     if (PAGE === 'wheel')      return wheelPage();
     if (PAGE === 'buy')        return buyPage();
@@ -416,6 +432,11 @@ async function renderPage() {
     if (PAGE === 'requests')   return requestsPage();
     if (PAGE === 'history')    return historyPage();
     if (PAGE === 'settings')   return settingsPage();
+}
+function stopLivePolls() {
+    if (livePingId) { clearInterval(livePingId); livePingId = null; }
+    if (viewersPollId) { clearInterval(viewersPollId); viewersPollId = null; }
+    if (chatPollId) { clearInterval(chatPollId); chatPollId = null; }
 }
 
 function dashboard() {
@@ -538,7 +559,7 @@ function buyPage() {
     document.getElementById('main').innerHTML = `
         <img src="image3.jpg" alt="Tickets" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">🛒 Buy Tickets</h1>
-        ${!salesOpen ? `<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Sales are currently CLOSED.</b> Wait for admin to open ticket sales.</p></div>` : ''}
+        ${!salesOpen ? `<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Sales are currently CLOSED.</b></p></div>` : ''}
         <div class="stats">
             <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
             <div class="stat"><small>Ticket Price</small><h2>${money(SETTINGS.ticket_price)}</h2></div>
@@ -611,7 +632,7 @@ async function depositPage() {
     let dep = { deposits: [] };
     try { dep = await api('/user/deposits'); } catch (e) {}
     document.getElementById('main').innerHTML = `
-        <img src="game-money.jpg" alt="Deposit" class="banner-img" onerror="this.src='image1.jpg'">
+        <img src="image1.jpg" alt="Deposit" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">💰 Deposit Money</h1>
         <div class="card">
             <h2>Step 1: Send Money</h2>
@@ -656,7 +677,7 @@ async function withdrawPage() {
     let w = { withdrawals: [] };
     try { w = await api('/user/withdrawals'); } catch (e) {}
     document.getElementById('main').innerHTML = `
-        <img src="game-chart.jpg" alt="Withdraw" class="banner-img" onerror="this.src='image3.jpg'">
+        <img src="image3.jpg" alt="Withdraw" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">💸 Withdraw Money</h1>
         <div class="stats"><div class="stat"><small>Balance</small><h2>${money(ME.balance)}</h2></div></div>
         <div class="card">
@@ -699,7 +720,7 @@ async function referralsPage() {
     const data = await api('/referrals');
     const goal = SETTINGS.referral_goal || 8;
     document.getElementById('main').innerHTML = `
-        <img src="game-friends.jpg" alt="Referrals" class="banner-img" onerror="this.src='image4.jpg'">
+        <img src="image4.jpg" alt="Referrals" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">🎁 My Referrals</h1>
         <div class="referral-card">
             <h2 style="color:#fbbf24">Your Code</h2>
@@ -723,7 +744,7 @@ async function usersPage() {
     const data = await api('/admin/users/full');
     const list = data.users;
     document.getElementById('main').innerHTML = `
-        <img src="game-team.jpg" alt="Users" class="banner-img" onerror="this.src='image4.jpg'">
+        <img src="image4.jpg" alt="Users" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">👥 Registered Users</h1>
         <div class="card"><div class="table-box"><table>
             <thead><tr>
@@ -773,7 +794,7 @@ let selectedTickets = [];
 function ticketsPage() {
     selectedTickets = [];
     document.getElementById('main').innerHTML = `
-        <img src="game-ticket.jpg" alt="Assign Tickets" class="banner-img" onerror="this.src='image3.jpg'">
+        <img src="image3.jpg" alt="Assign Tickets" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">🎟️ Assign Tickets</h1>
         <div class="card">
             <h2>Assign to User</h2><br>
@@ -839,7 +860,7 @@ async function requestsPage() {
     const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
     const pendingWds  = wd.withdrawals.filter(w => w.status === 'pending');
     document.getElementById('main').innerHTML = `
-        <img src="game-money.jpg" alt="Requests" class="banner-img" onerror="this.src='image1.jpg'">
+        <img src="image1.jpg" alt="Requests" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">📥 Manage Requests</h1>
         <div class="stats">
             <div class="stat"><small>Pending Deposits</small><h2>${pendingDeps.length}</h2></div>
@@ -887,6 +908,7 @@ async function decideWithdraw(id, action) {
     catch (e) { alert('❌ ' + e.message); }
 }
 
+/* ============= WHEEL PAGE WITH LIVE VIEWERS ============= */
 function wheelPage() {
     const isAdmin = ME.role === 'admin';
     const spinning = SETTINGS.round_state === 'spinning';
@@ -916,10 +938,33 @@ function wheelPage() {
                 <div id="winnerArea"></div>
             </div>
         </div>
+
+        <!-- LIVE VIEWERS PANEL -->
+        <div class="live-panel">
+            <h3>
+                🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
+                <button class="mini-btn" style="background:#22c55e" onclick="joinLive()">Join Live</button>
+                <button class="mini-btn" style="background:#7f1d1d" onclick="leaveLive()">Leave</button>
+                <button class="mini-btn" style="background:#0ea5e9" onclick="toggleSpeak()">🎤 Voice</button>
+            </h3>
+            <div id="viewersList" class="live-viewers-list">
+                <p class="muted" style="font-size:12px">No viewers yet.</p>
+            </div>
+
+            <div class="live-chat">
+                <h4>💬 Live Chat</h4>
+                <div id="liveChatMessages" class="live-chat-messages"></div>
+                <div class="live-chat-input">
+                    <input id="liveChatInput" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendLiveChat()">
+                    <button onclick="sendLiveChat()">Send</button>
+                </div>
+            </div>
+        </div>
         </div>`;
 
     buildWheel();
     applyWheelState();
+    startLivePolls();
 }
 function buildWheel() {
     const wheel = document.getElementById('wheel');
@@ -1034,7 +1079,7 @@ function startSalesCountdown(startedAt, durationMin) {
         if (remaining <= 0) {
             clearInterval(countdownId); countdownId = null;
             const statusEl = document.getElementById('status');
-            if (statusEl) statusEl.textContent = '⏰ Sales closed. Waiting for admin to spin.';
+            if (statusEl) statusEl.textContent = '⏰ Sales closed.';
         }
     };
     tick(); countdownId = setInterval(tick, 500);
@@ -1067,10 +1112,126 @@ function showWinners(winners) {
         <div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
 }
 
+/* ============= LIVE VIEWERS LOGIC ============= */
+function startLivePolls() {
+    refreshViewers();
+    refreshLiveChat();
+    viewersPollId = setInterval(refreshViewers, 4000);
+    chatPollId = setInterval(refreshLiveChat, 4000);
+    livePingId = setInterval(async () => {
+        try { await api('/live/heartbeat', { method: 'POST' }); } catch (e) {}
+    }, 20000);
+}
+
+async function joinLive() {
+    try {
+        await api('/live/join', { method: 'POST' });
+        toast('✅ Joined live');
+        refreshViewers();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+async function leaveLive() {
+    try {
+        await api('/live/leave', { method: 'POST' });
+        toast('👋 Left live');
+        refreshViewers();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function toggleSpeak() {
+    try {
+        const viewers = (await api('/live/viewers')).viewers || [];
+        const me = ME.role === 'admin'
+            ? viewers.find(v => v.role === 'admin')
+            : viewers.find(v => String(v.user_id) === String(ME.id));
+        if (!me) { alert('Join Live first'); return; }
+        const newState = !me.speaking;
+        await api('/live/speak', { method: 'POST', body: { speaking: newState } });
+        toast(newState ? '🎤 You are now speaking' : '🔇 Stopped speaking');
+        refreshViewers();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function refreshViewers() {
+    try {
+        const data = await api('/live/viewers');
+        const list = data.viewers || [];
+        const listEl = document.getElementById('viewersList');
+        const countEl = document.getElementById('viewerCount');
+        if (!listEl || !countEl) return;
+        countEl.textContent = list.length;
+
+        if (!list.length) {
+            listEl.innerHTML = `<p class="muted" style="font-size:12px">No viewers yet. Tap "Join Live" to appear.</p>`;
+            return;
+        }
+
+        listEl.innerHTML = list.map(v => {
+            const isMe = (ME.role === 'admin' && v.role === 'admin') || (ME.role !== 'admin' && String(v.user_id) === String(ME.id));
+            const dotCls = v.role === 'admin' ? 'viewer-dot admin' : (v.muted ? 'viewer-dot muted' : 'viewer-dot');
+            const micIcon = v.muted ? '🔇' : '🎤';
+            let voiceBadge = '';
+            if (v.muted) {
+                voiceBadge = '<span class="voice-badge muted">MUTED</span>';
+            } else if (v.speaking) {
+                voiceBadge = '<span class="voice-badge speaking">🔴 LIVE</span>';
+            } else {
+                voiceBadge = '<span class="voice-badge ready">🎤 READY</span>';
+            }
+            const adminActions = ME.role === 'admin' && v.role !== 'admin' ? `
+                <div class="viewer-actions">
+                    <button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">
+                        ${v.muted ? 'Unmute' : 'Mute'}
+                    </button>
+                    <button class="mini-btn kick" onclick="kickViewer(${v.id})">Kick</button>
+                </div>` : '';
+            return `<div class="viewer-row">
+                <div class="${dotCls}"></div>
+                <div class="viewer-name">
+                    ${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''}
+                    ${voiceBadge}
+                </div>
+                <div style="font-size:16px">${micIcon}</div>
+                ${adminActions}
+            </div>`;
+        }).join('');
+    } catch (e) { /* silent */ }
+}
+
+async function toggleMute(viewerId, muted) {
+    try { await api('/live/mute', { method: 'POST', body: { viewerId, muted } }); refreshViewers(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function kickViewer(viewerId) {
+    if (!confirm('Kick this viewer?')) return;
+    try { await api('/live/kick', { method: 'POST', body: { viewerId } }); toast('👋 Kicked'); refreshViewers(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+async function refreshLiveChat() {
+    try {
+        const data = await api('/live/chat');
+        const el = document.getElementById('liveChatMessages');
+        if (!el) return;
+        const msgs = data.messages || [];
+        el.innerHTML = msgs.length ? msgs.map(m => `<div class="live-chat-msg"><b>${escapeHTML(m.user_name)}:</b> ${escapeHTML(m.message)}</div>`).join('') : `<p class="muted" style="font-size:12px">No messages yet.</p>`;
+        el.scrollTop = el.scrollHeight;
+    } catch (e) { /* silent */ }
+}
+async function sendLiveChat() {
+    const input = document.getElementById('liveChatInput');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    try { await api('/live/chat', { method: 'POST', body: { message: text } }); input.value = ''; refreshLiveChat(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= HISTORY ============= */
 async function historyPage() {
     const data = await api('/rounds');
     document.getElementById('main').innerHTML = `
-        <img src="game-chart.jpg" alt="History" class="banner-img" onerror="this.src='image3.jpg'">
+        <img src="image3.jpg" alt="History" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">📜 Round History</h1>
         ${!data.rounds.length ? `<div class="card"><p class="muted">No rounds yet.</p></div>` : data.rounds.map(r => `
             <div class="history"><h3>Round #${r.round_number}</h3><p class="muted">${formatDate(r.date)}</p><br>
@@ -1080,6 +1241,7 @@ async function historyPage() {
             </div>`).join('')}`;
 }
 
+/* ============= SETTINGS ============= */
 function settingsPage() {
     const wc = SETTINGS.winner_count || 1;
     const prizes = SETTINGS.prizes || [];
@@ -1089,7 +1251,7 @@ function settingsPage() {
         prizeInputs += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${val}">`;
     }
     document.getElementById('main').innerHTML = `
-        <img src="game-settings.jpg" alt="Settings" class="banner-img" onerror="this.src='image1.jpg'">
+        <img src="image1.jpg" alt="Settings" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">⚙️ Settings</h1>
         <div class="card">
             <h2>Round Configuration</h2><br>
@@ -1169,7 +1331,7 @@ async function closeSales() {
 
 function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
 function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
-function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); showLoginPage(); hideChatFab(); }
+function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); hideChatFab(); }
 function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
 function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = s % 60; if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
 function formatDate(d) { return new Date(d).toLocaleString(); }

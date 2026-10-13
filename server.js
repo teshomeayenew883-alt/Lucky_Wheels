@@ -95,7 +95,6 @@ async function generateReferralCode() {
   throw new Error('Could not generate referral code');
 }
 
-/* Get admin password (allows override via DB) */
 async function getAdminPassword() {
   try {
     const { data } = await sb.from('admin_auth').select('password_hash').eq('id', 1).maybeSingle();
@@ -103,7 +102,6 @@ async function getAdminPassword() {
   } catch { return null; }
 }
 
-/* ============= CONFIG ============= */
 app.get('/api/config', (req, res) => {
   res.json({
     supabaseUrl: process.env.SUPABASE_URL,
@@ -113,7 +111,6 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-/* ============= AUTH ============= */
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, phone, password, referralCode } = req.body;
@@ -185,30 +182,21 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= ADMIN PASSWORD CHANGE ============= */
 app.post('/api/admin/change-password', auth, adminOnly, async (req, res) => {
   try {
     const { newPassword, code } = req.body;
     if (!newPassword || !code) return res.status(400).json({ error: 'Password and code required' });
-    if (String(code).trim() !== ADMIN_RESET_CODE) {
-      return res.status(403).json({ error: 'Invalid secret code' });
-    }
+    if (String(code).trim() !== ADMIN_RESET_CODE) return res.status(403).json({ error: 'Invalid secret code' });
     const clean = String(newPassword).trim();
     if (clean.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
-
     const hash = await bcrypt.hash(clean, 10);
-    const { error } = await sb.from('admin_auth').update({
-      password_hash: hash,
-      updated_at: new Date().toISOString()
-    }).eq('id', 1);
+    const { error } = await sb.from('admin_auth').update({ password_hash: hash, updated_at: new Date().toISOString() }).eq('id', 1);
     if (error) return res.status(500).json({ error: error.message });
-
-    notifyAdmin(`🔐 <b>Admin Password Changed</b>\n\nTime: ${new Date().toISOString()}`);
+    notifyAdmin(`🔐 <b>Admin Password Changed</b>`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= STATE ============= */
 app.get('/api/state', auth, async (req, res) => {
   try {
     const settings = await getSettings();
@@ -238,7 +226,6 @@ app.get('/api/referrals', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= ADMIN: USERS ============= */
 app.get('/api/admin/users', auth, adminOnly, async (req, res) => {
   const { data, error } = await sb.from('users')
     .select('id,name,phone,balance,active_referrals,free_tickets,has_bought_ticket,referral_code,referred_by')
@@ -289,7 +276,6 @@ app.post('/api/admin/users/balance', auth, adminOnly, async (req, res) => {
   res.json({ ok: true, balance: newBalance });
 });
 
-/* ============= ADMIN: ASSIGN TICKETS ============= */
 app.post('/api/admin/tickets/assign', auth, adminOnly, async (req, res) => {
   try {
     const { name, phone, password, balance, numbers, useFreeTicket } = req.body;
@@ -374,7 +360,6 @@ app.post('/api/admin/tickets/assign', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= SETTINGS ============= */
 app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
   try {
     const { duration, winners, prize, ticketPrice, referralGoal, referralReward, prizes, salesDuration } = req.body;
@@ -426,7 +411,6 @@ app.post('/api/admin/tickets/reset-one', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= TWO-PHASE TIMER ============= */
 app.post('/api/admin/start-sales', auth, adminOnly, async (req, res) => {
   try {
     const settings = await getSettings();
@@ -452,7 +436,6 @@ app.post('/api/admin/close-sales', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= SPIN ============= */
 app.post('/api/admin/spin/start', auth, adminOnly, async (req, res) => {
   try {
     const settings = await getSettings();
@@ -548,7 +531,6 @@ app.get('/api/rounds', auth, async (req, res) => {
   res.json({ rounds: data });
 });
 
-/* ============= DEPOSITS ============= */
 app.post('/api/user/deposits', auth, async (req, res) => {
   try {
     if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -568,7 +550,7 @@ app.post('/api/user/deposits', auth, async (req, res) => {
     });
     if (error) return res.status(500).json({ error: error.message });
 
-    notifyAdmin(`💰 <b>New Deposit</b>\n\nUser: ${user.name}\nAmount: ${amt} ETB\nTxn: ${transactionId}`);
+    notifyAdmin(`💰 <b>New Deposit</b>\n\nUser: ${user.name}\nAmount: ${amt} ETB`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -580,7 +562,6 @@ app.get('/api/user/deposits', auth, async (req, res) => {
   res.json({ deposits: data || [] });
 });
 
-/* ============= WITHDRAWALS ============= */
 app.post('/api/user/withdrawals', auth, async (req, res) => {
   try {
     if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -609,7 +590,7 @@ app.post('/api/user/withdrawals', auth, async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
-    notifyAdmin(`💸 <b>New Withdrawal</b>\n\nUser: ${user.name}\nAmount: ${amt} ETB\nAccount: ${accountNumber}`);
+    notifyAdmin(`💸 <b>New Withdrawal</b>\n\nUser: ${user.name}\nAmount: ${amt} ETB`);
     res.json({ ok: true, newBalance });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -621,7 +602,6 @@ app.get('/api/user/withdrawals', auth, async (req, res) => {
   res.json({ withdrawals: data || [] });
 });
 
-/* ============= ADMIN: MANAGE REQUESTS ============= */
 app.get('/api/admin/deposits', auth, adminOnly, async (req, res) => {
   const { data, error } = await sb.from('deposits').select('*').order('id', { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
@@ -685,7 +665,6 @@ app.post('/api/admin/withdrawals/:id/decide', auth, adminOnly, async (req, res) 
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= USER: BUY TICKETS ============= */
 app.post('/api/user/tickets/buy', auth, async (req, res) => {
   try {
     if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -693,10 +672,7 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
     if (!numbers?.length) return res.status(400).json({ error: 'Select at least one ticket' });
 
     const settings = await getSettings();
-
-    if (settings.sales_state !== 'open') {
-      return res.status(400).json({ error: 'Ticket sales are not open right now. Wait for admin to open.' });
-    }
+    if (settings.sales_state !== 'open') return res.status(400).json({ error: 'Ticket sales are not open right now.' });
 
     const { data: user } = await sb.from('users').select('*').eq('id', req.user.id).single();
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -742,24 +718,7 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
       }
     }
 
-    let referralMessage = null;
-    if (!user.has_bought_ticket && user.referred_by) {
-      const { data: referrer } = await sb.from('users')
-        .select('id,name,active_referrals,free_tickets').eq('id', user.referred_by).single();
-      if (referrer) {
-        const newActive = (referrer.active_referrals || 0) + 1;
-        const goal = settings.referral_goal || 8;
-        const reward = settings.referral_reward || 1;
-        let newFree = referrer.free_tickets || 0;
-        if (newActive % goal === 0) {
-          newFree += reward;
-          referralMessage = `🎁 ${referrer.name} earned ${reward} FREE ticket!`;
-        }
-        await sb.from('users').update({ active_referrals: newActive, free_tickets: newFree }).eq('id', referrer.id);
-      }
-    }
-
-    res.json({ ok: true, cost, usedFree, referralMessage });
+    res.json({ ok: true, cost, usedFree });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -779,13 +738,10 @@ app.post('/api/live/join', auth, async (req, res) => {
     }
 
     const { error } = await sb.from('live_viewers').insert({
-      user_id: userId,
-      user_name: userName,
-      role: req.user.role,
+      user_id: userId, user_name: userName, role: req.user.role,
       joined_at: new Date().toISOString(),
       last_seen: new Date().toISOString(),
-      muted: false,
-      speaking: false
+      muted: false, speaking: false
     });
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
@@ -794,11 +750,8 @@ app.post('/api/live/join', auth, async (req, res) => {
 
 app.post('/api/live/leave', auth, async (req, res) => {
   try {
-    if (req.user.role === 'admin') {
-      await sb.from('live_viewers').delete().eq('role', 'admin');
-    } else {
-      await sb.from('live_viewers').delete().eq('user_id', req.user.id);
-    }
+    if (req.user.role === 'admin') await sb.from('live_viewers').delete().eq('role', 'admin');
+    else await sb.from('live_viewers').delete().eq('user_id', req.user.id);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -839,6 +792,18 @@ app.post('/api/live/kick', auth, adminOnly, async (req, res) => {
     if (!viewerId) return res.status(400).json({ error: 'Missing viewerId' });
     const { error } = await sb.from('live_viewers').delete().eq('id', viewerId);
     if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/live/speak', auth, async (req, res) => {
+  try {
+    const { speaking } = req.body;
+    if (req.user.role === 'admin') {
+      await sb.from('live_viewers').update({ speaking: !!speaking }).eq('role', 'admin');
+    } else {
+      await sb.from('live_viewers').update({ speaking: !!speaking }).eq('user_id', req.user.id);
+    }
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -955,11 +920,11 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
     let reply = '';
     if (text === '/start') {
-      reply = `👋 Welcome, ${firstName}!\n\n🎡 Lucky Wheel Ethiopia\n\nPlay: https://lucky-wheels-pnqd.vercel.app\n\n📢 ${TELEGRAM_CHANNEL}`;
+      reply = `👋 Welcome, ${firstName}!\n\n🎡 Lucky Wheel Ethiopia\n\nPlay: https://lucky-wheels-one.vercel.app\n\n📢 ${TELEGRAM_CHANNEL}`;
     } else if (text === '/help') {
       reply = `Commands: /start /play /balance /support`;
     } else if (text === '/play') {
-      reply = `🎡 Play: https://lucky-wheels-pnqd.vercel.app`;
+      reply = `🎡 Play: https://lucky-wheels-one.vercel.app`;
     } else if (text === '/support') {
       reply = `📞 Contact admin: 0928151586`;
     } else {
