@@ -183,9 +183,256 @@ th { color: #94a3b8; }
 .live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
 .live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
 
-@media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } }
-@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .login-wheel-overlay { width: 130px; height: 130px; } .login-banner-wrap img { height: 180px; } }
+/* NUMBER BETTING */
+.nb-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 12px; }
+.nb-cell { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; border-radius: 8px; background: #172033; border: 2px solid #334155; color: #94a3b8; transition: all .3s ease; position: relative; }
+.nb-cell.drawn { background: #166534; border-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34,197,94,.7); animation: nbPop .5s ease; }
+.nb-cell.winner { background: #dc2626; border-color: #ef4444; color: #ffffff; box-shadow: 0 0 20px rgba(239,68,68,.9); animation: nbWinner .8s ease infinite alternate; }
+.nb-cell.mine { border-color: #fbbf24; }
+.nb-cell.mine-picked { background: #fbbf24; color: #111827; border-color: #fbbf24; }
+.nb-cell.taken { background: #1e293b; border-color: #475569; color: #475569; cursor: not-allowed; }
+@keyframes nbPop { from { transform: scale(0.6); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+@keyframes nbWinner { from { transform: scale(1); } to { transform: scale(1.12); } }
+.nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.nb-timer { text-align: center; font-size: 46px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 12px; }
+.nb-timer.drawing { color: #ef4444; border-color: #ef4444; animation: timerPulse 0.6s infinite alternate; }
+.nb-timer.idle { color: #94a3b8; border-color: #334155; }
+.nb-pick-info { padding: 12px; background: #0b1220; border: 1px dashed #fbbf24; border-radius: 10px; margin: 12px 0; font-size: 14px; }
+.nb-pick-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nb-pick-chip { padding: 6px 12px; background: #fbbf24; color: #111827; border-radius: 20px; font-weight: bold; font-size: 13px; }
+
+@media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } .nb-grid { grid-template-columns: repeat(8, 1fr); } }
+@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .login-wheel-overlay { width: 130px; height: 130px; } .login-banner-wrap img { height: 180px; } .nb-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; } .nb-cell { font-size: 12px; } .nb-stats { grid-template-columns: repeat(2, 1fr); } .nb-timer { font-size: 34px; } }
 @media(max-width:450px) { .wheel-container { width: 280px; } }
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #0f172a; color: white; }
+button, input, select { font-family: inherit; }
+button { cursor: pointer; }
+.hidden { display: none !important; }
+.banner-img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; margin-bottom: 20px; display: block; background: #1e293b; box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 2px solid #334155; }
+.login-banner-wrap { position: relative; margin-bottom: 20px; border-radius: 15px; overflow: hidden; border: 2px solid #fbbf24; box-shadow: 0 0 30px rgba(251,191,36,0.3); }
+.login-banner-wrap img { display: block; width: 100%; height: 220px; object-fit: cover; }
+.login-wheel-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 170px; height: 170px; animation: spinWheel 12s linear infinite; filter: drop-shadow(0 0 20px rgba(251,191,36,0.9)); }
+@keyframes spinWheel { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+.login-wheel-pointer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid #dc2626; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+.login-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle, #1e3a5f, #0f172a); }
+.login-card { width: 430px; max-width: 100%; padding: 35px; background: #111827; border: 1px solid #334155; border-radius: 20px; }
+.logo { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 10px; }
+.logo span, .header-logo span { color: #fbbf24; }
+.login-description { text-align: center; color: #94a3b8; margin-bottom: 25px; }
+input, select { width: 100%; padding: 13px; margin: 7px 0 12px; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; outline: none; font-size: 14px; }
+input:focus, select:focus { border-color: #fbbf24; }
+.hint { font-size: 12px; color: #64748b; margin: -6px 0 10px; }
+.main-button { width: 100%; padding: 13px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; margin-top: 8px; }
+.main-button:hover { opacity: .85; }
+.main-button:disabled { opacity: .5; cursor: not-allowed; }
+.login-footer { text-align: center; color: #94a3b8; margin-top: 18px; }
+.link-button { border: none; background: none; color: #fbbf24; font-weight: bold; }
+.header { height: 70px; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; background: #111827; border-bottom: 1px solid #334155; }
+.header-logo { font-size: 25px; font-weight: bold; }
+.header-user { display: flex; align-items: center; gap: 15px; }
+.logout { padding: 9px 14px; border: none; border-radius: 7px; background: #991b1b; color: white; }
+.layout { min-height: calc(100vh - 70px); display: grid; grid-template-columns: 230px 1fr; }
+.sidebar { padding: 20px; background: #111827; border-right: 1px solid #334155; }
+.nav { width: 100%; padding: 13px; margin-bottom: 8px; border: none; border-radius: 8px; background: transparent; color: #94a3b8; text-align: left; }
+.nav:hover { background: #1e293b; color: white; }
+.nav.active { background: #334155; color: #fbbf24; }
+.main { width: 100%; max-width: 1400px; padding: 25px; }
+.card { padding: 20px; margin-bottom: 20px; background: #111827; border: 1px solid #334155; border-radius: 15px; }
+.title { margin-bottom: 20px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+.stat { padding: 20px; background: #172033; border: 1px solid #334155; border-radius: 12px; }
+.stat small { color: #94a3b8; }
+.stat h2 { margin-top: 10px; color: #fbbf24; }
+.referral-card { padding: 22px; margin-bottom: 20px; border-radius: 15px; background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #fbbf24; }
+.referral-code-box { display: flex; gap: 10px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+.referral-code { padding: 12px 20px; border-radius: 8px; background: #0b1220; border: 2px dashed #fbbf24; font-size: 22px; font-weight: bold; letter-spacing: 3px; color: #fbbf24; font-family: monospace; }
+.copy-btn { padding: 12px 18px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; }
+.progress-bar { width: 100%; height: 14px; background: #0b1220; border-radius: 7px; overflow: hidden; margin: 10px 0; border: 1px solid #334155; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); transition: width .4s ease; }
+.ref-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+.ref-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+.ref-badge.active { background: #166534; color: #86efac; }
+.ref-badge.pending { background: #78350f; color: #fcd34d; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.full { grid-column: 1 / -1; }
+label { color: #cbd5e1; display: block; }
+.ticket-selector, .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; margin-top: 10px; }
+.ticket-select { padding: 15px 5px; border: 1px solid #475569; border-radius: 8px; background: #172033; color: white; }
+.ticket-select.selected { background: #fbbf24; color: #111827; }
+.ticket-select.sold { background: #7f1d1d; color: #fecaca; cursor: not-allowed; }
+.ticket-select.mine { background: #166534; color: #86efac; cursor: not-allowed; border-color: #4ade80; }
+.ticket { padding: 18px; border-radius: 10px; background: #172033; border: 1px solid #475569; }
+.ticket.sold { background: #3f1515; border-color: #991b1b; }
+.ticket.free { background: #14532d; border-color: #4ade80; }
+.ticket-number { font-size: 25px; font-weight: bold; color: #fbbf24; margin-bottom: 10px; }
+.available { color: #4ade80; }
+.sold-text { color: #f87171; }
+.free-badge { color: #4ade80; font-weight: bold; font-size: 12px; }
+.checkbox-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: #0b1220; border-radius: 8px; border: 1px solid #4ade80; margin-bottom: 12px; }
+.checkbox-row input { width: auto; margin: 0; }
+.checkbox-row label { color: #86efac; font-weight: bold; margin: 0; display: inline; }
+.wheel-layout { display: grid; grid-template-columns: minmax(300px, 460px) 1fr; gap: 30px; align-items: center; }
+.wheel-container { position: relative; width: 380px; max-width: 88vw; aspect-ratio: 1; margin: auto; }
+.wheel { width: 100%; height: 100%; position: relative; overflow: hidden; border: 7px solid #fbbf24; border-radius: 50%; background: #334155; box-shadow: 0 0 40px rgba(0,0,0,.5); will-change: transform; }
+.wheel.has-winners { animation: winnerGlow 1.4s ease-in-out infinite; }
+@keyframes winnerGlow { 0%,100% { box-shadow: 0 0 30px rgba(251,191,36,.45); } 50% { box-shadow: 0 0 70px rgba(251,191,36,.95); } }
+.wheel-labels { position: absolute; inset: 0; pointer-events: none; }
+.wl { position: absolute; inset: 0; display: flex; justify-content: center; }
+.wl span { margin-top: 14px; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+.pointer { position: absolute; z-index: 20; top: -2px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 17px solid transparent; border-right: 17px solid transparent; border-top: 38px solid red; }
+.pointer.winner { border-top-color: #4ade80; animation: bounceP 0.7s infinite alternate; }
+@keyframes bounceP { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(6px); } }
+.center { position: absolute; z-index: 30; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 78px; height: 78px; border-radius: 50%; background: #111827; border: 4px solid #fbbf24; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: bold; text-align: center; line-height: 1.1; pointer-events: none; }
+.arrow-orbit { position: absolute; inset: 0; z-index: 25; pointer-events: none; transition: transform 1s cubic-bezier(.2,.8,.3,1); }
+.arrow-tip { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: translate(-50%, -50%) translateY(-66px); border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 20px solid #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.9)); animation: pulseArrow .8s infinite alternate; }
+@keyframes pulseArrow { from { opacity: .65; } to { opacity: 1; } }
+.timer { text-align: center; font-size: 60px; font-weight: bold; color: #fbbf24; margin-bottom: 15px; font-family: monospace; letter-spacing: 3px; text-shadow: 0 0 20px rgba(251,191,36,0.6); padding: 12px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #334155; transition: all 0.3s ease; }
+.timer.sales { color: #22c55e; text-shadow: 0 0 20px rgba(34,197,94,0.6); border-color: #166534; }
+.timer.spinning { color: #ef4444; animation: timerPulse 0.5s infinite alternate; border-color: #ef4444; }
+@keyframes timerPulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+.status { text-align: center; color: #94a3b8; margin-bottom: 15px; }
+.winners { padding: 20px; margin-top: 20px; border-radius: 12px; background: #14532d; border: 1px solid #4ade80; }
+.winners h2 { color: #4ade80; margin-bottom: 12px; }
+.winner { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+.table-box { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 13px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+th { color: #94a3b8; }
+.small-button { padding: 8px 12px; border: none; border-radius: 7px; background: #334155; color: white; margin: 2px; }
+.gold-button { background: #fbbf24; color: #111827; }
+.red-button { background: #991b1b; color: white; }
+.green-button { background: #166534; color: white; }
+.history { padding: 18px; margin-bottom: 12px; background: #172033; border: 1px solid #334155; border-radius: 10px; }
+.history h3 { color: #fbbf24; margin-bottom: 8px; }
+.muted { color: #94a3b8; }
+.gold { color: #fbbf24; }
+.live-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #4ade80; margin-right: 6px; animation: livePulse 1.2s infinite; }
+@keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+.toast { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 16px 24px; border-radius: 10px; background: #166534; color: white; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,.4); transform: translateY(-20px); opacity: 0; transition: all .35s ease; max-width: 380px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { background: #991b1b; }
+.method-box { padding: 20px; border-radius: 12px; border: 2px dashed #fbbf24; background: #0b1220; margin: 12px 0; }
+.method-box h3 { color: #fbbf24; margin-bottom: 8px; }
+.method-box .acct { font-size: 22px; font-weight: bold; font-family: monospace; letter-spacing: 2px; color: #ffffff; margin: 6px 0; }
+.method-box .name { color: #86efac; font-weight: bold; }
+.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.status-badge.pending { background: #78350f; color: #fcd34d; }
+.status-badge.approved { background: #166534; color: #86efac; }
+.status-badge.rejected { background: #7f1d1d; color: #fecaca; }
+.req-card { padding: 16px; border-radius: 12px; background: #172033; border: 1px solid #334155; margin-bottom: 12px; }
+.req-card .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; flex-wrap: wrap; gap: 6px; }
+.req-card .row b { color: #cbd5e1; }
+.req-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+.action-btn { padding: 12px 20px; border: 1px solid #475569; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: transform .15s ease; text-decoration: none; }
+.action-btn:hover { transform: translateY(-2px); opacity: .9; }
+.action-btn.blue { background: #0ea5e9; color: white; border-color: #0ea5e9; }
+.action-btn.green { background: #22c55e; color: white; border-color: #22c55e; }
+.action-btn.purple { background: #a855f7; color: white; border-color: #a855f7; }
+.action-btn.red { background: #dc2626; color: white; border-color: #dc2626; }
+.telegram-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: linear-gradient(135deg, #0088cc, #006699); border: 1px solid #4dd0e1; border-radius: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.telegram-banner .icon { font-size: 32px; }
+.telegram-banner .text { flex: 1; min-width: 200px; }
+.telegram-banner .text h3 { color: #fff; margin-bottom: 4px; font-size: 16px; }
+.telegram-banner .text p { color: #e0f7fa; font-size: 13px; }
+.telegram-banner .join-btn { padding: 10px 20px; background: #fff; color: #006699; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; cursor: pointer; }
+.chat-fab { position: fixed; bottom: 24px; right: 24px; z-index: 9998; padding: 14px 20px; border-radius: 30px; background: #fbbf24; border: 2px solid #111827; font-size: 15px; font-weight: bold; color: #111827; box-shadow: 0 8px 24px rgba(0,0,0,.4); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .15s ease; }
+.chat-fab:hover { transform: translateY(-2px) scale(1.03); }
+.chat-panel { position: fixed; bottom: 96px; right: 24px; z-index: 9999; width: 370px; max-width: 92vw; height: 500px; max-height: 70vh; background: #111827; border: 1px solid #334155; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.chat-head { padding: 14px 18px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.chat-head h3 { color: #fbbf24; font-size: 16px; }
+.chat-close { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; line-height: 1; }
+.chat-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.chat-msg { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; max-width: 85%; word-wrap: break-word; }
+.chat-msg.user { background: #fbbf24; color: #111827; align-self: flex-end; border-bottom-right-radius: 4px; }
+.chat-msg.bot { background: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 4px; }
+.chat-msg.typing { color: #94a3b8; font-style: italic; }
+.chat-input-row { padding: 12px; border-top: 1px solid #334155; display: flex; gap: 8px; background: #0b1220; }
+.chat-input-row input { flex: 1; padding: 10px 12px; margin: 0; border: 1px solid #475569; border-radius: 8px; background: #0b1220; color: white; font-size: 14px; }
+.chat-send { padding: 10px 16px; border: none; border-radius: 8px; background: #fbbf24; color: #111827; font-weight: bold; cursor: pointer; }
+.chat-send:disabled { opacity: .5; cursor: not-allowed; }
+
+/* LIVE VIEWERS PANEL */
+.live-panel { padding: 16px; border-radius: 12px; background: #0b1220; border: 1px solid #334155; margin-top: 16px; }
+.live-panel h3 { color: #22c55e; font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.live-viewers-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.viewer-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #172033; border-radius: 8px; font-size: 13px; }
+.viewer-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; flex-shrink: 0; animation: livePulse 1.2s infinite; }
+.viewer-dot.muted { background: #78350f; animation: none; }
+.viewer-dot.admin { background: #fbbf24; }
+.viewer-name { flex: 1; color: #e2e8f0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.viewer-actions { display: flex; gap: 4px; }
+.mini-btn { padding: 4px 8px; font-size: 11px; border: none; border-radius: 6px; cursor: pointer; color: white; }
+.mini-btn.mute { background: #78350f; }
+.mini-btn.unmute { background: #166534; }
+.mini-btn.kick { background: #7f1d1d; }
+.voice-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: bold; }
+.voice-badge.speaking { background: #22c55e; color: white; animation: voicePulse 0.6s infinite; }
+.voice-badge.muted { background: #78350f; color: #fcd34d; }
+.voice-badge.ready { background: #166534; color: #86efac; }
+@keyframes voicePulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.85; } }
+.live-chat { margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; }
+.live-chat h4 { color: #94a3b8; font-size: 12px; margin-bottom: 8px; }
+.live-chat-messages { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.live-chat-msg { padding: 6px 10px; background: #172033; border-radius: 8px; font-size: 12px; }
+.live-chat-msg b { color: #fbbf24; }
+.live-chat-input { display: flex; gap: 6px; }
+.live-chat-input input { flex: 1; padding: 8px 10px; margin: 0; font-size: 13px; }
+.live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+.live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
+
+/* ============ NUMBER BETTING ============ */
+.nb-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 12px; }
+.nb-cell { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; border-radius: 8px; background: #172033; border: 2px solid #334155; color: #94a3b8; transition: all .3s ease; position: relative; user-select: none; }
+.nb-cell:hover:not(.taken):not(.drawn) { transform: scale(1.06); cursor: pointer; }
+.nb-cell.drawn { background: #166534; border-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34,197,94,.7); animation: nbPop .5s ease; }
+.nb-cell.winner { background: #dc2626; border-color: #ef4444; color: #ffffff; box-shadow: 0 0 20px rgba(239,68,68,.9); animation: nbWinner .8s ease infinite alternate; }
+.nb-cell.mine { border-color: #fbbf24; }
+.nb-cell.mine-picked { background: #fbbf24; color: #111827; border-color: #fbbf24; }
+.nb-cell.taken { background: #1e293b; border-color: #475569; color: #475569; cursor: not-allowed; }
+@keyframes nbPop { from { transform: scale(0.6); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
+@keyframes nbWinner { from { transform: scale(1); } to { transform: scale(1.12); } }
+.nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.nb-stats .stat h2 { font-size: 18px; }
+.nb-timer { text-align: center; font-size: 46px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 12px; }
+.nb-timer.drawing { color: #ef4444; border-color: #ef4444; animation: timerPulse 0.6s infinite alternate; }
+.nb-timer.idle { color: #94a3b8; border-color: #334155; }
+.nb-pick-info { padding: 12px; background: #0b1220; border: 1px dashed #fbbf24; border-radius: 10px; margin: 12px 0; font-size: 14px; }
+.nb-pick-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nb-pick-chip { display: inline-block; padding: 6px 12px; background: #fbbf24; color: #111827; border-radius: 20px; font-weight: bold; font-size: 13px; }
+
+/* RESPONSIVE */
+@media(max-width:1000px) {
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .wheel-layout { grid-template-columns: 1fr; }
+  .nb-stats { grid-template-columns: repeat(2, 1fr); }
+  .nb-grid { grid-template-columns: repeat(8, 1fr); }
+}
+@media(max-width:700px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: flex; overflow-x: auto; padding: 10px; }
+  .nav { min-width: 130px; margin-right: 5px; }
+  .main { padding: 15px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .full { grid-column: auto; }
+  .stats { grid-template-columns: 1fr; }
+  .wheel-container { width: 320px; }
+  .timer { font-size: 40px; }
+  .banner-img { height: 160px; }
+  .login-wheel-overlay { width: 130px; height: 130px; }
+  .login-banner-wrap img { height: 180px; }
+  .nb-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .nb-cell { font-size: 12px; border-radius: 6px; }
+  .nb-timer { font-size: 34px; }
+  .nb-stats { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width:450px) {
+  .wheel-container { width: 280px; }
+  .nb-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
 </style>
 </head>
 <body>
@@ -283,6 +530,10 @@ let subscribed   = false;
 let livePingId   = null;
 let viewersPollId = null;
 let chatPollId   = null;
+let nbState      = null;
+let nbPicked     = [];
+let nbPollId     = null;
+let nbSettleId   = null;
 let CONFIG       = { botUsername: 'Numbers_Betting_bot', channelUsername: '@Lucky21_Wheel' };
 
 function renderSidebar() {
@@ -291,7 +542,8 @@ function renderSidebar() {
     if (isAdmin) {
         sidebar.innerHTML = `
             <button class="nav active" data-page="dashboard" onclick="openPage('dashboard')">🏠 Dashboard</button>
-            <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Wheel</button>
+            <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Lucky Wheel</button>
+            <button class="nav" data-page="nb" onclick="openPage('nb')">🎰 Number Betting</button>
             <button class="nav" data-page="users" onclick="openPage('users')">👥 Users</button>
             <button class="nav" data-page="tickets" onclick="openPage('tickets')">🎟️ Assign Tickets</button>
             <button class="nav" data-page="requests" onclick="openPage('requests')">📥 Requests</button>
@@ -301,7 +553,8 @@ function renderSidebar() {
     } else {
         sidebar.innerHTML = `
             <button class="nav active" data-page="dashboard" onclick="openPage('dashboard')">🏠 Dashboard</button>
-            <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Wheel</button>
+            <button class="nav" data-page="wheel" onclick="openPage('wheel')">🎡 Lucky Wheel</button>
+            <button class="nav" data-page="nb" onclick="openPage('nb')">🎰 Number Betting</button>
             <button class="nav" data-page="buy" onclick="openPage('buy')">🛒 Buy Tickets</button>
             <button class="nav" data-page="deposit" onclick="openPage('deposit')">💰 Deposit</button>
             <button class="nav" data-page="withdraw" onclick="openPage('withdraw')">💸 Withdraw</button>
@@ -405,6 +658,8 @@ function subscribeRealtime() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'users' },    onLiveUpdate)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, onLiveUpdate)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawals' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'nb_settings' }, onLiveUpdate)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'nb_tickets' },  onLiveUpdate)
       .subscribe();
 }
 let liveBusy = false;
@@ -423,6 +678,7 @@ async function renderPage() {
     stopLivePolls();
     if (PAGE === 'dashboard')  return dashboard();
     if (PAGE === 'wheel')      return wheelPage();
+    if (PAGE === 'nb')         return nbPage();
     if (PAGE === 'buy')        return buyPage();
     if (PAGE === 'deposit')    return depositPage();
     if (PAGE === 'withdraw')   return withdrawPage();
@@ -437,6 +693,8 @@ function stopLivePolls() {
     if (livePingId) { clearInterval(livePingId); livePingId = null; }
     if (viewersPollId) { clearInterval(viewersPollId); viewersPollId = null; }
     if (chatPollId) { clearInterval(chatPollId); chatPollId = null; }
+    if (nbPollId) { clearInterval(nbPollId); nbPollId = null; }
+    if (nbSettleId) { clearInterval(nbSettleId); nbSettleId = null; }
 }
 
 function dashboard() {
@@ -471,6 +729,7 @@ function dashboard() {
                     <button class="action-btn" onclick="openPage('tickets')">🎟️ Assign Tickets</button>
                     <button class="action-btn blue" onclick="openPage('requests')">📥 Manage Requests</button>
                     <button class="action-btn green" onclick="openPage('wheel')">🎡 Open Wheel</button>
+                    <button class="action-btn purple" onclick="openPage('nb')">🎰 Open Number Betting</button>
                     <button class="action-btn purple" onclick="openPage('settings')">⚙️ Settings</button>
                 </div>
             </div>`;
@@ -527,6 +786,7 @@ function dashboard() {
                 <button class="action-btn" onclick="openPage('deposit')">💰 Deposit</button>
                 <button class="action-btn green" onclick="openPage('buy')">🛒 Buy Tickets</button>
                 <button class="action-btn blue" onclick="openPage('withdraw')">💸 Withdraw</button>
+                <button class="action-btn purple" onclick="openPage('nb')">🎰 Number Betting</button>
             </div>
         </div>
 
@@ -908,7 +1168,295 @@ async function decideWithdraw(id, action) {
     catch (e) { alert('❌ ' + e.message); }
 }
 
-/* ============= WHEEL PAGE WITH LIVE VIEWERS ============= */
+/* =========================================================
+   NUMBER BETTING PAGE
+   ========================================================= */
+async function nbPage() {
+    try {
+        const s = await api('/nb/state');
+        nbState = s;
+    } catch (e) {
+        document.getElementById('main').innerHTML = `<div class="card"><p>❌ ${escapeHTML(e.message)}</p></div>`;
+        return;
+    }
+    const s = nbState.settings;
+    const isAdmin = ME.role === 'admin';
+    const drawing = s.round_state === 'drawing';
+    const salesOpen = s.sales_state === 'open';
+
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">🎰 Number Betting — Round #${s.round_number}</h1>
+
+        <div class="nb-stats">
+            <div class="stat"><small>Status</small><h2 id="nbStatusH">${nbStatusText(s)}</h2></div>
+            <div class="stat"><small>Sold</small><h2>${nbState.sold_count}/${s.total_numbers}</h2></div>
+            <div class="stat"><small>Ticket Bundle</small><h2>${s.tickets_per_purchase} for ${s.price_per_purchase} ETB</h2></div>
+            <div class="stat"><small>Drawn</small><h2>${(s.winning_numbers || []).length}/${s.drawn_count}</h2></div>
+        </div>
+
+        <div id="nbTimer" class="nb-timer ${drawing ? 'drawing' : salesOpen ? 'sales' : 'idle'}">--:--</div>
+
+        <div class="card">
+            <h2>Numbers Board</h2>
+            <div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div>
+        </div>
+
+        ${isAdmin ? nbAdminPanel(s) : nbUserPanel(s)}
+
+        <div class="live-panel">
+            <h3>
+                🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
+                <button class="mini-btn" style="background:#22c55e" onclick="joinLive()">Join Live</button>
+                <button class="mini-btn" style="background:#7f1d1d" onclick="leaveLive()">Leave</button>
+                <button class="mini-btn" style="background:#0ea5e9" onclick="toggleSpeak()">🎤 Voice</button>
+            </h3>
+            <div id="viewersList" class="live-viewers-list">
+                <p class="muted" style="font-size:12px">No viewers yet.</p>
+            </div>
+            <div class="live-chat">
+                <h4>💬 Live Chat</h4>
+                <div id="liveChatMessages" class="live-chat-messages"></div>
+                <div class="live-chat-input">
+                    <input id="liveChatInput" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendLiveChat()">
+                    <button onclick="sendLiveChat()">Send</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    nbStartPolls();
+}
+
+function nbStatusText(s) {
+    if (s.round_state === 'drawing') return '🎬 DRAWING';
+    if (s.round_state === 'finished') return '✅ FINISHED';
+    if (s.sales_state === 'open') return '🟢 SALES OPEN';
+    if (s.sales_state === 'closed') return '🔴 SALES CLOSED';
+    return '⚪ IDLE';
+}
+
+function nbGridHtml(s) {
+    const drawnSet = new Set(s.winning_numbers || []);
+    const mineSet = new Set((nbState.my_tickets || []).map(t => t.number));
+    const userNumbers = new Set((nbState.tickets || []).filter(t => t.user_id).map(t => t.number));
+    let html = '';
+    for (let i = 1; i <= s.total_numbers; i++) {
+        let cls = 'nb-cell';
+        if (drawnSet.has(i)) cls += ' drawn';
+        if (drawnSet.has(i) && mineSet.has(i)) cls += ' winner';
+        if (mineSet.has(i) && !drawnSet.has(i)) cls += ' mine-picked';
+        else if (mineSet.has(i)) cls += ' mine';
+        else if (userNumbers.has(i) && !drawnSet.has(i)) cls += ' taken';
+        html += `<div class="${cls}">${i}</div>`;
+    }
+    return html;
+}
+
+function nbAdminPanel(s) {
+    const drawing = s.round_state === 'drawing';
+    const salesOpen = s.sales_state === 'open';
+    const finished = s.round_state === 'finished';
+    const prizes = s.prizes || [];
+    let winnersHtml = '';
+    if (finished && s.winners && s.winners.length) {
+        winnersHtml = `<div class="winners"><h2>🏆 Winners</h2>${s.winners.map(w => `
+            <div class="winner"><b>#${w.place} — ${escapeHTML(w.name)}</b><br>Matches: ${w.matches}<br>Shown: ${(w.shown_numbers || []).map(n => '#' + n).join(', ')}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+    }
+    return `
+    <div class="card">
+        <h2>Admin Controls</h2>
+        <div class="action-buttons">
+            <button class="action-btn green" onclick="nbStartSales()" ${salesOpen || drawing ? 'disabled' : ''}>🟢 OPEN SALES</button>
+            <button class="action-btn red" onclick="nbCloseSales()" ${!salesOpen ? 'disabled' : ''}>🔴 CLOSE SALES</button>
+            <button class="action-btn" onclick="nbDraw()" ${drawing || !salesOpen ? 'disabled' : ''}>🎬 DRAW NUMBERS</button>
+            <button class="action-btn red" onclick="nbNewRound()" ${drawing ? 'disabled' : ''}>🔄 NEW ROUND</button>
+        </div>
+    </div>
+    <div class="card">
+        <h2>⚙️ Number Betting Settings</h2><br>
+        <label>Total Numbers</label><input id="nbTotal" type="number" min="10" max="200" value="${s.total_numbers}">
+        <label>Drawn per Round</label><input id="nbDrawn" type="number" min="1" max="50" value="${s.drawn_count}">
+        <label>Tickets per Purchase</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
+        <label>Price per Purchase (ETB)</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
+        <label>Draw Speed (sec between numbers)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
+        <label>Round Duration (minutes)</label><input id="nbDuration" type="number" min="1" max="120" value="${s.round_duration_minutes}">
+        <label>Number of Winners</label><input id="nbWinners" type="number" min="1" max="20" value="${s.winner_count}" onchange="nbReloadPrizes()">
+        <br><hr style="border-color:#334155;margin:16px 0"><br>
+        <h3 style="color:#fbbf24">🏆 Prizes per Winner</h3>
+        <div id="nbPrizeList">${prizes.map((p, i) => `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="${p}">`).join('')}</div>
+        <button class="main-button" onclick="nbSaveSettings()">Save Number Betting Settings</button>
+    </div>
+    ${winnersHtml}`;
+}
+
+function nbUserPanel(s) {
+    const salesOpen = s.sales_state === 'open';
+    const mine = nbState.my_tickets || [];
+    const drawing = s.round_state === 'drawing';
+    const finished = s.round_state === 'finished';
+    let winnersHtml = '';
+    if (finished && s.winners && s.winners.length) {
+        winnersHtml = `<div class="winners"><h2>🏆 Winners</h2>${s.winners.map(w => `
+            <div class="winner"><b>#${w.place} — ${escapeHTML(w.name)}</b><br>Matches: ${w.matches}<br>Shown: ${(w.shown_numbers || []).map(n => '#' + n).join(', ')}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+    }
+    return `
+    <div class="card">
+        <h2>My Tickets (${mine.length})</h2><br>
+        ${mine.length ? mine.map(t => `<span class="nb-pick-chip" style="margin:3px">#${t.number}</span>`).join('') : `<p class="muted">No tickets yet this round.</p>`}
+    </div>
+    <div class="card">
+        <h2>🛒 Buy Tickets</h2>
+        <p class="muted" style="margin:8px 0">Pick exactly <b>${s.tickets_per_purchase}</b> numbers for <b>${money(s.price_per_purchase)}</b>.</p>
+        <div class="nb-pick-info">
+            <b>Selected:</b> <span id="nbPickedCount">0</span> / ${s.tickets_per_purchase}
+            <div class="nb-pick-list" id="nbPickedList"></div>
+        </div>
+        <button class="main-button" onclick="nbBuy()" ${!salesOpen ? 'disabled' : ''}>${salesOpen ? 'CONFIRM PURCHASE' : 'SALES CLOSED'}</button>
+    </div>
+    ${winnersHtml}`;
+}
+
+function nbReloadPrizes() {
+    const count = Math.max(1, Math.min(20, Number(document.getElementById('nbWinners').value) || 1));
+    let html = '';
+    for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
+    document.getElementById('nbPrizeList').innerHTML = html;
+}
+
+function nbStartPolls() {
+    if (nbPollId) clearInterval(nbPollId);
+    if (nbSettleId) clearInterval(nbSettleId);
+    nbTickTimer();
+    nbPollId = setInterval(nbTickTimer, 500);
+    nbSettleId = setInterval(async () => {
+        if (nbState && nbState.settings.round_state === 'drawing') {
+            try { await api('/nb/settle', { method: 'POST' }); await nbRefreshSilent(); } catch (e) {}
+        }
+    }, 3000);
+}
+
+function nbTickTimer() {
+    if (!nbState) return;
+    const s = nbState.settings;
+    const el = document.getElementById('nbTimer');
+    if (!el) return;
+    let secs = 0;
+    if (s.round_state === 'drawing' && s.drawing_started_at) {
+        const start = new Date(s.drawing_started_at).getTime();
+        const elapsed = (Date.now() - start) / 1000;
+        const shown = Math.min(s.drawn_count, Math.floor(elapsed / s.draw_delay_seconds) + 1);
+        const total = s.drawn_count * s.draw_delay_seconds;
+        secs = Math.max(0, total - elapsed);
+        el.textContent = `DRAW ${shown}/${s.drawn_count} · ${formatTime(Math.ceil(secs))}`;
+    } else if (s.sales_state === 'open' && s.sales_started_at) {
+        const start = new Date(s.sales_started_at).getTime();
+        const elapsed = (Date.now() - start) / 1000;
+        const total = s.round_duration_minutes * 60;
+        secs = Math.max(0, total - elapsed);
+        el.textContent = `SALES ${formatTime(Math.ceil(secs))}`;
+    } else {
+        el.textContent = '--:--';
+    }
+}
+
+async function nbRefreshSilent() {
+    try {
+        const s = await api('/nb/state');
+        nbState = s;
+        // update grid only, keep page
+        const grid = document.getElementById('nbGrid');
+        if (grid) grid.innerHTML = nbGridHtml(s.settings);
+        const soldEl = document.querySelector('.nb-stats .stat:nth-child(2) h2');
+        if (soldEl) soldEl.textContent = `${s.sold_count}/${s.settings.total_numbers}`;
+        const drawnEl = document.querySelector('.nb-stats .stat:nth-child(4) h2');
+        if (drawnEl) drawnEl.textContent = `${(s.settings.winning_numbers || []).length}/${s.settings.drawn_count}`;
+        const statusEl = document.getElementById('nbStatusH');
+        if (statusEl) statusEl.textContent = nbStatusText(s.settings);
+        nbTickTimer();
+    } catch (e) {}
+}
+
+async function nbStartSales() {
+    try { await api('/admin/nb/start-sales', { method: 'POST' }); toast('🟢 NB sales opened'); await nbPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function nbCloseSales() {
+    try { await api('/admin/nb/close-sales', { method: 'POST' }); toast('🔴 NB sales closed'); await nbPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function nbDraw() {
+    if (!confirm('Start drawing winning numbers?')) return;
+    try { await api('/admin/nb/draw', { method: 'POST' }); toast('🎬 Drawing started'); await nbPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function nbNewRound() {
+    if (!confirm('Start new Number Betting round?')) return;
+    try { await api('/admin/nb/new-round', { method: 'POST' }); toast('🔄 New round'); await nbPage(); }
+    catch (e) { alert('❌ ' + e.message); }
+}
+async function nbSaveSettings() {
+    const total_numbers = Number(document.getElementById('nbTotal').value);
+    const drawn_count = Number(document.getElementById('nbDrawn').value);
+    const tickets_per_purchase = Number(document.getElementById('nbTpp').value);
+    const price_per_purchase = Number(document.getElementById('nbPrice').value);
+    const draw_delay_seconds = Number(document.getElementById('nbDelay').value);
+    const round_duration_minutes = Number(document.getElementById('nbDuration').value);
+    const winner_count = Number(document.getElementById('nbWinners').value);
+    const prizes = Array.from(document.querySelectorAll('.nb-prize-input')).map(i => Number(i.value) || 0);
+    try {
+        await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } });
+        alert('✅ Saved');
+        await nbPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+function nbTogglePick(num, cell) {
+    if (!nbState) return;
+    const s = nbState.settings;
+    const taken = (nbState.tickets || []).some(t => t.number === num && t.user_id);
+    if (taken) return;
+    if (nbPicked.includes(num)) {
+        nbPicked = nbPicked.filter(n => n !== num);
+        cell.classList.remove('mine-picked');
+    } else {
+        if (nbPicked.length >= s.tickets_per_purchase) { toast('Already picked max', true); return; }
+        nbPicked.push(num);
+        cell.classList.add('mine-picked');
+    }
+    const cnt = document.getElementById('nbPickedCount');
+    if (cnt) cnt.textContent = nbPicked.length;
+    const list = document.getElementById('nbPickedList');
+    if (list) list.innerHTML = nbPicked.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
+}
+
+// Attach click handlers to number cells on nb page
+document.addEventListener('click', (ev) => {
+    const cell = ev.target.closest && ev.target.closest('.nb-cell');
+    if (!cell) return;
+    if (PAGE !== 'nb') return;
+    if (ME && ME.role === 'admin') return;
+    if (!nbState || nbState.settings.sales_state !== 'open') return;
+    const num = Number(cell.textContent.trim());
+    if (!num) return;
+    nbTogglePick(num, cell);
+});
+
+async function nbBuy() {
+    if (!nbState) return;
+    const s = nbState.settings;
+    if (nbPicked.length !== s.tickets_per_purchase) { alert(`Pick exactly ${s.tickets_per_purchase} numbers`); return; }
+    if (Number(ME.balance) < Number(s.price_per_purchase)) { alert('Insufficient balance'); return; }
+    if (!confirm(`Buy ${s.tickets_per_purchase} tickets for ${money(s.price_per_purchase)}?`)) return;
+    try {
+        await api('/nb/buy', { method: 'POST', body: { numbers: nbPicked } });
+        toast('✅ Purchased!');
+        nbPicked = [];
+        await refreshState();
+        await nbPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+/* ============= WHEEL PAGE ============= */
 function wheelPage() {
     const isAdmin = ME.role === 'admin';
     const spinning = SETTINGS.round_state === 'spinning';
@@ -939,7 +1487,6 @@ function wheelPage() {
             </div>
         </div>
 
-        <!-- LIVE VIEWERS PANEL -->
         <div class="live-panel">
             <h3>
                 🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
@@ -950,7 +1497,6 @@ function wheelPage() {
             <div id="viewersList" class="live-viewers-list">
                 <p class="muted" style="font-size:12px">No viewers yet.</p>
             </div>
-
             <div class="live-chat">
                 <h4>💬 Live Chat</h4>
                 <div id="liveChatMessages" class="live-chat-messages"></div>
@@ -1001,13 +1547,6 @@ function buildWheel() {
     }
     labels.innerHTML = html;
 }
-
-/* =========================================================
-   ✅ FIXED applyWheelState()
-   - Wheel now spins continuously for the FULL duration.
-   - Only starts once per round (uses wheel._spinKey guard).
-   - Admin clicking "SPIN NOW" triggers the spin cleanly.
-   ========================================================= */
 function applyWheelState() {
     const wheel = document.getElementById('wheel');
     if (!wheel) return;
@@ -1022,7 +1561,6 @@ function applyWheelState() {
 
     const spinKey = s.round_number + ':' + s.spin_started_at;
 
-    // 🔒 If this same spin is already running, DO NOT reset the wheel.
     if (s.round_state === 'spinning' && wheel._spinKey === spinKey) {
         const startedAt = new Date(s.spin_started_at).getTime();
         startCountdown(startedAt, s.duration);
@@ -1055,20 +1593,15 @@ function applyWheelState() {
     if (s.round_state === 'spinning') {
         timerEl.classList.remove('sales');
         timerEl.classList.add('spinning');
-
         const startedAt = new Date(s.spin_started_at).getTime();
         if (pointer) pointer.classList.remove('winner');
         if (orbit) orbit.classList.add('hidden');
 
-        // 🎡 START THE SPIN — only once per round
         wheel._spinKey = spinKey;
-
-        // Reset to 0 instantly (no transition)
         wheel.style.transition = 'none';
         wheel.style.transform = 'rotate(0deg)';
-        void wheel.offsetWidth; // force reflow
+        void wheel.offsetWidth;
 
-        // On next frame, apply the full-duration spin
         requestAnimationFrame(() => {
             wheel.style.transition = `transform ${s.duration}s cubic-bezier(.15,.7,.2,1)`;
             wheel.style.transform = `rotate(${target}deg)`;
@@ -1161,20 +1694,13 @@ function startLivePolls() {
 }
 
 async function joinLive() {
-    try {
-        await api('/live/join', { method: 'POST' });
-        toast('✅ Joined live');
-        refreshViewers();
-    } catch (e) { alert('❌ ' + e.message); }
+    try { await api('/live/join', { method: 'POST' }); toast('✅ Joined live'); refreshViewers(); }
+    catch (e) { alert('❌ ' + e.message); }
 }
 async function leaveLive() {
-    try {
-        await api('/live/leave', { method: 'POST' });
-        toast('👋 Left live');
-        refreshViewers();
-    } catch (e) { alert('❌ ' + e.message); }
+    try { await api('/live/leave', { method: 'POST' }); toast('👋 Left live'); refreshViewers(); }
+    catch (e) { alert('❌ ' + e.message); }
 }
-
 async function toggleSpeak() {
     try {
         const viewers = (await api('/live/viewers')).viewers || [];
@@ -1188,7 +1714,6 @@ async function toggleSpeak() {
         refreshViewers();
     } catch (e) { alert('❌ ' + e.message); }
 }
-
 async function refreshViewers() {
     try {
         const data = await api('/live/viewers');
@@ -1197,44 +1722,32 @@ async function refreshViewers() {
         const countEl = document.getElementById('viewerCount');
         if (!listEl || !countEl) return;
         countEl.textContent = list.length;
-
         if (!list.length) {
             listEl.innerHTML = `<p class="muted" style="font-size:12px">No viewers yet. Tap "Join Live" to appear.</p>`;
             return;
         }
-
         listEl.innerHTML = list.map(v => {
             const isMe = (ME.role === 'admin' && v.role === 'admin') || (ME.role !== 'admin' && String(v.user_id) === String(ME.id));
             const dotCls = v.role === 'admin' ? 'viewer-dot admin' : (v.muted ? 'viewer-dot muted' : 'viewer-dot');
             const micIcon = v.muted ? '🔇' : '🎤';
             let voiceBadge = '';
-            if (v.muted) {
-                voiceBadge = '<span class="voice-badge muted">MUTED</span>';
-            } else if (v.speaking) {
-                voiceBadge = '<span class="voice-badge speaking">🔴 LIVE</span>';
-            } else {
-                voiceBadge = '<span class="voice-badge ready">🎤 READY</span>';
-            }
+            if (v.muted) voiceBadge = '<span class="voice-badge muted">MUTED</span>';
+            else if (v.speaking) voiceBadge = '<span class="voice-badge speaking">🔴 LIVE</span>';
+            else voiceBadge = '<span class="voice-badge ready">🎤 READY</span>';
             const adminActions = ME.role === 'admin' && v.role !== 'admin' ? `
                 <div class="viewer-actions">
-                    <button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">
-                        ${v.muted ? 'Unmute' : 'Mute'}
-                    </button>
+                    <button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">${v.muted ? 'Unmute' : 'Mute'}</button>
                     <button class="mini-btn kick" onclick="kickViewer(${v.id})">Kick</button>
                 </div>` : '';
             return `<div class="viewer-row">
                 <div class="${dotCls}"></div>
-                <div class="viewer-name">
-                    ${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''}
-                    ${voiceBadge}
-                </div>
+                <div class="viewer-name">${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''} ${voiceBadge}</div>
                 <div style="font-size:16px">${micIcon}</div>
                 ${adminActions}
             </div>`;
         }).join('');
-    } catch (e) { /* silent */ }
+    } catch (e) {}
 }
-
 async function toggleMute(viewerId, muted) {
     try { await api('/live/mute', { method: 'POST', body: { viewerId, muted } }); refreshViewers(); }
     catch (e) { alert('❌ ' + e.message); }
@@ -1244,7 +1757,6 @@ async function kickViewer(viewerId) {
     try { await api('/live/kick', { method: 'POST', body: { viewerId } }); toast('👋 Kicked'); refreshViewers(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
 async function refreshLiveChat() {
     try {
         const data = await api('/live/chat');
@@ -1253,7 +1765,7 @@ async function refreshLiveChat() {
         const msgs = data.messages || [];
         el.innerHTML = msgs.length ? msgs.map(m => `<div class="live-chat-msg"><b>${escapeHTML(m.user_name)}:</b> ${escapeHTML(m.message)}</div>`).join('') : `<p class="muted" style="font-size:12px">No messages yet.</p>`;
         el.scrollTop = el.scrollHeight;
-    } catch (e) { /* silent */ }
+    } catch (e) {}
 }
 async function sendLiveChat() {
     const input = document.getElementById('liveChatInput');
@@ -1266,19 +1778,33 @@ async function sendLiveChat() {
 
 /* ============= HISTORY ============= */
 async function historyPage() {
-    const data = await api('/rounds');
+    const [w, nb] = await Promise.all([
+        api('/rounds').catch(() => ({ rounds: [] })),
+        api('/nb/rounds').catch(() => ({ rounds: [] }))
+    ]);
     document.getElementById('main').innerHTML = `
         <img src="image3.jpg" alt="History" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">📜 Round History</h1>
-        ${!data.rounds.length ? `<div class="card"><p class="muted">No rounds yet.</p></div>` : data.rounds.map(r => `
-            <div class="history"><h3>Round #${r.round_number}</h3><p class="muted">${formatDate(r.date)}</p><br>
+        <h1 class="title">📜 History</h1>
+
+        <h2 style="margin:16px 0;color:#fbbf24">🎡 Lucky Wheel</h2>
+        ${!w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `
+            <div class="history"><h3>Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br>
                 <strong>Sold:</strong><br><p>${(r.sold_tickets || []).map(t => '#' + t.number).join(', ') || '-'}</p><br>
                 <strong>Winners:</strong><br>
-                ${(r.winners || []).map(w => `<div class="winner">🏆 ${w.place}. ${escapeHTML(w.name)} - #${w.ticket} - <span class="gold">${money(w.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
-            </div>`).join('')}`;
+                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
+            </div>`).join('')}
+
+        <h2 style="margin:24px 0 16px;color:#fbbf24">🎰 Number Betting</h2>
+        ${!nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `
+            <div class="history"><h3>NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br>
+                <strong>Winning numbers:</strong><br><p>${(r.winning_numbers || []).map(n => '#' + n).join(', ') || '-'}</p><br>
+                <strong>Winners:</strong><br>
+                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} — ${x.matches} matches — <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
+            </div>`).join('')}
+    `;
 }
 
-/* ============= SETTINGS ============= */
+/* ============= SETTINGS (Lucky Wheel) ============= */
 function settingsPage() {
     const wc = SETTINGS.winner_count || 1;
     const prizes = SETTINGS.prizes || [];
@@ -1291,7 +1817,7 @@ function settingsPage() {
         <img src="image1.jpg" alt="Settings" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">⚙️ Settings</h1>
         <div class="card">
-            <h2>Round Configuration</h2><br>
+            <h2>🎡 Lucky Wheel Configuration</h2><br>
             <label>Number Of Sections</label><input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
             <label>Sales Duration (minutes)</label>
             <input id="salesDuration" type="number" min="1" value="${SETTINGS.sales_duration || 120}">
@@ -1307,7 +1833,15 @@ function settingsPage() {
             <h3 style="color:#fbbf24">🎁 Referral Rewards</h3><br>
             <label>Referrals For Free Ticket</label><input id="referralGoal" type="number" min="1" value="${SETTINGS.referral_goal || 8}">
             <label>Free Tickets Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
-            <button class="main-button" onclick="saveSettingsPage()">Save Settings</button>
+            <button class="main-button" onclick="saveSettingsPage()">Save Wheel Settings</button>
+        </div>
+
+        <div class="card">
+            <h2>🎰 Number Betting Configuration</h2>
+            <p class="muted" style="margin-top:8px">Manage Number Betting settings from its own page.</p>
+            <div class="action-buttons">
+                <button class="action-btn purple" onclick="openPage('nb')">Open Number Betting Page</button>
+            </div>
         </div>
 
         <div class="card" style="border-color:#dc2626">
@@ -1356,7 +1890,6 @@ async function changeAdminPassword() {
         document.getElementById('resetCode').value = '';
     } catch (e) { alert('❌ ' + e.message); }
 }
-
 async function startSales() {
     try { await api('/admin/start-sales', { method: 'POST' }); toast('🟢 Sales opened!'); await refreshState(); renderPage(); }
     catch (e) { alert('❌ ' + e.message); }
@@ -1365,13 +1898,12 @@ async function closeSales() {
     try { await api('/admin/close-sales', { method: 'POST' }); toast('🔴 Sales closed!'); await refreshState(); renderPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
 function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
 function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
 function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); hideChatFab(); }
 function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
 function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = s % 60; if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
-function formatDate(d) { return new Date(d).toLocaleString(); }
+function formatDate(d) { try { return new Date(d).toLocaleString(); } catch { return '—'; } }
 function escapeHTML(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
 let chatHistory = [];
