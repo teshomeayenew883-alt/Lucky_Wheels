@@ -39,15 +39,33 @@ const TELEGRAM_ADMIN_CHAT    = process.env.TELEGRAM_ADMIN_CHAT;
 const TELEGRAM_CHANNEL       = process.env.TELEGRAM_CHANNEL || '@Lucky21_Wheel';
 const TELEGRAM_BOT_USERNAME  = process.env.TELEGRAM_BOT_USERNAME || 'Numbers_Betting_bot';
 
-async function sendTelegram(chatId, message) {
+async function sendTelegram(chatId, message, keyboard) {
   if (!TELEGRAM_BOT_TOKEN || !chatId) return;
   try {
+    const body = {
+      chat_id: chatId,
+      text: message,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+    if (keyboard) body.reply_markup = keyboard;
     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML', disable_web_page_preview: true })
+      body: JSON.stringify(body)
     });
   } catch (e) { console.error('Telegram send error:', e.message); }
+}
+
+async function answerCallback(callbackId, text) {
+  if (!TELEGRAM_BOT_TOKEN || !callbackId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: callbackId, text: text || '', show_alert: false })
+    });
+  } catch (e) { console.error('Answer callback error:', e.message); }
 }
 
 async function notifyAdmin(message) { return sendTelegram(TELEGRAM_ADMIN_CHAT, message); }
@@ -447,7 +465,8 @@ app.post('/api/admin/spin/start', auth, adminOnly, async (req, res) => {
 
     const shuffled = [...soldTickets].sort(() => Math.random() - 0.5);
     const winnerNumbers = shuffled.slice(0, Math.min(settings.winner_count, shuffled.length)).map(t => t.number);
-    const targetRotation = 360 * 30 + Math.floor(Math.random() * 360);
+    const spins = Math.max(5, Math.round((settings.duration || 30) / 2));
+    const targetRotation = 360 * spins + Math.floor(Math.random() * 360);
 
     const { error } = await sb.from('settings').update({
       round_state: 'spinning', spin_started_at: new Date().toISOString(),
@@ -907,33 +926,283 @@ app.get('/api/admin/insights', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ============= TELEGRAM WEBHOOK ============= */
+/* ============= TELEGRAM BOT (REAL) ============= */
+
+async function botGetUserByTelegram(telegramId) {
+  const { data } = await sb.from('users').select('*').eq('telegram_id', telegramId).maybeSingle();
+  return data;
+}
+
+async function botGetUserByPhone(phone) {
+  const { data } = await sb.from('users').select('*').eq('phone', phone).maybeSingle();
+  return data;
+}
+
+function botMainMenu(isAdmin) {
+  const rows = [
+    [{ text: '🎡 Current Round', callback_data: 'round' }],
+    [{ text: '💰 My Balance', callback_data: 'balance' }, { text: '🎟️ My Tickets', callback_data: 'tickets' }],
+    [{ text: '🎁 Invite Friends', callback_data: 'invite' }, { text: '❓ Help', callback_data: 'help' }],
+    [{ text: '🌐 Open Web App', url: 'https://lucky-wheels-2nnu.vercel.app' }]
+  ];
+  if (isAdmin) {
+    rows.push([{ text: '⚙️ Admin Panel', callback_data: 'admin' }]);
+  }
+  return { inline_keyboard: rows };
+}
+
+function botAdminMenu() {
+  return {
+    inline_keyboard: [
+      [{ text: '📊 Stats', callback_data: 'admin_stats' }, { text: '📥 Requests', callback_data: 'admin_requests' }],
+      [{ text: '🟢 Open Sales', callback_data: 'admin_startsales' }, { text: '🔴 Close Sales', callback_data: 'admin_closesales' }],
+      [{ text: '🎡 Spin Wheel', callback_data: 'admin_spin' }, { text: '🔄 New Round', callback_data: 'admin_newround' }],
+      [{ text: '⬅️ Back', callback_data: 'menu' }]
+    ]
+  };
+}
+
+async function botHandleMessage(message) {
+  const chatId = message.chat.id;
+  const text = (message.text || '').trim();
+  const lower = text.toLowerCase();
+  const telegramId = message.from?.id;
+
+  const existing = await botGetUserByTelegram(telegramId);
+  const isAdmin = TELEGRAM_ADMIN_CHAT && String(chatId) === String(TELEGRAM_ADMIN_CHAT);
+
+  if (lower === '/start' || lower === 'start') {
+    if (existing) {
+      await sendTelegram(chatId, `👋 Welcome back, <b>${existing.name}</b>!\n\nBalance: <b>${Number(existing.balance || 0).toLocaleString()} ETB</b>\nTickets: <b>${existing.has_bought_ticket ? 'yes' : 'none'}</b>`, botMainMenu(isAdmin));
+    } else {
+      await sendTelegram(chatId, `👋 Welcome to <b>Lucky Wheel Ethiopia</b>!\n\nTo connect your account, please send your <b>phone number</b> (e.g. 09xxxxxxxx).\n\nIf you don't have an account yet, register on the web app first:\n🌐 https://lucky-wheels-2nnu.vercel.app`);
+    }
+    return;
+  }
+
+  if (lower === '/help' || lower === 'help') {
+    await sendTelegram(chatId, `<b>📖 Available Commands</b>\n\n/start — Main menu\n/balance — Check balance\n/tickets — My tickets\n/invite — Referral link\n/round — Current round info\n\nOr tap the buttons below:`, botMainMenu(isAdmin));
+    return;
+  }
+
+  if (!existing) {
+    // Try to link by phone
+    const cleaned = text.replace(/[^0-9]/g, '');
+    if (cleaned.length >= 9) {
+      let phone = cleaned;
+      if (phone.startsWith('251')) phone = '0' + phone.slice(3);
+      if (phone.startsWith('0') && phone.length === 10) {
+        const user = await botGetUserByPhone(phone);
+        if (user) {
+          await sb.from('users').update({ telegram_id: telegramId }).eq('id', user.id);
+          await sendTelegram(chatId, `✅ Linked to <b>${user.name}</b>!\n\nBalance: <b>${Number(user.balance || 0).toLocaleString()} ETB</b>`, botMainMenu(isAdmin));
+          return;
+        } else {
+          await sendTelegram(chatId, `❌ No account found for <b>${phone}</b>.\n\nRegister on the web first:\n🌐 https://lucky-wheels-2nnu.vercel.app`);
+          return;
+        }
+      }
+    }
+    await sendTelegram(chatId, `Please send your phone number (e.g. 09xxxxxxxx) to connect your account.`);
+    return;
+  }
+
+  if (lower === '/balance' || lower === 'balance') {
+    await sendTelegram(chatId, `💰 <b>Your Balance</b>\n\n<b>${Number(existing.balance || 0).toLocaleString()} ETB</b>\n🎁 Free tickets: <b>${existing.free_tickets || 0}</b>`, botMainMenu(isAdmin));
+    return;
+  }
+
+  if (lower === '/tickets' || lower === 'tickets') {
+    const settings = await getSettings();
+    const { data: myTickets } = await sb.from('tickets')
+      .select('number, used_free_ticket')
+      .eq('round_number', settings.round_number)
+      .eq('user_id', existing.id);
+    const list = (myTickets || []).map(t => `🎟️ #${t.number}${t.used_free_ticket ? ' (FREE)' : ''}`).join('\n') || 'No tickets yet this round.';
+    await sendTelegram(chatId, `<b>My Tickets</b>\n\n${list}`, botMainMenu(isAdmin));
+    return;
+  }
+
+  if (lower === '/invite' || lower === 'invite') {
+    const link = `https://lucky-wheels-2nnu.vercel.app/?ref=${existing.referral_code}`;
+    await sendTelegram(chatId, `🎁 <b>Invite Friends</b>\n\nYour code: <code>${existing.referral_code}</code>\nYour link:\n${link}\n\nEvery <b>8 active friends</b> = 1 FREE ticket!`, botMainMenu(isAdmin));
+    return;
+  }
+
+  if (lower === '/round' || lower === 'round') {
+    const settings = await getSettings();
+    const { data: sold } = await sb.from('tickets')
+      .select('number').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    const soldCount = (sold || []).length;
+    const status = settings.round_state === 'spinning' ? '🎡 Spinning...' :
+                   settings.sales_state === 'open' ? '🟢 Sales open' :
+                   settings.round_state === 'finished' ? '✅ Round finished' : '⚪ Idle';
+    await sendTelegram(chatId, `<b>Round #${settings.round_number}</b>\n\nStatus: ${status}\nSold: <b>${soldCount}</b> / ${settings.ticket_count}\nTicket price: <b>${settings.ticket_price} ETB</b>`, botMainMenu(isAdmin));
+    return;
+  }
+
+  if (isAdmin && lower === '/admin') {
+    await sendTelegram(chatId, '<b>⚙️ Admin Panel</b>\n\nChoose an action:', botAdminMenu());
+    return;
+  }
+
+  // Free text → AI
+  if (groq) {
+    try {
+      const completion = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-20b',
+        messages: [
+          { role: 'system', content: `You are the Lucky Wheel Ethiopia assistant. User: ${existing.name}, Balance: ${existing.balance} ETB. Reply short and helpful in English or Amharic.` },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.6, max_tokens: 300
+      });
+      const reply = completion.choices?.[0]?.message?.content || 'Sorry, I didn\'t understand.';
+      await sendTelegram(chatId, reply, botMainMenu(isAdmin));
+    } catch (e) {
+      await sendTelegram(chatId, 'Type /help to see commands.', botMainMenu(isAdmin));
+    }
+    return;
+  }
+
+  await sendTelegram(chatId, 'Type /help to see commands.', botMainMenu(isAdmin));
+}
+
+async function botHandleCallback(cb) {
+  const chatId = cb.message.chat.id;
+  const data = cb.data;
+  const telegramId = cb.from?.id;
+
+  const existing = await botGetUserByTelegram(telegramId);
+  const isAdmin = TELEGRAM_ADMIN_CHAT && String(chatId) === String(TELEGRAM_ADMIN_CHAT);
+
+  await answerCallback(cb.id);
+
+  if (data === 'menu') {
+    await sendTelegram(chatId, '🏠 Main Menu', botMainMenu(isAdmin));
+    return;
+  }
+  if (data === 'balance' && existing) {
+    await sendTelegram(chatId, `💰 Balance: <b>${Number(existing.balance || 0).toLocaleString()} ETB</b>\n🎁 Free tickets: <b>${existing.free_tickets || 0}</b>`, botMainMenu(isAdmin));
+    return;
+  }
+  if (data === 'tickets' && existing) {
+    const settings = await getSettings();
+    const { data: myTickets } = await sb.from('tickets')
+      .select('number, used_free_ticket')
+      .eq('round_number', settings.round_number).eq('user_id', existing.id);
+    const list = (myTickets || []).map(t => `🎟️ #${t.number}${t.used_free_ticket ? ' (FREE)' : ''}`).join('\n') || 'No tickets yet this round.';
+    await sendTelegram(chatId, `<b>My Tickets</b>\n\n${list}`, botMainMenu(isAdmin));
+    return;
+  }
+  if (data === 'invite' && existing) {
+    const link = `https://lucky-wheels-2nnu.vercel.app/?ref=${existing.referral_code}`;
+    await sendTelegram(chatId, `🎁 Code: <code>${existing.referral_code}</code>\n${link}`, botMainMenu(isAdmin));
+    return;
+  }
+  if (data === 'round') {
+    const settings = await getSettings();
+    const { data: sold } = await sb.from('tickets')
+      .select('number').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    const soldCount = (sold || []).length;
+    await sendTelegram(chatId, `<b>Round #${settings.round_number}</b>\n\nSold: <b>${soldCount}</b> / ${settings.ticket_count}\nTicket: <b>${settings.ticket_price} ETB</b>`, botMainMenu(isAdmin));
+    return;
+  }
+  if (data === 'help') {
+    await sendTelegram(chatId, `📖 Commands:\n/start /balance /tickets /invite /round`, botMainMenu(isAdmin));
+    return;
+  }
+  if (data === 'admin' && isAdmin) {
+    await sendTelegram(chatId, '<b>⚙️ Admin Panel</b>', botAdminMenu());
+    return;
+  }
+  if (data === 'admin_stats' && isAdmin) {
+    const settings = await getSettings();
+    const { count: userCount } = await sb.from('users').select('*', { count: 'exact', head: true }).eq('role', 'user');
+    const { data: sold } = await sb.from('tickets').select('number').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    await sendTelegram(chatId, `📊 <b>Stats</b>\n\nUsers: <b>${userCount || 0}</b>\nRound: <b>#${settings.round_number}</b>\nSold: <b>${(sold || []).length}</b> / ${settings.ticket_count}\nState: <b>${settings.round_state}</b>\nSales: <b>${settings.sales_state}</b>`, botAdminMenu());
+    return;
+  }
+  if (data === 'admin_requests' && isAdmin) {
+    const { data: deps } = await sb.from('deposits').select('*').eq('status', 'pending');
+    const { data: wds } = await sb.from('withdrawals').select('*').eq('status', 'pending');
+    await sendTelegram(chatId, `📥 <b>Pending Requests</b>\n\nDeposits: <b>${(deps || []).length}</b>\nWithdrawals: <b>${(wds || []).length}</b>\n\nManage them on the web admin panel.`, botAdminMenu());
+    return;
+  }
+  if (data === 'admin_startsales' && isAdmin) {
+    const settings = await getSettings();
+    if (settings.sales_state === 'open') {
+      await sendTelegram(chatId, '⚠️ Sales already open.', botAdminMenu());
+      return;
+    }
+    await sb.from('settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1);
+    await sendTelegram(chatId, '🟢 Sales opened!', botAdminMenu());
+    notifyChannel(`🎡 <b>Sales Open!</b>\n\nRound #${settings.round_number}\nBuy tickets now!`);
+    return;
+  }
+  if (data === 'admin_closesales' && isAdmin) {
+    await sb.from('settings').update({ sales_state: 'closed' }).eq('id', 1);
+    await sendTelegram(chatId, '🔴 Sales closed.', botAdminMenu());
+    return;
+  }
+  if (data === 'admin_spin' && isAdmin) {
+    const settings = await getSettings();
+    if (settings.round_state === 'spinning') {
+      await sendTelegram(chatId, '⚠️ Already spinning.', botAdminMenu());
+      return;
+    }
+    const { data: soldTickets } = await sb.from('tickets')
+      .select('*').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    if (!soldTickets?.length) {
+      await sendTelegram(chatId, '⚠️ No sold tickets yet.', botAdminMenu());
+      return;
+    }
+    const shuffled = [...soldTickets].sort(() => Math.random() - 0.5);
+    const winnerNumbers = shuffled.slice(0, Math.min(settings.winner_count, shuffled.length)).map(t => t.number);
+    const spins = Math.max(5, Math.round((settings.duration || 30) / 2));
+    const targetRotation = 360 * spins + Math.floor(Math.random() * 360);
+    await sb.from('settings').update({
+      round_state: 'spinning', spin_started_at: new Date().toISOString(),
+      target_rotation: targetRotation, winner_numbers: winnerNumbers, winners: [],
+      sales_state: 'closed'
+    }).eq('id', 1);
+    await sendTelegram(chatId, `🎡 <b>Wheel is spinning!</b>\n\nRound #${settings.round_number}\nDuration: ${settings.duration}s`, botAdminMenu());
+    return;
+  }
+  if (data === 'admin_newround' && isAdmin) {
+    const settings = await getSettings();
+    if (settings.round_state === 'spinning') {
+      await sendTelegram(chatId, '⚠️ Wait for the wheel to finish.', botAdminMenu());
+      return;
+    }
+    const nextRound = settings.round_number + 1;
+    const rows = Array.from({ length: settings.ticket_count }, (_, i) => ({ number: i + 1, round_number: nextRound }));
+    await sb.from('tickets').insert(rows);
+    await sb.from('settings').update({
+      round_number: nextRound, round_state: 'idle', spin_started_at: null,
+      target_rotation: 0, winner_numbers: [], winners: [],
+      sales_state: 'idle', sales_started_at: null
+    }).eq('id', 1);
+    await sb.from('live_viewers').delete().neq('id', 0);
+    await sb.from('live_chat').delete().neq('id', 0);
+    await sendTelegram(chatId, `🔄 <b>New Round Started (#${nextRound})</b>`, botAdminMenu());
+    return;
+  }
+}
+
 app.post('/api/telegram/webhook', async (req, res) => {
   try {
     const update = req.body;
-    const message = update?.message;
-    if (!message) return res.json({ ok: true });
-
-    const chatId = message.chat.id;
-    const text = (message.text || '').trim().toLowerCase();
-    const firstName = message.from?.first_name || 'friend';
-
-    let reply = '';
-    if (text === '/start') {
-      reply = `👋 Welcome, ${firstName}!\n\n🎡 Lucky Wheel Ethiopia\n\nPlay: https://lucky-wheels-one.vercel.app\n\n📢 ${TELEGRAM_CHANNEL}`;
-    } else if (text === '/help') {
-      reply = `Commands: /start /play /balance /support`;
-    } else if (text === '/play') {
-      reply = `🎡 Play: https://lucky-wheels-one.vercel.app`;
-    } else if (text === '/support') {
-      reply = `📞 Contact admin: 0928151586`;
-    } else {
-      reply = `Type /help for commands.`;
+    if (update.message) {
+      await botHandleMessage(update.message);
+    } else if (update.callback_query) {
+      await botHandleCallback(update.callback_query);
     }
-
-    await sendTelegram(chatId, reply);
     res.json({ ok: true });
-  } catch (e) { res.json({ ok: true }); }
+  } catch (e) {
+    console.error('Webhook error:', e);
+    res.json({ ok: true });
+  }
 });
 
 app.get('/api/admin/telegram-setup', auth, adminOnly, async (req, res) => {
