@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
 
@@ -42,12 +43,7 @@ const TELEGRAM_BOT_USERNAME  = process.env.TELEGRAM_BOT_USERNAME || 'Numbers_Bet
 async function sendTelegram(chatId, message, keyboard) {
   if (!TELEGRAM_BOT_TOKEN || !chatId) return;
   try {
-    const body = {
-      chat_id: chatId,
-      text: message,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true
-    };
+    const body = { chat_id: chatId, text: message, parse_mode: 'HTML', disable_web_page_preview: true };
     if (keyboard) body.reply_markup = keyboard;
     await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -871,9 +867,7 @@ app.post('/api/chat', auth, async (req, res) => {
       const { data: allTickets } = await sb.from('tickets').select('*').eq('round_number', settings.round_number);
       const users = allUsers || [], tickets = allTickets || [];
       const soldTickets = tickets.filter(t => t.user_id !== null).length;
-
       const context = `ADMIN MODE. Users: ${users.length}, Sold: ${soldTickets}/${settings.ticket_count}. Reply in English/Amharic, short.`;
-
       const completion = await groq.chat.completions.create({
         model: 'openai/gpt-oss-20b',
         messages: [
@@ -916,9 +910,7 @@ app.get('/api/admin/insights', auth, adminOnly, async (req, res) => {
     const { data: allTickets } = await sb.from('tickets').select('*').eq('round_number', settings.round_number);
     const users = allUsers || [], tickets = allTickets || [];
     const soldTickets = tickets.filter(t => t.user_id !== null).length;
-
     const prompt = `Give short admin report for Lucky Wheel.\nUsers: ${users.length}, Sold: ${soldTickets}/${settings.ticket_count}.\n📊 STATUS\n⚠️ CONCERNS\n💡 SUGGESTIONS\nUnder 150 words.`;
-
     const completion = await groq.chat.completions.create({
       model: 'openai/gpt-oss-20b',
       messages: [{ role: 'user', content: prompt }],
@@ -1205,13 +1197,73 @@ app.post('/api/admin/nb/new-round', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+/* Assign NB tickets (admin) — same flow as Lucky Wheel assign */
+app.post('/api/admin/nb/assign', auth, adminOnly, async (req, res) => {
+  try {
+    const { name, phone, password, balance, numbers } = req.body;
+    if (!name || !phone || !Array.isArray(numbers) || !numbers.length)
+      return res.status(400).json({ error: 'Missing fields' });
+
+    const s = await getNbSettings();
+    if (numbers.length !== Number(s.tickets_per_purchase))
+      return res.status(400).json({ error: `Pick exactly ${s.tickets_per_purchase} numbers` });
+    const uniq = new Set(numbers);
+    if (uniq.size !== numbers.length)
+      return res.status(400).json({ error: 'Numbers must be unique' });
+    const invalid = numbers.find(n => !Number.isInteger(n) || n < 1 || n > s.total_numbers);
+    if (invalid !== undefined) return res.status(400).json({ error: 'Invalid number' });
+
+    const cleanName = String(name).trim();
+    const cleanPhone = String(phone).trim();
+
+    let { data: user } = await sb.from('users').select('*').eq('phone', cleanPhone).maybeSingle();
+    if (!user) {
+      if (!password) return res.status(400).json({ error: 'Password needed for new user' });
+      const cleanPassword = String(password).trim();
+      const hash = await bcrypt.hash(cleanPassword, 10);
+      const newCode = await generateReferralCode();
+      const { data: created, error } = await sb.from('users').insert({
+        name: cleanName, phone: cleanPhone, password_hash: hash,
+        password_plain: cleanPassword, role: 'user',
+        balance: Math.max(0, Number(balance) || 0),
+        referral_code: newCode, banned: false
+      }).select().single();
+      if (error) return res.status(500).json({ error: error.message });
+      user = created;
+    } else {
+      const newBal = Number(user.balance) + (Number(balance) || 0);
+      if (newBal < 0) return res.status(400).json({ error: 'Balance cannot be negative' });
+      await sb.from('users').update({ name: cleanName, balance: newBal }).eq('id', user.id);
+      user.name = cleanName; user.balance = newBal;
+    }
+
+    const existing = await getNbTickets(s.round_number);
+    const taken = existing.filter(t => t.user_id && numbers.includes(t.number));
+    if (taken.length) return res.status(400).json({ error: 'Some numbers already taken' });
+
+    const batchId = crypto.randomUUID();
+    const rows = numbers.map(n => ({
+      round_number: s.round_number,
+      number: n,
+      user_id: user.id,
+      user_name: user.name,
+      phone: user.phone,
+      batch_id: batchId,
+      is_free: true
+    }));
+    const { error: insErr } = await sb.from('nb_tickets').insert(rows);
+    if (insErr) return res.status(500).json({ error: insErr.message });
+
+    res.json({ ok: true, user, numbers });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 /* ============= TELEGRAM BOT (REAL) ============= */
 
 async function botGetUserByTelegram(telegramId) {
   const { data } = await sb.from('users').select('*').eq('telegram_id', telegramId).maybeSingle();
   return data;
 }
-
 async function botGetUserByPhone(phone) {
   const { data } = await sb.from('users').select('*').eq('phone', phone).maybeSingle();
   return data;
