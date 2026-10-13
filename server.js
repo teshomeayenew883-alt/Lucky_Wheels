@@ -831,6 +831,69 @@ app.post('/api/admin/nb/draw', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/admin/nb/new-round', auth, adminOnly, async (req, res) => {
+  try {
+    const s = await getNbSettings();
+    if (s.round_state === 'drawing') return res.status(400).json({ error: 'Wait for draw to finish' });
+    const nextRound = s.round_number + 1;
+    await sb.from('nb_settings').update({
+      round_number: nextRound, round_state: 'idle', sales_state: 'idle',
+      sales_started_at: null, drawing_started_at: null,
+      winning_numbers: [], winners: [], settlement_done: false
+    }).eq('id', 1);
+    notifyAdmin(`🔄 <b>NB New Round #${nextRound}</b>`);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ========== THE MISSING ROUTE — ASSIGN NB TICKETS ========== */
+app.post('/api/admin/nb/assign', auth, adminOnly, async (req, res) => {
+  try {
+    const { name, phone, password, balance, numbers } = req.body;
+    if (!name || !phone || !Array.isArray(numbers) || !numbers.length) return res.status(400).json({ error: 'Missing fields' });
+    const s = await getNbSettings();
+    if (numbers.length !== Number(s.tickets_per_purchase)) return res.status(400).json({ error: `Pick exactly ${s.tickets_per_purchase} numbers` });
+    const uniq = new Set(numbers);
+    if (uniq.size !== numbers.length) return res.status(400).json({ error: 'Numbers must be unique' });
+    const invalid = numbers.find(n => !Number.isInteger(n) || n < 1 || n > s.total_numbers);
+    if (invalid !== undefined) return res.status(400).json({ error: 'Invalid number' });
+    const cleanName = String(name).trim();
+    const cleanPhone = String(phone).trim();
+    let { data: user } = await sb.from('users').select('*').eq('phone', cleanPhone).maybeSingle();
+    if (!user) {
+      if (!password) return res.status(400).json({ error: 'Password needed for new user' });
+      const cleanPassword = String(password).trim();
+      const hash = await bcrypt.hash(cleanPassword, 10);
+      const newCode = await generateReferralCode();
+      const { data: created, error } = await sb.from('users').insert({
+        name: cleanName, phone: cleanPhone, password_hash: hash,
+        password_plain: cleanPassword, role: 'user',
+        balance: Math.max(0, Number(balance) || 0),
+        referral_code: newCode, banned: false
+      }).select().single();
+      if (error) return res.status(500).json({ error: error.message });
+      user = created;
+    } else {
+      const newBal = Number(user.balance) + (Number(balance) || 0);
+      if (newBal < 0) return res.status(400).json({ error: 'Balance cannot be negative' });
+      await sb.from('users').update({ name: cleanName, balance: newBal }).eq('id', user.id);
+      user.name = cleanName; user.balance = newBal;
+    }
+    const existing = await getNbTickets(s.round_number);
+    const taken = existing.filter(t => t.user_id && numbers.includes(t.number));
+    if (taken.length) return res.status(400).json({ error: 'Some numbers already taken' });
+    const batchId = crypto.randomUUID();
+    const rows = numbers.map(n => ({
+      round_number: s.round_number, number: n,
+      user_id: user.id, user_name: user.name, phone: user.phone,
+      batch_id: batchId, is_free: true
+    }));
+    const { error: insErr } = await sb.from('nb_tickets').insert(rows);
+    if (insErr) return res.status(500).json({ error: insErr.message });
+    res.json({ ok: true, user, numbers });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/nb/settle', async (req, res) => {
   try {
     const s = await getNbSettings();
@@ -845,7 +908,6 @@ app.post('/api/nb/settle', async (req, res) => {
     const tickets = await getNbTickets(s.round_number);
     const tpp = Number(s.tickets_per_purchase) || 3;
 
-    // Group matched tickets per user
     const userMatched = {};
     for (const t of tickets) {
       if (!t.user_id) continue;
@@ -854,14 +916,12 @@ app.post('/api/nb/settle', async (req, res) => {
       userMatched[t.user_id].numbers.push(t.number);
     }
 
-    // All users who participated (even with 0 matches)
     const allUsers = {};
     for (const t of tickets) {
       if (!t.user_id) continue;
       if (!allUsers[t.user_id]) allUsers[t.user_id] = { user_id: t.user_id, name: t.user_name, phone: t.phone, numbers: [] };
     }
 
-    // Rank all participants by matches desc, ties alphabetically
     const ranked = Object.values(allUsers).map(u => ({
       ...u,
       matches: (userMatched[u.user_id]?.numbers || []).length,
@@ -876,23 +936,11 @@ app.post('/api/nb/settle', async (req, res) => {
     const winners = [];
     const usedUserIds = new Set();
 
-    // FORCED: Every place 1..N MUST be filled
-    // Priority: user with EXACTLY (tpp - (place-1)) matches
-    // Fallback: highest matches remaining user
     for (let place = 1; place <= wantedWinners; place++) {
       const idealMatches = tpp - (place - 1);
-
-      // Try exact match first
       let chosen = ranked.find(u => !usedUserIds.has(u.user_id) && u.matches === idealMatches);
-
-      // Fallback: highest matches among remaining
-      if (!chosen) {
-        chosen = ranked.find(u => !usedUserIds.has(u.user_id));
-      }
-
-      // Still nothing? Stop (not enough users)
+      if (!chosen) chosen = ranked.find(u => !usedUserIds.has(u.user_id));
       if (!chosen) break;
-
       usedUserIds.add(chosen.user_id);
 
       const prize = Number(prizes[place - 1] ?? 0);
@@ -939,6 +987,7 @@ app.post('/api/nb/settle', async (req, res) => {
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 /* ============= LIVE VIEWERS ============= */
 app.post('/api/live/join', auth, async (req, res) => {
   try {
