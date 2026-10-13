@@ -1036,19 +1036,26 @@ function applyWheelState() {
         const startedAt = new Date(s.spin_started_at).getTime();
         const elapsed = (Date.now() - startedAt) / 1000;
         const remaining = Math.max(0, s.duration - elapsed);
-        if (pointer) pointer.classList.remove('winner'); if (orbit) orbit.classList.add('hidden');
-        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)'; void wheel.offsetWidth;
-        requestAnimationFrame(() => {
-            wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`;
-            wheel.style.transform = `rotate(${target}deg)`;
-        });
+        if (pointer) pointer.classList.remove('winner');
+        if (orbit) orbit.classList.add('hidden');
+
+        /* IMPORTANT: Set transition THEN trigger rotation */
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        void wheel.offsetWidth;   /* force browser to apply the 0deg state */
+
+        /* Now apply the spin transition for the remaining time */
+        wheel.style.transition = `transform ${remaining}s cubic-bezier(.12,.72,.18,1)`;
+        wheel.style.transform = `rotate(${target}deg)`;
+
         startCountdown(startedAt, s.duration);
         return;
     }
     if (s.round_state === 'finished') {
         stopCountdown();
         timerEl.classList.remove('spinning', 'sales');
-        wheel.style.transition = 'none'; wheel.style.transform = `rotate(${target}deg)`;
+        wheel.style.transition = 'none';
+        wheel.style.transform = `rotate(${target}deg)`;
         if (pointer) pointer.classList.add('winner');
         const winners = s.winner_numbers || [];
         if (orbit && winners.length > 0 && n > 0) {
@@ -1058,7 +1065,8 @@ function applyWheelState() {
                 const angle = 360 / n;
                 const center = winnerIndex * angle + angle / 2;
                 const screen = ((center + target) % 360 + 360) % 360;
-                orbit.classList.remove('hidden'); orbit.style.transform = `rotate(${screen}deg)`;
+                orbit.classList.remove('hidden');
+                orbit.style.transform = `rotate(${screen}deg)`;
             }
         }
         const centerEl = document.getElementById('wheelCenter');
