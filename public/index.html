@@ -183,20 +183,51 @@ th { color: #94a3b8; }
 .live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
 .live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
 
-/* NUMBER BETTING */
-.nb-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin-top: 12px; }
-.nb-cell { aspect-ratio: 1; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 14px; border-radius: 8px; background: #172033; border: 2px solid #334155; color: #94a3b8; transition: all .3s ease; position: relative; user-select: none; }
-.nb-cell:hover:not(.taken):not(.drawn) { transform: scale(1.06); cursor: pointer; }
-.nb-cell.drawn { background: #166534; border-color: #22c55e; color: #ffffff; box-shadow: 0 0 12px rgba(34,197,94,.7); animation: nbPop .5s ease; }
-.nb-cell.winner { background: #dc2626; border-color: #ef4444; color: #ffffff; box-shadow: 0 0 20px rgba(239,68,68,.9); animation: nbWinner .8s ease infinite alternate; }
-.nb-cell.mine { border-color: #fbbf24; }
-.nb-cell.mine-picked { background: #fbbf24; color: #111827; border-color: #fbbf24; }
-.nb-cell.taken { background: #1e293b; border-color: #475569; color: #475569; cursor: not-allowed; }
-@keyframes nbPop { from { transform: scale(0.6); opacity: 0.4; } to { transform: scale(1); opacity: 1; } }
-@keyframes nbWinner { from { transform: scale(1); } to { transform: scale(1.12); } }
-.nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+/* =========================================================
+   NUMBER BETTING — Always 10 cols × 8 rows, responsive
+   ========================================================= */
+.nb-board { width: 100%; max-width: 100%; }
+.nb-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+.nb-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: clamp(10px, 1.6vw, 18px);
+  border-radius: 8px;
+  background: #172033;
+  border: 2px solid #334155;
+  color: #94a3b8;
+  transition: all .25s ease;
+  position: relative;
+  user-select: none;
+}
+.nb-cell:hover:not(.taken):not(.drawn):not(.mine) { transform: scale(1.05); cursor: pointer; border-color: #fbbf24; }
+.nb-cell.mine { border-color: #fbbf24; color: #fbbf24; background: #1a1308; }
+.nb-cell.taken { background: #0d1220; border-color: #1e293b; color: #475569; cursor: not-allowed; }
+.nb-cell.mine-picked { background: #fbbf24; color: #111827; border-color: #fbbf24; transform: scale(1.05); }
+.nb-cell.drawn-mine { background: #22c55e; border-color: #4ade80; color: #052e16; box-shadow: 0 0 20px rgba(34,197,94,.9); animation: nbReveal .6s ease, nbPulseMine 1.4s ease-in-out infinite alternate; }
+.nb-cell.drawn-other { background: #dc2626; border-color: #ef4444; color: #ffffff; box-shadow: 0 0 20px rgba(220,38,38,.8); animation: nbReveal .6s ease; }
+@keyframes nbReveal {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes nbPulseMine {
+  from { box-shadow: 0 0 20px rgba(34,197,94,.7); }
+  to { box-shadow: 0 0 34px rgba(34,197,94,1); }
+}
+
+.nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .nb-stats .stat h2 { font-size: 18px; }
-.nb-timer { text-align: center; font-size: 46px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 12px; }
+.nb-timer { text-align: center; font-size: 42px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 14px; }
 .nb-timer.drawing { color: #ef4444; border-color: #ef4444; animation: timerPulse 0.6s infinite alternate; }
 .nb-timer.idle { color: #94a3b8; border-color: #334155; }
 .nb-pick-info { padding: 12px; background: #0b1220; border: 1px dashed #fbbf24; border-radius: 10px; margin: 12px 0; font-size: 14px; }
@@ -209,9 +240,35 @@ th { color: #94a3b8; }
 .game-tab:hover { border-color: #fbbf24; color: #fbbf24; }
 .game-tab.active { background: #fbbf24; border-color: #fbbf24; color: #111827; box-shadow: 0 0 20px rgba(251,191,36,.5); }
 
-@media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } .nb-grid { grid-template-columns: repeat(8, 1fr); } }
-@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 15px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .login-wheel-overlay { width: 130px; height: 130px; } .login-banner-wrap img { height: 180px; } .nb-grid { grid-template-columns: repeat(5, 1fr); gap: 6px; } .nb-cell { font-size: 12px; } .nb-stats { grid-template-columns: repeat(2, 1fr); } .nb-timer { font-size: 34px; } }
-@media(max-width:450px) { .wheel-container { width: 280px; } }
+/* RESPONSIVE */
+@media(max-width:1000px) {
+  .stats { grid-template-columns: repeat(2,1fr); }
+  .wheel-layout { grid-template-columns: 1fr; }
+  .nb-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media(max-width:700px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: flex; overflow-x: auto; padding: 10px; }
+  .nav { min-width: 130px; margin-right: 5px; }
+  .main { padding: 12px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .full { grid-column: auto; }
+  .stats { grid-template-columns: 1fr; }
+  .wheel-container { width: 320px; }
+  .timer { font-size: 40px; }
+  .banner-img { height: 160px; }
+  .login-wheel-overlay { width: 130px; height: 130px; }
+  .login-banner-wrap img { height: 180px; }
+  .nb-timer { font-size: 30px; }
+  .nb-stats { grid-template-columns: 1fr 1fr; }
+  .nb-grid { gap: 4px; }
+  .nb-cell { font-size: 11px; border-radius: 6px; }
+}
+@media(max-width:450px) {
+  .wheel-container { width: 280px; }
+  .nb-grid { gap: 3px; }
+  .nb-cell { font-size: 10px; border-radius: 5px; border-width: 1.5px; }
+}
 </style>
 </head>
 <body>
@@ -244,14 +301,6 @@ th { color: #94a3b8; }
             <path d="M100,100 L100,185 A85,85 0 0,1 26.4,142.5 Z" fill="#3b82f6" stroke="#0f172a" stroke-width="1.5"/>
             <path d="M100,100 L26.4,142.5 A85,85 0 0,1 26.4,57.5 Z" fill="#a855f7" stroke="#0f172a" stroke-width="1.5"/>
             <path d="M100,100 L26.4,57.5 A85,85 0 0,1 100,15 Z" fill="#f97316" stroke="#0f172a" stroke-width="1.5"/>
-            <text x="140" y="75" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">1</text>
-            <text x="155" y="110" fill="#111827" font-size="14" font-weight="bold" text-anchor="middle">2</text>
-            <text x="140" y="150" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">3</text>
-            <text x="100" y="165" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">4</text>
-            <text x="60" y="150" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">5</text>
-            <text x="45" y="110" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">6</text>
-            <text x="60" y="75" fill="#111827" font-size="14" font-weight="bold" text-anchor="middle">7</text>
-            <text x="100" y="55" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">8</text>
             <circle cx="100" cy="100" r="22" fill="#111827" stroke="#fbbf24" stroke-width="4"/>
             <circle cx="100" cy="100" r="8" fill="#fbbf24"/>
         </svg>
@@ -314,13 +363,12 @@ let nbPollId     = null;
 let nbSettleId   = null;
 let CONFIG       = { botUsername: 'Numbers_Betting_bot', channelUsername: '@Lucky21_Wheel' };
 
-/* Game chooser state for Buy page and Assign page */
-let buyGame = 'wheel';       // 'wheel' | 'nb'
-let assignGame = 'wheel';    // 'wheel' | 'nb'
-let buySelected = [];        // wheel tickets picked
-let nbBuyPicked = [];        // nb tickets picked (buy page)
-let assignSelectedWheel = [];  // wheel tickets picked (assign)
-let assignSelectedNB = [];     // nb tickets picked (assign)
+let buyGame = 'wheel';
+let assignGame = 'wheel';
+let buySelected = [];
+let nbBuyPicked = [];
+let assignSelectedWheel = [];
+let assignSelectedNB = [];
 
 function renderSidebar() {
     const isAdmin = ME.role === 'admin';
@@ -483,6 +531,9 @@ function stopLivePolls() {
     if (nbSettleId) { clearInterval(nbSettleId); nbSettleId = null; }
 }
 
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 function dashboard() {
     const sold = TICKETS.filter(t => t.user_id !== null).length;
     const botUrl = 'https://t.me/' + CONFIG.botUsername;
@@ -492,21 +543,18 @@ function dashboard() {
         document.getElementById('main').innerHTML = `
             <img src="image1.jpg" alt="Admin" class="banner-img" onerror="this.style.display='none'">
             <h1 class="title">Admin Dashboard</h1>
-
             <div class="card">
                 <h2>🤖 AI Business Insight</h2>
                 <div id="insightBox" class="muted" style="margin-top:14px;line-height:1.7;white-space:pre-wrap">
                     <span style="color:#fbbf24">⏳ Analyzing your business...</span>
                 </div>
             </div>
-
             <div class="stats">
                 <div class="stat"><small>Registered Users</small><h2 id="statUsers">—</h2></div>
                 <div class="stat"><small>Sold Tickets</small><h2>${sold}/${SETTINGS.ticket_count}</h2></div>
                 <div class="stat"><small>Sales State</small><h2>${SETTINGS.sales_state === 'open' ? '🟢 OPEN' : '⚪ ' + (SETTINGS.sales_state || 'idle').toUpperCase()}</h2></div>
                 <div class="stat"><small>Round State</small><h2>${SETTINGS.round_state}</h2></div>
             </div>
-
             <div class="card">
                 <h2>Admin Actions</h2>
                 <div class="action-buttons">
@@ -519,7 +567,6 @@ function dashboard() {
                     <button class="action-btn purple" onclick="openPage('settings')">⚙️ Settings</button>
                 </div>
             </div>`;
-
         api('/admin/users').then(list => { const el = document.getElementById('statUsers'); if (el) el.textContent = list.users.length; }).catch(() => {});
         api('/admin/insights').then(data => {
             const insightEl = document.getElementById('insightBox');
@@ -540,7 +587,6 @@ function dashboard() {
     document.getElementById('main').innerHTML = `
         <img src="image2.jpg" alt="Welcome" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">Welcome, ${escapeHTML(ME.name)}</h1>
-
         <div class="telegram-banner" style="background:linear-gradient(135deg,#22c55e,#16a34a);border-color:#4ade80">
             <div class="icon">🤖</div>
             <div class="text">
@@ -549,7 +595,6 @@ function dashboard() {
             </div>
             <a href="${botUrl}" target="_blank" class="join-btn" style="color:#16a34a">Open Bot</a>
         </div>
-
         <div class="telegram-banner">
             <div class="icon">📢</div>
             <div class="text">
@@ -558,14 +603,12 @@ function dashboard() {
             </div>
             <a href="${channelUrl}" target="_blank" class="join-btn">Join Channel</a>
         </div>
-
         <div class="stats">
             <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
             <div class="stat"><small>My Tickets</small><h2>${mine.length}</h2></div>
             <div class="stat"><small>Active Referrals</small><h2>${refs}</h2></div>
             <div class="stat"><small>Free Tickets</small><h2>${ME.free_tickets || 0}</h2></div>
         </div>
-
         <div class="card">
             <h2>Quick Actions</h2>
             <div class="action-buttons">
@@ -575,7 +618,6 @@ function dashboard() {
                 <button class="action-btn purple" onclick="openPage('nb')">🎰 Number Betting</button>
             </div>
         </div>
-
         <div class="referral-card">
             <h2 style="color:#fbbf24">🎁 Referral Progress</h2>
             <p class="muted" style="margin:8px 0 12px">${refs} active · ${nextReward} more for a FREE ticket</p>
@@ -586,7 +628,6 @@ function dashboard() {
                 <button class="copy-btn" onclick="copyInviteLink()">🔗 Invite</button>
             </div>
         </div>
-
         <div class="card"><h2>🎟️ My Tickets</h2><br>
             ${mine.length ? mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' ') : `<p class="muted">No tickets yet.</p>`}
         </div>`;
@@ -595,12 +636,10 @@ function copyReferral() { if (!ME.referral_code) return; navigator.clipboard.wri
 function copyInviteLink() { if (!ME.referral_code) return; const link = window.location.origin + '/?ref=' + ME.referral_code; navigator.clipboard.writeText(link); toast('🔗 Copied!'); }
 
 /* =========================================================
-   BUY TICKETS PAGE — WITH GAME CHOOSER
+   BUY TICKETS (with game chooser)
    ========================================================= */
 async function buyPage() {
     if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Admin — use Assign Tickets instead.</p></div>`; return; }
-
-    // Reset picks when switching game tabs
     buySelected = [];
     nbBuyPicked = [];
 
@@ -610,19 +649,15 @@ async function buyPage() {
     document.getElementById('main').innerHTML = `
         <img src="image3.jpg" alt="Tickets" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">🛒 Buy Tickets</h1>
-
         <div class="game-tabs">
             <button class="game-tab ${buyGame === 'wheel' ? 'active' : ''}" onclick="buySwitchGame('wheel')">🎡 Lucky Wheel</button>
             <button class="game-tab ${buyGame === 'nb' ? 'active' : ''}" onclick="buySwitchGame('nb')">🎰 Number Betting</button>
         </div>
-
         <div id="buyContent"></div>
     `;
-
     if (buyGame === 'wheel') buyRenderWheel();
     else buyRenderNB(nbSettings);
 }
-
 function buySwitchGame(game) {
     if (buyGame === game) return;
     buyGame = game;
@@ -630,7 +665,6 @@ function buySwitchGame(game) {
     nbBuyPicked = [];
     buyPage();
 }
-
 function buyRenderWheel() {
     const salesOpen = SETTINGS.sales_state === 'open';
     const soldCount = TICKETS.filter(t => t.user_id !== null).length;
@@ -703,27 +737,14 @@ async function buySelectedTickets() {
         await refreshState(); buyPage();
     } catch (e) { alert('❌ ' + e.message); }
 }
-
-/* Number Betting buy render (inside Buy page) */
-function buyRenderNB(nbSettings) {
-    if (!nbSettings) {
-        document.getElementById('buyContent').innerHTML = `<div class="card"><p class="muted">Number Betting not available.</p></div>`;
-        return;
-    }
+async function buyRenderNB(nbSettings) {
+    if (!nbSettings) { document.getElementById('buyContent').innerHTML = `<div class="card"><p class="muted">Number Betting not available.</p></div>`; return; }
     const s = nbSettings;
     const salesOpen = s.sales_state === 'open';
-    const takenSet = new Set();
-    // Get all NB tickets taken this round
-    api('/nb/state').then(st => {
-        (st.tickets || []).forEach(t => { if (t.user_id) takenSet.add(t.number); });
-        const mySet = new Set((st.my_tickets || []).map(t => t.number));
-        const grid = document.getElementById('nbBuyGrid');
-        if (grid) grid.innerHTML = nbBuyGridHtml(s, takenSet, mySet);
-        const mineEl = document.getElementById('nbMineList');
-        if (mineEl) mineEl.innerHTML = (st.my_tickets || []).length
-            ? st.my_tickets.map(t => `<span class="nb-pick-chip" style="margin:3px">#${t.number}</span>`).join('')
-            : '<span class="muted">No tickets yet this round.</span>';
-    }).catch(() => {});
+    let st = { tickets: [], my_tickets: [] };
+    try { st = await api('/nb/state'); } catch (e) {}
+    const takenSet = new Set((st.tickets || []).filter(t => t.user_id).map(t => t.number));
+    const mySet = new Set((st.my_tickets || []).map(t => t.number));
 
     document.getElementById('buyContent').innerHTML = `
         ${!salesOpen ? `<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Number Betting sales are currently CLOSED.</b></p></div>` : ''}
@@ -735,12 +756,12 @@ function buyRenderNB(nbSettings) {
         </div>
         <div class="card">
             <h2>My NB Tickets</h2>
-            <div id="nbMineList" style="margin-top:10px"><span class="muted">Loading...</span></div>
+            <div style="margin-top:10px">${mySet.size ? [...mySet].sort((a,b)=>a-b).map(n => `<span class="nb-pick-chip" style="margin:3px">#${n}</span>`).join('') : '<span class="muted">No tickets yet this round.</span>'}</div>
         </div>
         <div class="card">
             <h2>Pick ${s.tickets_per_purchase} Numbers</h2>
             <p class="muted" style="margin-top:8px">Tap a number to select. Tap again to deselect.</p>
-            <div class="nb-grid" id="nbBuyGrid">${nbBuyGridHtml(s, new Set(), new Set())}</div>
+            <div class="nb-board" style="margin-top:12px"><div class="nb-grid" id="nbBuyGrid">${nbBuyGridHtml(s, takenSet, mySet)}</div></div>
         </div>
         <div class="card">
             <div class="nb-pick-info">
@@ -750,39 +771,36 @@ function buyRenderNB(nbSettings) {
             <p><b>Total:</b> <span class="gold">${money(s.price_per_purchase)}</span></p><br>
             <button class="main-button" onclick="nbBuyConfirm()" ${!salesOpen ? 'disabled' : ''}>🛒 CONFIRM NB PURCHASE</button>
         </div>`;
-    // Attach click handlers on the grid
-    setTimeout(() => nbAttachGridClick('nbBuyGrid', nbBuyToggle), 50);
+    setTimeout(() => nbAttachGridClick('nbBuyGrid', nbBuyToggle, s), 50);
 }
-
 function nbBuyGridHtml(s, takenSet, mySet) {
     let html = '';
     for (let i = 1; i <= s.total_numbers; i++) {
         let cls = 'nb-cell';
-        if (mySet.has(i)) cls += ' mine';
-        else if (takenSet.has(i)) cls += ' taken';
         if (nbBuyPicked.includes(i)) cls += ' mine-picked';
+        else if (mySet.has(i)) cls += ' mine';
+        else if (takenSet.has(i)) cls += ' taken';
         html += `<div class="${cls}" data-num="${i}">${i}</div>`;
     }
     return html;
 }
-
-function nbAttachGridClick(gridId, handler) {
+function nbAttachGridClick(gridId, handler, s) {
     const grid = document.getElementById(gridId);
     if (!grid) return;
-    grid.addEventListener('click', (ev) => {
+    grid._nbHandler = (ev) => {
         const cell = ev.target.closest('.nb-cell');
         if (!cell) return;
         const num = Number(cell.dataset.num);
         if (!num) return;
-        handler(num, cell);
-    });
+        handler(num, cell, s);
+    };
+    grid.removeEventListener('click', grid._nbOldHandler || (()=>{}));
+    grid.addEventListener('click', grid._nbHandler);
+    grid._nbOldHandler = grid._nbHandler;
 }
-
-function nbBuyToggle(num, cell) {
+function nbBuyToggle(num, cell, s) {
     if (cell.classList.contains('taken')) return;
-    const s = nbState ? nbState.settings : null;
-    // Get from settings fetched from nb/config earlier; fallback to DOM
-    const tpp = Number(document.getElementById('nbBuyCount')?.parentElement?.innerHTML?.match(/\/ (\d+)/)?.[1]) || 3;
+    const tpp = Number(s.tickets_per_purchase);
     if (nbBuyPicked.includes(num)) {
         nbBuyPicked = nbBuyPicked.filter(n => n !== num);
         cell.classList.remove('mine-picked');
@@ -794,7 +812,6 @@ function nbBuyToggle(num, cell) {
     const cnt = document.getElementById('nbBuyCount'); if (cnt) cnt.textContent = nbBuyPicked.length;
     const list = document.getElementById('nbBuyList'); if (list) list.innerHTML = nbBuyPicked.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
 }
-
 async function nbBuyConfirm() {
     const cfg = await api('/nb/config');
     if (nbBuyPicked.length !== cfg.tickets_per_purchase) { alert(`Pick exactly ${cfg.tickets_per_purchase} numbers`); return; }
@@ -810,31 +827,26 @@ async function nbBuyConfirm() {
 }
 
 /* =========================================================
-   ASSIGN TICKETS PAGE — WITH GAME CHOOSER (admin)
+   ASSIGN TICKETS (admin) — with game chooser
    ========================================================= */
 async function ticketsPage() {
     assignSelectedWheel = [];
     assignSelectedNB = [];
-
     let nbSettings = null;
     try { nbSettings = await api('/nb/config'); } catch (e) {}
 
     document.getElementById('main').innerHTML = `
         <img src="image3.jpg" alt="Assign Tickets" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">🎟️ Assign Tickets</h1>
-
         <div class="game-tabs">
             <button class="game-tab ${assignGame === 'wheel' ? 'active' : ''}" onclick="assignSwitchGame('wheel')">🎡 Lucky Wheel</button>
             <button class="game-tab ${assignGame === 'nb' ? 'active' : ''}" onclick="assignSwitchGame('nb')">🎰 Number Betting</button>
         </div>
-
         <div id="assignContent"></div>
     `;
-
     if (assignGame === 'wheel') assignRenderWheel();
     else assignRenderNB(nbSettings);
 }
-
 function assignSwitchGame(game) {
     if (assignGame === game) return;
     assignGame = game;
@@ -842,7 +854,6 @@ function assignSwitchGame(game) {
     assignSelectedNB = [];
     ticketsPage();
 }
-
 function assignRenderWheel() {
     document.getElementById('assignContent').innerHTML = `
         <div class="card">
@@ -903,19 +914,12 @@ async function resetOneTicket(number) {
     try { await api('/admin/tickets/reset-one', { method: 'POST', body: { number } }); toast('✅ Reset'); await refreshState(); ticketsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
-function assignRenderNB(nbSettings) {
-    if (!nbSettings) {
-        document.getElementById('assignContent').innerHTML = `<div class="card"><p class="muted">Number Betting not available.</p></div>`;
-        return;
-    }
+async function assignRenderNB(nbSettings) {
+    if (!nbSettings) { document.getElementById('assignContent').innerHTML = `<div class="card"><p class="muted">Number Betting not available.</p></div>`; return; }
     const s = nbSettings;
-    const takenSet = new Set();
-    api('/nb/state').then(st => {
-        (st.tickets || []).forEach(t => { if (t.user_id) takenSet.add(t.number); });
-        const grid = document.getElementById('nbAssignGrid');
-        if (grid) grid.innerHTML = nbAssignGridHtml(s, takenSet);
-    }).catch(() => {});
+    let st = { tickets: [] };
+    try { st = await api('/nb/state'); } catch (e) {}
+    const takenSet = new Set((st.tickets || []).filter(t => t.user_id).map(t => t.number));
 
     document.getElementById('assignContent').innerHTML = `
         <div class="card">
@@ -926,32 +930,28 @@ function assignRenderNB(nbSettings) {
             <label>Password (new users only)</label><input id="assignNbPassword" type="password" placeholder="Password">
             <label>Balance Adjustment (ETB)</label><input id="assignNbBalance" type="number" value="0">
             <label>Select ${s.tickets_per_purchase} Numbers</label>
-            <div class="nb-grid" id="nbAssignGrid">${nbAssignGridHtml(s, new Set())}</div>
+            <div class="nb-board" style="margin-top:12px"><div class="nb-grid" id="nbAssignGrid">${nbAssignGridHtml(s, takenSet)}</div></div>
             <div class="nb-pick-info">
                 <b>Selected:</b> <span id="nbAssignCount">0</span> / ${s.tickets_per_purchase}
                 <div class="nb-pick-list" id="nbAssignList"></div>
             </div>
             <button class="main-button" onclick="assignTicketsNB()">🎟️ ASSIGN NB TICKETS</button>
         </div>`;
-    setTimeout(() => nbAttachGridClick('nbAssignGrid', nbAssignToggle), 50);
+    setTimeout(() => nbAttachGridClick('nbAssignGrid', nbAssignToggle, s), 50);
 }
-
 function nbAssignGridHtml(s, takenSet) {
     let html = '';
     for (let i = 1; i <= s.total_numbers; i++) {
         let cls = 'nb-cell';
-        if (takenSet.has(i)) cls += ' taken';
         if (assignSelectedNB.includes(i)) cls += ' mine-picked';
+        else if (takenSet.has(i)) cls += ' taken';
         html += `<div class="${cls}" data-num="${i}">${i}</div>`;
     }
     return html;
 }
-
-function nbAssignToggle(num, cell) {
+function nbAssignToggle(num, cell, s) {
     if (cell.classList.contains('taken')) return;
-    const s = nbState ? nbState.settings : null;
-    const tppMatch = document.getElementById('nbAssignCount')?.parentElement?.innerHTML?.match(/\/ (\d+)/);
-    const tpp = tppMatch ? Number(tppMatch[1]) : 3;
+    const tpp = Number(s.tickets_per_purchase);
     if (assignSelectedNB.includes(num)) {
         assignSelectedNB = assignSelectedNB.filter(n => n !== num);
         cell.classList.remove('mine-picked');
@@ -963,7 +963,6 @@ function nbAssignToggle(num, cell) {
     const cnt = document.getElementById('nbAssignCount'); if (cnt) cnt.textContent = assignSelectedNB.length;
     const list = document.getElementById('nbAssignList'); if (list) list.innerHTML = assignSelectedNB.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
 }
-
 async function assignTicketsNB() {
     const name = document.getElementById('assignNbName').value.trim();
     const phone = document.getElementById('assignNbPhone').value.trim();
@@ -971,9 +970,7 @@ async function assignTicketsNB() {
     const balance = Number(document.getElementById('assignNbBalance').value) || 0;
     const cfg = await api('/nb/config');
     if (!name || !phone) { alert('Enter name and phone'); return; }
-    if (assignSelectedNB.length !== cfg.tickets_per_purchase) {
-        alert(`Pick exactly ${cfg.tickets_per_purchase} numbers`); return;
-    }
+    if (assignSelectedNB.length !== cfg.tickets_per_purchase) { alert(`Pick exactly ${cfg.tickets_per_purchase} numbers`); return; }
     try {
         await api('/admin/nb/assign', { method: 'POST', body: { name, phone, password, balance, numbers: assignSelectedNB } });
         alert('✅ NB Tickets Assigned!');
@@ -982,224 +979,8 @@ async function assignTicketsNB() {
     } catch (e) { alert('❌ ' + e.message); }
 }
 
-async function depositPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
-    let dep = { deposits: [] };
-    try { dep = await api('/user/deposits'); } catch (e) {}
-    document.getElementById('main').innerHTML = `
-        <img src="image1.jpg" alt="Deposit" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">💰 Deposit Money</h1>
-        <div class="card">
-            <h2>Step 1: Send Money</h2>
-            <div class="method-box"><h3>🏦 CBE</h3><div class="acct">1000676405058</div><div class="name">Teshome Ayenew</div></div>
-            <div class="method-box"><h3>🏦 BOA</h3><div class="acct">189018436</div><div class="name">Teshome Ayenew</div></div>
-        </div>
-        <div class="card">
-            <h2>Step 2: Submit Request</h2><br>
-            <label>Method</label>
-            <select id="depMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
-            <label>Amount (ETB)</label>
-            <input id="depAmount" type="number" min="1" placeholder="e.g. 500">
-            <label>Transaction ID</label>
-            <input id="depTxn" placeholder="From bank SMS">
-            <button class="main-button" onclick="submitDeposit()">📤 SUBMIT DEPOSIT</button>
-        </div>
-        <div class="card"><h2>My Deposits</h2><br>
-            ${!dep.deposits.length ? `<p class="muted">No deposits yet.</p>` : dep.deposits.map(d => `
-                <div class="req-card">
-                    <div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div>
-                    <div class="row"><b>Method:</b> <span>${d.method.toUpperCase()}</span></div>
-                    <div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div>
-                    <div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>
-                </div>`).join('')}
-        </div>`;
-}
-async function submitDeposit() {
-    const method = document.getElementById('depMethod').value;
-    const amount = Number(document.getElementById('depAmount').value);
-    const transactionId = document.getElementById('depTxn').value.trim();
-    if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
-    if (!transactionId) { alert('Enter transaction ID'); return; }
-    try {
-        await api('/user/deposits', { method: 'POST', body: { method, amount, transactionId } });
-        alert('✅ Submitted!');
-        depositPage();
-    } catch (e) { alert('❌ ' + e.message); }
-}
-
-async function withdrawPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
-    let w = { withdrawals: [] };
-    try { w = await api('/user/withdrawals'); } catch (e) {}
-    document.getElementById('main').innerHTML = `
-        <img src="image3.jpg" alt="Withdraw" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">💸 Withdraw Money</h1>
-        <div class="stats"><div class="stat"><small>Balance</small><h2>${money(ME.balance)}</h2></div></div>
-        <div class="card">
-            <h2>Request Withdrawal</h2><br>
-            <label>Method</label>
-            <select id="wdMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
-            <label>Amount (ETB)</label>
-            <input id="wdAmount" type="number" min="1" placeholder="e.g. 500">
-            <label>Your Account Number</label>
-            <input id="wdAccount" placeholder="Your account">
-            <button class="main-button" onclick="submitWithdraw()">📤 SUBMIT WITHDRAWAL</button>
-        </div>
-        <div class="card"><h2>My Withdrawals</h2><br>
-            ${!w.withdrawals.length ? `<p class="muted">No withdrawals yet.</p>` : w.withdrawals.map(x => `
-                <div class="req-card">
-                    <div class="row"><b>Amount:</b> <span class="gold">${money(x.amount)}</span></div>
-                    <div class="row"><b>Method:</b> <span>${x.method.toUpperCase()}</span></div>
-                    <div class="row"><b>Account:</b> <span>${escapeHTML(x.account_number)}</span></div>
-                    <div class="row"><b>Status:</b> <span class="status-badge ${x.status}">${x.status.toUpperCase()}</span></div>
-                </div>`).join('')}
-        </div>`;
-}
-async function submitWithdraw() {
-    const method = document.getElementById('wdMethod').value;
-    const amount = Number(document.getElementById('wdAmount').value);
-    const accountNumber = document.getElementById('wdAccount').value.trim();
-    if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
-    if (!accountNumber) { alert('Enter account number'); return; }
-    if (amount > Number(ME.balance)) { alert('Not enough balance'); return; }
-    if (!confirm(`Withdraw ${money(amount)}?`)) return;
-    try {
-        await api('/user/withdrawals', { method: 'POST', body: { method, amount, accountNumber } });
-        alert('✅ Submitted!');
-        await refreshState(); withdrawPage();
-    } catch (e) { alert('❌ ' + e.message); }
-}
-
-async function referralsPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
-    const data = await api('/referrals');
-    const goal = SETTINGS.referral_goal || 8;
-    document.getElementById('main').innerHTML = `
-        <img src="image4.jpg" alt="Referrals" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">🎁 My Referrals</h1>
-        <div class="referral-card">
-            <h2 style="color:#fbbf24">Your Code</h2>
-            <div class="referral-code-box">
-                <div class="referral-code">${ME.referral_code || '—'}</div>
-                <button class="copy-btn" onclick="copyReferral()">📋 Copy</button>
-                <button class="copy-btn" onclick="copyInviteLink()">🔗 Link</button>
-            </div>
-            <p class="muted" style="margin-top:12px">Every <b class="gold">${goal}</b> friends who buy = <b class="gold">1 FREE ticket</b>.</p>
-        </div>
-        <div class="card"><h2>Friends (${data.referrals.length})</h2><br>
-            ${data.referrals.length ? data.referrals.map(r => `
-                <div class="ref-row">
-                    <div><b>${escapeHTML(r.name)}</b><br><span class="muted" style="font-size:12px">${escapeHTML(r.phone)}</span></div>
-                    <div>${r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>'}</div>
-                </div>`).join('') : `<p class="muted">No referrals yet.</p>`}
-        </div>`;
-}
-
-async function usersPage() {
-    const data = await api('/admin/users/full');
-    const list = data.users;
-    document.getElementById('main').innerHTML = `
-        <img src="image4.jpg" alt="Users" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">👥 Registered Users</h1>
-        <div class="card"><div class="table-box"><table>
-            <thead><tr>
-                <th>Name</th><th>Phone</th><th>Password</th><th>Balance</th>
-                <th>Tickets</th><th>Refs</th><th>Free</th><th>Status</th><th>Actions</th>
-            </tr></thead>
-            <tbody>${list.length ? list.map(u => `
-                <tr>
-                    <td>${escapeHTML(u.name)}</td>
-                    <td>${escapeHTML(u.phone)}</td>
-                    <td><span style="font-family:monospace;color:#fbbf24">${escapeHTML(u.password_plain || '—')}</span></td>
-                    <td class="gold">${money(u.balance)}</td>
-                    <td>${userTickets(u.id) || '-'}</td>
-                    <td>${u.active_referrals || 0}</td>
-                    <td class="gold">${u.free_tickets || 0}</td>
-                    <td>${u.banned ? '<span class="status-badge rejected">BANNED</span>' : '<span class="status-badge approved">ACTIVE</span>'}</td>
-                    <td>
-                        <button class="small-button gold-button" onclick="adjustBalance('${u.id}')">Balance</button>
-                        <button class="small-button" onclick="resetPassword('${u.id}', '${escapeHTML(u.name)}')">Reset PW</button>
-                        ${u.banned ? `<button class="small-button green-button" onclick="banUser('${u.id}', false)">Restore</button>` : `<button class="small-button red-button" onclick="banUser('${u.id}', true)">Ban</button>`}
-                    </td>
-                </tr>`).join('') : `<tr><td colspan="9" class="muted">No users yet.</td></tr>`}</tbody>
-        </table></div></div>`;
-}
-async function resetPassword(userId, userName) {
-    const newPw = prompt(`New password for ${userName}:\n(min 4 characters)`);
-    if (newPw === null) return;
-    if (newPw.trim().length < 4) { alert('Min 4 characters'); return; }
-    try { await api('/admin/users/reset-password', { method: 'POST', body: { userId, newPassword: newPw.trim() } }); alert('✅ Updated.'); usersPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-async function banUser(userId, banned) {
-    if (!confirm(banned ? 'BAN this user?' : 'RESTORE this user?')) return;
-    try { await api('/admin/users/ban', { method: 'POST', body: { userId, banned } }); alert(banned ? '✅ Banned.' : '✅ Restored.'); usersPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-async function adjustBalance(id) {
-    const amount = prompt('Amount to ADD (use - to subtract):');
-    if (amount === null) return;
-    const value = Number(amount);
-    if (!Number.isFinite(value)) { alert('Invalid'); return; }
-    try { await api('/admin/users/balance', { method: 'POST', body: { userId: id, amount: value } }); await refreshState(); usersPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-
-async function requestsPage() {
-    const [dep, wd] = await Promise.all([api('/admin/deposits'), api('/admin/withdrawals')]);
-    const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
-    const pendingWds  = wd.withdrawals.filter(w => w.status === 'pending');
-    document.getElementById('main').innerHTML = `
-        <img src="image1.jpg" alt="Requests" class="banner-img" onerror="this.style.display='none'">
-        <h1 class="title">📥 Manage Requests</h1>
-        <div class="stats">
-            <div class="stat"><small>Pending Deposits</small><h2>${pendingDeps.length}</h2></div>
-            <div class="stat"><small>Pending Withdrawals</small><h2>${pendingWds.length}</h2></div>
-            <div class="stat"><small>Total Deposits</small><h2>${dep.deposits.length}</h2></div>
-            <div class="stat"><small>Total Withdrawals</small><h2>${wd.withdrawals.length}</h2></div>
-        </div>
-        <div class="card"><h2>💰 Deposits</h2><br>
-            ${!dep.deposits.length ? `<p class="muted">None yet.</p>` : dep.deposits.map(d => `
-                <div class="req-card">
-                    <div class="row"><b>User:</b> <span>${escapeHTML(d.user_name)} (${escapeHTML(d.phone)})</span></div>
-                    <div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div>
-                    <div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div>
-                    <div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>
-                    ${d.status === 'pending' ? `<div class="req-actions">
-                        <button class="small-button green-button" onclick="decideDeposit(${d.id}, 'approve')">✓ Approve</button>
-                        <button class="small-button red-button" onclick="decideDeposit(${d.id}, 'reject')">✗ Reject</button>
-                    </div>` : ''}
-                </div>`).join('')}
-        </div>
-        <div class="card"><h2>💸 Withdrawals</h2><br>
-            ${!wd.withdrawals.length ? `<p class="muted">None yet.</p>` : wd.withdrawals.map(w => `
-                <div class="req-card">
-                    <div class="row"><b>User:</b> <span>${escapeHTML(w.user_name)} (${escapeHTML(w.phone)})</span></div>
-                    <div class="row"><b>Amount:</b> <span class="gold">${money(w.amount)}</span></div>
-                    <div class="row"><b>Account:</b> <span>${escapeHTML(w.account_number)}</span></div>
-                    <div class="row"><b>Status:</b> <span class="status-badge ${w.status}">${w.status.toUpperCase()}</span></div>
-                    ${w.status === 'pending' ? `<div class="req-actions">
-                        <button class="small-button green-button" onclick="decideWithdraw(${w.id}, 'approve')">✓ Approve</button>
-                        <button class="small-button red-button" onclick="decideWithdraw(${w.id}, 'reject')">✗ Reject</button>
-                    </div>` : ''}
-                </div>`).join('')}
-        </div>`;
-}
-async function decideDeposit(id, action) {
-    const comment = prompt(action === 'approve' ? 'Approve? Comment:' : 'Reject? Reason:');
-    if (comment === null) return;
-    try { await api(`/admin/deposits/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-async function decideWithdraw(id, action) {
-    const comment = prompt(action === 'approve' ? 'Approve? Reference:' : 'Reject? Reason:');
-    if (comment === null) return;
-    try { await api(`/admin/withdrawals/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-
 /* =========================================================
-   NUMBER BETTING PAGE (live game view)
+   NB PAGE — self-contained, sequential reveal, corrected colors
    ========================================================= */
 async function nbPage() {
     try {
@@ -1216,19 +997,17 @@ async function nbPage() {
 
     document.getElementById('main').innerHTML = `
         <h1 class="title">🎰 Number Betting — Round #${s.round_number}</h1>
-
         <div class="nb-stats">
             <div class="stat"><small>Status</small><h2 id="nbStatusH">${nbStatusText(s)}</h2></div>
-            <div class="stat"><small>Sold</small><h2>${nbState.sold_count}/${s.total_numbers}</h2></div>
+            <div class="stat"><small>Sold</small><h2 id="nbSoldH">${nbState.sold_count}/${s.total_numbers}</h2></div>
             <div class="stat"><small>Ticket Bundle</small><h2>${s.tickets_per_purchase} for ${s.price_per_purchase} ETB</h2></div>
-            <div class="stat"><small>Drawn</small><h2>${(s.winning_numbers || []).length}/${s.drawn_count}</h2></div>
+            <div class="stat"><small>Drawn</small><h2 id="nbDrawnH">0/${s.drawn_count}</h2></div>
         </div>
-
         <div id="nbTimer" class="nb-timer ${drawing ? 'drawing' : salesOpen ? 'sales' : 'idle'}">--:--</div>
-
         <div class="card">
             <h2>Numbers Board</h2>
-            <div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div>
+            <p class="muted" style="margin-top:6px;font-size:13px">🟢 Green = yours + drawn · 🔴 Red = others + drawn · 🟡 Gold = your pick</p>
+            <div class="nb-board" style="margin-top:12px"><div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div></div>
         </div>
 
         ${isAdmin ? nbAdminPanel(s) : nbUserPanel(s)}
@@ -1253,10 +1032,8 @@ async function nbPage() {
             </div>
         </div>
     `;
-
     nbStartPolls();
 }
-
 function nbStatusText(s) {
     if (s.round_state === 'drawing') return '🎬 DRAWING';
     if (s.round_state === 'finished') return '✅ FINISHED';
@@ -1264,24 +1041,34 @@ function nbStatusText(s) {
     if (s.sales_state === 'closed') return '🔴 SALES CLOSED';
     return '⚪ IDLE';
 }
-
+function nbDrawnSoFar(s) {
+    // Determine how many winning numbers are visible at this moment
+    if (!s.winning_numbers || !s.winning_numbers.length) return 0;
+    if (s.round_state === 'finished') return s.winning_numbers.length;
+    if (s.round_state !== 'drawing') return 0;
+    const start = new Date(s.drawing_started_at).getTime();
+    const elapsed = (Date.now() - start) / 1000;
+    const shown = Math.floor(elapsed / Math.max(1, s.draw_delay_seconds)) + 1;
+    return Math.min(s.winning_numbers.length, Math.max(0, shown));
+}
 function nbGridHtml(s) {
-    const drawnSet = new Set(s.winning_numbers || []);
+    const drawnCount = nbDrawnSoFar(s);
+    const drawnSet = new Set((s.winning_numbers || []).slice(0, drawnCount));
     const mineSet = new Set((nbState.my_tickets || []).map(t => t.number));
     const userNumbers = new Set((nbState.tickets || []).filter(t => t.user_id).map(t => t.number));
     let html = '';
     for (let i = 1; i <= s.total_numbers; i++) {
         let cls = 'nb-cell';
-        if (drawnSet.has(i)) cls += ' drawn';
-        if (drawnSet.has(i) && mineSet.has(i)) cls += ' winner';
-        if (mineSet.has(i) && !drawnSet.has(i)) cls += ' mine-picked';
-        else if (mineSet.has(i)) cls += ' mine';
-        else if (userNumbers.has(i) && !drawnSet.has(i)) cls += ' taken';
-        html += `<div class="${cls}">${i}</div>`;
+        const drawn = drawnSet.has(i);
+        const mine = mineSet.has(i);
+        if (drawn && mine) cls += ' drawn-mine';
+        else if (drawn) cls += ' drawn-other';
+        else if (mine) cls += ' mine';
+        else if (userNumbers.has(i)) cls += ' taken';
+        html += `<div class="${cls}" data-num="${i}">${i}</div>`;
     }
     return html;
 }
-
 function nbAdminPanel(s) {
     const drawing = s.round_state === 'drawing';
     const salesOpen = s.sales_state === 'open';
@@ -1318,28 +1105,75 @@ function nbAdminPanel(s) {
     </div>
     ${winnersHtml}`;
 }
-
 function nbUserPanel(s) {
     const mine = nbState.my_tickets || [];
     const finished = s.round_state === 'finished';
+    const salesOpen = s.sales_state === 'open';
+    const drawing = s.round_state === 'drawing';
     let winnersHtml = '';
     if (finished && s.winners && s.winners.length) {
         winnersHtml = `<div class="winners"><h2>🏆 Winners</h2>${s.winners.map(w => `
             <div class="winner"><b>#${w.place} — ${escapeHTML(w.name)}</b><br>Matches: ${w.matches}<br>Shown: ${(w.shown_numbers || []).map(n => '#' + n).join(', ')}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
     }
+    // NB page has its own buy panel — self-contained
     return `
     <div class="card">
-        <h2>My Tickets (${mine.length})</h2><br>
+        <h2>My NB Tickets (${mine.length})</h2><br>
         ${mine.length ? mine.map(t => `<span class="nb-pick-chip" style="margin:3px">#${t.number}</span>`).join('') : `<p class="muted">No tickets yet this round.</p>`}
     </div>
     <div class="card">
         <h2>🛒 Buy Tickets</h2>
-        <p class="muted" style="margin:8px 0">Go to <b>Buy Tickets</b> in the sidebar and choose 🎰 Number Betting.</p>
-        <div class="action-buttons">
-            <button class="action-btn green" onclick="openPage('buy')">Go to Buy Tickets</button>
+        <p class="muted" style="margin:8px 0">Pick <b>${s.tickets_per_purchase}</b> numbers for <b>${money(s.price_per_purchase)}</b>.</p>
+        ${!salesOpen ? `<p style="color:#ef4444;font-weight:bold;margin-bottom:10px">⚠️ Sales are closed. Wait for admin to open.</p>` : ''}
+        <div class="nb-pick-info">
+            <b>Selected:</b> <span id="nbPageCount">0</span> / ${s.tickets_per_purchase}
+            <div class="nb-pick-list" id="nbPageList"></div>
         </div>
+        <button class="main-button" onclick="nbPageBuy()" ${!salesOpen || drawing ? 'disabled' : ''}>🛒 CONFIRM PURCHASE</button>
     </div>
     ${winnersHtml}`;
+}
+
+/* Buy from NB page directly (uses the nbGrid on this page) */
+async function nbPageBuy() {
+    const cfg = await api('/nb/config');
+    // We need user's selected numbers from the nbPage. Use a separate pick state.
+    if (!window._nbPagePicked) window._nbPagePicked = [];
+    const picked = window._nbPagePicked;
+    if (picked.length !== cfg.tickets_per_purchase) { alert(`Pick exactly ${cfg.tickets_per_purchase} numbers on the board above`); return; }
+    if (Number(ME.balance) < Number(cfg.price_per_purchase)) { alert('Insufficient balance'); return; }
+    if (!confirm(`Buy ${cfg.tickets_per_purchase} NB tickets for ${money(cfg.price_per_purchase)}?`)) return;
+    try {
+        await api('/nb/buy', { method: 'POST', body: { numbers: picked } });
+        toast('✅ Purchased!');
+        window._nbPagePicked = [];
+        await refreshState(); await nbPage();
+    } catch (e) { alert('❌ ' + e.message); }
+}
+
+/* Click handler for the NB page grid — only active for users in sales-open state */
+function nbPageAttachGrid(s) {
+    const grid = document.getElementById('nbGrid');
+    if (!grid) return;
+    grid._nbpHandler = (ev) => {
+        if (ME.role === 'admin') return;
+        if (s.sales_state !== 'open' || s.round_state === 'drawing') return;
+        const cell = ev.target.closest('.nb-cell');
+        if (!cell) return;
+        if (cell.classList.contains('taken') || cell.classList.contains('drawn-mine') || cell.classList.contains('drawn-other')) return;
+        const num = Number(cell.dataset.num);
+        if (!num) return;
+        if (!window._nbPagePicked) window._nbPagePicked = [];
+        const picked = window._nbPagePicked;
+        if (picked.includes(num)) { window._nbPagePicked = picked.filter(n => n !== num); cell.classList.remove('mine-picked'); }
+        else {
+            if (picked.length >= s.tickets_per_purchase) { toast('Max ' + s.tickets_per_purchase + ' numbers', true); return; }
+            picked.push(num); cell.classList.add('mine-picked');
+        }
+        const cnt = document.getElementById('nbPageCount'); if (cnt) cnt.textContent = window._nbPagePicked.length;
+        const list = document.getElementById('nbPageList'); if (list) list.innerHTML = window._nbPagePicked.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
+    };
+    grid.addEventListener('click', grid._nbpHandler);
 }
 
 function nbReloadPrizes() {
@@ -1348,19 +1182,18 @@ function nbReloadPrizes() {
     for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
     document.getElementById('nbPrizeList').innerHTML = html;
 }
-
 function nbStartPolls() {
     if (nbPollId) clearInterval(nbPollId);
     if (nbSettleId) clearInterval(nbSettleId);
     nbTickTimer();
-    nbPollId = setInterval(nbTickTimer, 500);
+    nbPollId = setInterval(nbTickTimer, 300);
     nbSettleId = setInterval(async () => {
         if (nbState && nbState.settings.round_state === 'drawing') {
             try { await api('/nb/settle', { method: 'POST' }); await nbRefreshSilent(); } catch (e) {}
         }
     }, 3000);
+    if (ME.role !== 'admin' && nbState) nbPageAttachGrid(nbState.settings);
 }
-
 function nbTickTimer() {
     if (!nbState) return;
     const s = nbState.settings;
@@ -1369,7 +1202,7 @@ function nbTickTimer() {
     if (s.round_state === 'drawing' && s.drawing_started_at) {
         const start = new Date(s.drawing_started_at).getTime();
         const elapsed = (Date.now() - start) / 1000;
-        const shown = Math.min(s.drawn_count, Math.floor(elapsed / s.draw_delay_seconds) + 1);
+        const shown = nbDrawnSoFar(s);
         const total = s.drawn_count * s.draw_delay_seconds;
         const secs = Math.max(0, total - elapsed);
         el.textContent = `DRAW ${shown}/${s.drawn_count} · ${formatTime(Math.ceil(secs))}`;
@@ -1383,41 +1216,25 @@ function nbTickTimer() {
         el.textContent = '--:--';
     }
 }
-
 async function nbRefreshSilent() {
     try {
         const s = await api('/nb/state');
         nbState = s;
         const grid = document.getElementById('nbGrid');
         if (grid) grid.innerHTML = nbGridHtml(s.settings);
-        const soldEl = document.querySelector('.nb-stats .stat:nth-child(2) h2');
+        const soldEl = document.getElementById('nbSoldH');
         if (soldEl) soldEl.textContent = `${s.sold_count}/${s.settings.total_numbers}`;
-        const drawnEl = document.querySelector('.nb-stats .stat:nth-child(4) h2');
-        if (drawnEl) drawnEl.textContent = `${(s.settings.winning_numbers || []).length}/${s.settings.drawn_count}`;
+        const drawnEl = document.getElementById('nbDrawnH');
+        if (drawnEl) drawnEl.textContent = `${nbDrawnSoFar(s.settings)}/${s.settings.drawn_count}`;
         const statusEl = document.getElementById('nbStatusH');
         if (statusEl) statusEl.textContent = nbStatusText(s.settings);
         nbTickTimer();
     } catch (e) {}
 }
-
-async function nbStartSales() {
-    try { await api('/admin/nb/start-sales', { method: 'POST' }); toast('🟢 NB sales opened'); await nbPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-async function nbCloseSales() {
-    try { await api('/admin/nb/close-sales', { method: 'POST' }); toast('🔴 NB sales closed'); await nbPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-async function nbDraw() {
-    if (!confirm('Start drawing winning numbers?')) return;
-    try { await api('/admin/nb/draw', { method: 'POST' }); toast('🎬 Drawing started'); await nbPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-async function nbNewRound() {
-    if (!confirm('Start new Number Betting round?')) return;
-    try { await api('/admin/nb/new-round', { method: 'POST' }); toast('🔄 New round'); await nbPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
+async function nbStartSales() { try { await api('/admin/nb/start-sales', { method: 'POST' }); toast('🟢 NB sales opened'); await nbPage(); } catch (e) { alert('❌ ' + e.message); } }
+async function nbCloseSales() { try { await api('/admin/nb/close-sales', { method: 'POST' }); toast('🔴 NB sales closed'); await nbPage(); } catch (e) { alert('❌ ' + e.message); } }
+async function nbDraw() { if (!confirm('Start drawing winning numbers?')) return; try { await api('/admin/nb/draw', { method: 'POST' }); toast('🎬 Drawing started'); await nbPage(); } catch (e) { alert('❌ ' + e.message); } }
+async function nbNewRound() { if (!confirm('Start new Number Betting round?')) return; try { await api('/admin/nb/new-round', { method: 'POST' }); toast('🔄 New round'); await nbPage(); } catch (e) { alert('❌ ' + e.message); } }
 async function nbSaveSettings() {
     const total_numbers = Number(document.getElementById('nbTotal').value);
     const drawn_count = Number(document.getElementById('nbDrawn').value);
@@ -1439,7 +1256,6 @@ function wheelPage() {
     const isAdmin = ME.role === 'admin';
     const spinning = SETTINGS.round_state === 'spinning';
     const salesOpen = SETTINGS.sales_state === 'open';
-
     document.getElementById('main').innerHTML = `
         <img src="image2.jpg" alt="Lucky Wheel" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">🎡 Lucky Wheel</h1>
@@ -1464,7 +1280,6 @@ function wheelPage() {
                 <div id="winnerArea"></div>
             </div>
         </div>
-
         <div class="live-panel">
             <h3>
                 🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
@@ -1485,7 +1300,6 @@ function wheelPage() {
             </div>
         </div>
         </div>`;
-
     buildWheel();
     applyWheelState();
     startLivePolls();
@@ -1536,15 +1350,12 @@ function applyWheelState() {
     const n = soldTickets.length;
     const timerEl = document.getElementById('timer');
     if (!timerEl) return;
-
     const spinKey = s.round_number + ':' + s.spin_started_at;
-
     if (s.round_state === 'spinning' && wheel._spinKey === spinKey) {
         const startedAt = new Date(s.spin_started_at).getTime();
         startCountdown(startedAt, s.duration);
         return;
     }
-
     if (s.round_state === 'idle' && s.sales_state !== 'open') {
         stopCountdown();
         wheel._spinKey = null;
@@ -1559,7 +1370,6 @@ function applyWheelState() {
         timerEl.textContent = formatTime(s.duration);
         return;
     }
-
     if (s.sales_state === 'open' && s.round_state !== 'spinning') {
         timerEl.classList.remove('spinning');
         timerEl.classList.add('sales');
@@ -1567,28 +1377,23 @@ function applyWheelState() {
         startSalesCountdown(startedAt, s.sales_duration || 120);
         return;
     }
-
     if (s.round_state === 'spinning') {
         timerEl.classList.remove('sales');
         timerEl.classList.add('spinning');
         const startedAt = new Date(s.spin_started_at).getTime();
         if (pointer) pointer.classList.remove('winner');
         if (orbit) orbit.classList.add('hidden');
-
         wheel._spinKey = spinKey;
         wheel.style.transition = 'none';
         wheel.style.transform = 'rotate(0deg)';
         void wheel.offsetWidth;
-
         requestAnimationFrame(() => {
             wheel.style.transition = `transform ${s.duration}s cubic-bezier(.15,.7,.2,1)`;
             wheel.style.transform = `rotate(${target}deg)`;
         });
-
         startCountdown(startedAt, s.duration);
         return;
     }
-
     if (s.round_state === 'finished') {
         stopCountdown();
         timerEl.classList.remove('spinning', 'sales');
@@ -1642,32 +1447,20 @@ function startCountdown(startedAt, duration) {
     tick(); countdownId = setInterval(tick, 250);
 }
 function stopCountdown() { if (countdownId) { clearInterval(countdownId); countdownId = null; } }
-async function startSpin() {
-    const btn = document.getElementById('spinButton'); if (btn) btn.disabled = true;
-    try { await api('/admin/spin/start', { method: 'POST' }); await refreshState(); await renderPage(); }
-    catch (e) { alert('❌ ' + e.message); if (btn) btn.disabled = false; }
-}
-async function newRound() {
-    if (!confirm('Start new round?')) return;
-    try { await api('/admin/round/reset', { method: 'POST' }); await refreshState(); await renderPage(); alert('✅ New round!'); }
-    catch (e) { alert('❌ ' + e.message); }
-}
+async function startSpin() { const btn = document.getElementById('spinButton'); if (btn) btn.disabled = true; try { await api('/admin/spin/start', { method: 'POST' }); await refreshState(); await renderPage(); } catch (e) { alert('❌ ' + e.message); if (btn) btn.disabled = false; } }
+async function newRound() { if (!confirm('Start new round?')) return; try { await api('/admin/round/reset', { method: 'POST' }); await refreshState(); await renderPage(); alert('✅ New round!'); } catch (e) { alert('❌ ' + e.message); } }
 function showWinners(winners) {
     const area = document.getElementById('winnerArea'); if (!area) return;
     if (!winners || !winners.length) { area.innerHTML = ''; return; }
-    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `
-        <div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `<div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
 }
 
-/* ============= LIVE VIEWERS LOGIC ============= */
+/* ============= LIVE VIEWERS ============= */
 function startLivePolls() {
-    refreshViewers();
-    refreshLiveChat();
+    refreshViewers(); refreshLiveChat();
     viewersPollId = setInterval(refreshViewers, 4000);
     chatPollId = setInterval(refreshLiveChat, 4000);
-    livePingId = setInterval(async () => {
-        try { await api('/live/heartbeat', { method: 'POST' }); } catch (e) {}
-    }, 20000);
+    livePingId = setInterval(async () => { try { await api('/live/heartbeat', { method: 'POST' }); } catch (e) {} }, 20000);
 }
 async function joinLive() { try { await api('/live/join', { method: 'POST' }); toast('✅ Joined live'); refreshViewers(); } catch (e) { alert('❌ ' + e.message); } }
 async function leaveLive() { try { await api('/live/leave', { method: 'POST' }); toast('👋 Left live'); refreshViewers(); } catch (e) { alert('❌ ' + e.message); } }
@@ -1699,17 +1492,8 @@ async function refreshViewers() {
             if (v.muted) voiceBadge = '<span class="voice-badge muted">MUTED</span>';
             else if (v.speaking) voiceBadge = '<span class="voice-badge speaking">🔴 LIVE</span>';
             else voiceBadge = '<span class="voice-badge ready">🎤 READY</span>';
-            const adminActions = ME.role === 'admin' && v.role !== 'admin' ? `
-                <div class="viewer-actions">
-                    <button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">${v.muted ? 'Unmute' : 'Mute'}</button>
-                    <button class="mini-btn kick" onclick="kickViewer(${v.id})">Kick</button>
-                </div>` : '';
-            return `<div class="viewer-row">
-                <div class="${dotCls}"></div>
-                <div class="viewer-name">${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''} ${voiceBadge}</div>
-                <div style="font-size:16px">${micIcon}</div>
-                ${adminActions}
-            </div>`;
+            const adminActions = ME.role === 'admin' && v.role !== 'admin' ? `<div class="viewer-actions"><button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">${v.muted ? 'Unmute' : 'Mute'}</button><button class="mini-btn kick" onclick="kickViewer(${v.id})">Kick</button></div>` : '';
+            return `<div class="viewer-row"><div class="${dotCls}"></div><div class="viewer-name">${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''} ${voiceBadge}</div><div style="font-size:16px">${micIcon}</div>${adminActions}</div>`;
         }).join('');
     } catch (e) {}
 }
@@ -1743,7 +1527,6 @@ async function historyPage() {
     document.getElementById('main').innerHTML = `
         <img src="image3.jpg" alt="History" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">📜 History</h1>
-
         <h2 style="margin:16px 0;color:#fbbf24">🎡 Lucky Wheel</h2>
         ${!w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `
             <div class="history"><h3>Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br>
@@ -1751,7 +1534,6 @@ async function historyPage() {
                 <strong>Winners:</strong><br>
                 ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
             </div>`).join('')}
-
         <h2 style="margin:24px 0 16px;color:#fbbf24">🎰 Number Betting</h2>
         ${!nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `
             <div class="history"><h3>NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br>
@@ -1777,10 +1559,8 @@ function settingsPage() {
         <div class="card">
             <h2>🎡 Lucky Wheel Configuration</h2><br>
             <label>Number Of Sections</label><input id="ticketCount" type="number" min="2" max="60" value="${SETTINGS.ticket_count}">
-            <label>Sales Duration (minutes)</label>
-            <input id="salesDuration" type="number" min="1" value="${SETTINGS.sales_duration || 120}">
-            <label>Spin Duration (seconds)</label>
-            <input id="duration" type="number" min="5" value="${SETTINGS.duration}">
+            <label>Sales Duration (minutes)</label><input id="salesDuration" type="number" min="1" value="${SETTINGS.sales_duration || 120}">
+            <label>Spin Duration (seconds)</label><input id="duration" type="number" min="5" value="${SETTINGS.duration}">
             <label>Number Of Winners</label><input id="winnerCount" type="number" min="1" max="60" value="${wc}" onchange="reloadPrizeInputs()">
             <label>Default Prize Per Winner</label><input id="prize" type="number" min="0" value="${SETTINGS.prize}">
             <label>Ticket Price</label><input id="ticketPrice" type="number" min="0" value="${SETTINGS.ticket_price}">
@@ -1793,7 +1573,6 @@ function settingsPage() {
             <label>Free Tickets Per Goal</label><input id="referralReward" type="number" min="1" value="${SETTINGS.referral_reward || 1}">
             <button class="main-button" onclick="saveSettingsPage()">Save Wheel Settings</button>
         </div>
-
         <div class="card">
             <h2>🎰 Number Betting Configuration</h2>
             <p class="muted" style="margin-top:8px">Manage Number Betting settings from its own page.</p>
@@ -1801,14 +1580,11 @@ function settingsPage() {
                 <button class="action-btn purple" onclick="openPage('nb')">Open Number Betting Page</button>
             </div>
         </div>
-
         <div class="card" style="border-color:#dc2626">
             <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
             <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
-            <label>New Password</label>
-            <input id="newAdminPw" type="password" placeholder="New admin password">
-            <label>Secret Reset Code</label>
-            <input id="resetCode" type="password" placeholder="Enter secret code">
+            <label>New Password</label><input id="newAdminPw" type="password" placeholder="New admin password">
+            <label>Secret Reset Code</label><input id="resetCode" type="password" placeholder="Enter secret code">
             <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword()">🔐 Change Password</button>
         </div>`;
 }
@@ -1854,7 +1630,7 @@ function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === Stri
 function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
 function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); hideChatFab(); }
 function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
-function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = s % 60; if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
+function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
 function formatDate(d) { try { return new Date(d).toLocaleString(); } catch { return '—'; } }
 function escapeHTML(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
