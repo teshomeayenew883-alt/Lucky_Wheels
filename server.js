@@ -843,7 +843,9 @@ app.post('/api/nb/settle', async (req, res) => {
 
     const winning = s.winning_numbers || [];
     const tickets = await getNbTickets(s.round_number);
+    const tpp = Number(s.tickets_per_purchase) || 3;
 
+    // Group matched tickets per user
     const userMatched = {};
     for (const t of tickets) {
       if (!t.user_id) continue;
@@ -852,12 +854,14 @@ app.post('/api/nb/settle', async (req, res) => {
       userMatched[t.user_id].numbers.push(t.number);
     }
 
+    // All users who participated (even with 0 matches)
     const allUsers = {};
     for (const t of tickets) {
       if (!t.user_id) continue;
       if (!allUsers[t.user_id]) allUsers[t.user_id] = { user_id: t.user_id, name: t.user_name, phone: t.phone, numbers: [] };
     }
 
+    // Rank all participants: highest matches first, ties broken alphabetically
     const ranked = Object.values(allUsers).map(u => ({
       ...u,
       matches: (userMatched[u.user_id]?.numbers || []).length,
@@ -871,10 +875,12 @@ app.post('/api/nb/settle', async (req, res) => {
     const wantedWinners = Math.max(1, Number(s.winner_count) || 1);
     const winners = [];
 
+    // FORCE all places to be filled
     for (let i = 0; i < wantedWinners && i < ranked.length; i++) {
       const u = ranked[i];
       const place = i + 1;
       const prize = Number(prizes[i] ?? 0);
+      // Show rule: 1st shows all; Nth shows matches - (N-1), clamped >= 0
       const shownCount = Math.max(0, u.matches - (place - 1));
       const shownNumbers = u.matched_numbers.slice(0, shownCount);
 
@@ -918,22 +924,6 @@ app.post('/api/nb/settle', async (req, res) => {
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
-
-app.post('/api/admin/nb/new-round', auth, adminOnly, async (req, res) => {
-  try {
-    const s = await getNbSettings();
-    if (s.round_state === 'drawing') return res.status(400).json({ error: 'Wait for draw to finish' });
-    const nextRound = s.round_number + 1;
-    await sb.from('nb_settings').update({
-      round_number: nextRound, round_state: 'idle', sales_state: 'idle',
-      sales_started_at: null, drawing_started_at: null,
-      winning_numbers: [], winners: [], settlement_done: false
-    }).eq('id', 1);
-    notifyAdmin(`🔄 <b>NB New Round #${nextRound}</b>`);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 app.post('/api/admin/nb/assign', auth, adminOnly, async (req, res) => {
   try {
     const { name, phone, password, balance, numbers } = req.body;
