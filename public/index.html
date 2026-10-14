@@ -12,10 +12,16 @@ button { cursor: pointer; }
 .hidden { display: none !important; }
 .banner-img { width: 100%; height: 200px; object-fit: cover; border-radius: 15px; margin-bottom: 20px; display: block; background: #1e293b; box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 2px solid #334155; }
 .login-banner-wrap { position: relative; margin-bottom: 20px; border-radius: 15px; overflow: hidden; border: 2px solid #fbbf24; box-shadow: 0 0 30px rgba(251,191,36,0.3); }
-.login-banner-wrap img { display: block; width: 100%; height: 220px; object-fit: cover; }
-.login-wheel-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 170px; height: 170px; animation: spinWheel 12s linear infinite; filter: drop-shadow(0 0 20px rgba(251,191,36,0.9)); }
-@keyframes spinWheel { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-.login-wheel-pointer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; pointer-events: none; width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 26px solid #dc2626; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+.login-animated-header { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; background: radial-gradient(circle at center, #1e3a5f 0%, #0f172a 100%); align-items: center; justify-items: center; }
+.login-svg-wheel { width: 100%; max-width: 180px; height: auto; filter: drop-shadow(0 0 20px rgba(251,191,36,0.6)); }
+.login-svg-numbers { width: 100%; max-width: 200px; height: auto; filter: drop-shadow(0 0 20px rgba(34,197,94,0.5)); }
+@keyframes wheelSpinSmooth { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.wheel-spin-group { animation: wheelSpinSmooth 8s linear infinite; }
+@keyframes numPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.num-glow-seq rect:nth-child(odd) { animation: numPulse 2s ease-in-out infinite; }
+.num-glow-seq-2 rect:nth-child(even) { animation: numPulse 2s ease-in-out infinite 0.4s; }
+.num-glow-seq-3 rect:nth-child(odd) { animation: numPulse 2s ease-in-out infinite 0.8s; }
+.num-glow-seq-4 rect:nth-child(even) { animation: numPulse 2s ease-in-out infinite 1.2s; }
 .login-page { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: radial-gradient(circle, #1e3a5f, #0f172a); }
 .login-card { width: 430px; max-width: 100%; padding: 35px; background: #111827; border: 1px solid #334155; border-radius: 20px; }
 .logo { text-align: center; font-size: 30px; font-weight: bold; margin-bottom: 10px; }
@@ -138,9 +144,7 @@ th { color: #94a3b8; }
 .telegram-banner .text h3 { color: #fff; margin-bottom: 4px; font-size: 16px; }
 .telegram-banner .text p { color: #e0f7fa; font-size: 13px; }
 .telegram-banner .join-btn { padding: 10px 20px; background: #fff; color: #006699; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; cursor: pointer; }
-.chat-fab { position: fixed; bottom: 24px; right: 24px; z-index: 9998; padding: 14px 20px; border-radius: 30px; background: #fbbf24; border: 2px solid #111827; font-size: 15px; font-weight: bold; color: #111827; box-shadow: 0 8px 24px rgba(0,0,0,.4); cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: transform .15s ease; }
-.chat-fab:hover { transform: translateY(-2px) scale(1.03); }
-.chat-panel { position: fixed; bottom: 96px; right: 24px; z-index: 9999; width: 370px; max-width: 92vw; height: 500px; max-height: 70vh; background: #111827; border: 1px solid #334155; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.chat-panel { position: fixed; bottom: 24px; right: 24px; z-index: 9999; width: 370px; max-width: 92vw; height: 500px; max-height: 70vh; background: #111827; border: 1px solid #334155; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
 .chat-head { padding: 14px 18px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
 .chat-head h3 { color: #fbbf24; font-size: 16px; }
 .chat-close { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; line-height: 1; }
@@ -180,9 +184,10 @@ th { color: #94a3b8; }
 .live-chat-input input { flex: 1; padding: 8px 10px; margin: 0; font-size: 13px; }
 .live-chat-input button { padding: 8px 14px; font-size: 13px; border: none; border-radius: 6px; background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
 .live-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; background: #166534; color: #86efac; font-size: 11px; font-weight: bold; }
-.nb-board { width: 100%; }
-.nb-grid { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(8, 1fr); gap: 5px; width: 100%; height: 62vh; max-height: 560px; min-height: 320px; }
-.nb-cell { display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: clamp(11px, 1.5vw, 20px); border-radius: 8px; background: #172033; border: 2px solid #334155; color: #94a3b8; position: relative; user-select: none; min-height: 0; min-width: 0; overflow: hidden; }
+.nb-wrap { position: relative; width: 100%; max-width: 100%; }
+.nb-board { position: relative; width: 100%; }
+.nb-grid { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; width: 100%; height: 55vh; max-height: 520px; min-height: 260px; }
+.nb-cell { display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: clamp(10px, 1.5vw, 22px); border-radius: 8px; background: #172033; border: 2px solid #334155; color: #94a3b8; position: relative; user-select: none; min-height: 0; min-width: 0; overflow: hidden; }
 .nb-cell:hover:not(.taken):not(.drawn-win):not(.drawn-lose):not(.mine) { transform: scale(1.05); cursor: pointer; border-color: #fbbf24; }
 .nb-cell.mine { border-color: #fbbf24; color: #fbbf24; background: #1a1308; }
 .nb-cell.taken { background: #0d1220; border-color: #1e293b; color: #475569; cursor: not-allowed; }
@@ -190,26 +195,68 @@ th { color: #94a3b8; }
 .nb-cell.drawn-win { background: #16a34a; border-color: #22c55e; color: #ffffff; animation: nbRevealOnce .5s ease-out; animation-fill-mode: both; }
 .nb-cell.drawn-lose { background: #991b1b; border-color: #dc2626; color: #fecaca; animation: nbRevealOnce .5s ease-out; animation-fill-mode: both; }
 @keyframes nbRevealOnce { 0% { transform: scale(0.4); opacity: 0.3; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+.nb-overlay-winners { position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 30; display: flex; flex-direction: column; gap: 6px; pointer-events: none; max-height: 62%; overflow-y: auto; }
+.nb-win-card { padding: 10px 14px; border-radius: 10px; border: 3px solid; backdrop-filter: blur(4px); background: rgba(15, 23, 42, 0.86); box-shadow: 0 6px 24px rgba(0,0,0,.6); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: bold; font-size: clamp(11px, 1.3vw, 15px); }
+.nb-win-card .rank { font-size: clamp(16px, 2vw, 22px); }
+.nb-win-card.place-1 { border-color: #FFD700; box-shadow: 0 0 24px rgba(255,215,0,.7); }
+.nb-win-card.place-2 { border-color: #C0C0C0; box-shadow: 0 0 20px rgba(192,192,192,.6); }
+.nb-win-card.place-3 { border-color: #CD7F32; box-shadow: 0 0 20px rgba(205,127,50,.6); }
+.nb-win-card.place-4 { border-color: #3B82F6; box-shadow: 0 0 18px rgba(59,130,246,.55); }
+.nb-win-card.place-5 { border-color: #A855F7; box-shadow: 0 0 18px rgba(168,85,247,.55); }
+.nb-win-card.place-6, .nb-win-card.place-7, .nb-win-card.place-8, .nb-win-card.place-9, .nb-win-card.place-10 { border-color: #06B6D4; box-shadow: 0 0 18px rgba(6,182,212,.5); }
+.nb-win-card .w-name { color: #fff; }
+.nb-win-card .w-id { color: #94a3b8; font-family: monospace; font-size: 12px; }
+.nb-win-card .w-phone { color: #94a3b8; font-family: monospace; font-size: 12px; }
+.nb-win-card .w-prize { margin-left: auto; color: #fbbf24; font-weight: bold; }
+.nb-win-card .w-tickets { font-size: 12px; color: #cbd5e1; font-family: monospace; }
 .nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .nb-stats .stat h2 { font-size: 18px; }
-.nb-timer { text-align: center; font-size: 42px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 14px; }
+.nb-timer { text-align: center; font-size: 38px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 12px; }
 .nb-timer.drawing { color: #ef4444; border-color: #ef4444; animation: timerPulse 0.6s infinite alternate; }
 .nb-timer.idle { color: #94a3b8; border-color: #334155; }
 .nb-pick-info { padding: 12px; background: #0b1220; border: 1px dashed #fbbf24; border-radius: 10px; margin: 12px 0; font-size: 14px; }
 .nb-pick-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .nb-pick-chip { display: inline-block; padding: 6px 12px; background: #fbbf24; color: #111827; border-radius: 20px; font-weight: bold; font-size: 13px; }
+body.public-view .header, body.public-view .sidebar, body.public-view .nb-stats, body.public-view .nb-timer { display: none !important; }
+body.public-view .layout { grid-template-columns: 1fr !important; }
+body.public-view .main { max-width: 100% !important; padding: 8px !important; }
+body.public-view .nb-grid { height: 72vh; max-height: 720px; }
+body.public-view .nb-overlay-winners { max-height: 65%; }
+body.public-view #exitPublicBtn { display: inline-flex !important; }
+#exitPublicBtn { display: none; position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 10px 16px; background: #991b1b; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 .game-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
 .game-tab { flex: 1; min-width: 140px; padding: 16px; border: 2px solid #334155; border-radius: 12px; background: #172033; color: #94a3b8; font-weight: bold; font-size: 15px; text-align: center; cursor: pointer; transition: all .2s ease; }
 .game-tab:hover { border-color: #fbbf24; color: #fbbf24; }
 .game-tab.active { background: #fbbf24; border-color: #fbbf24; color: #111827; box-shadow: 0 0 20px rgba(251,191,36,.5); }
+.nb-hero { width: 100%; height: 180px; border-radius: 15px; margin-bottom: 20px; overflow: hidden; border: 2px solid #334155; background: #0b1220; display: block; }
 @media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } .nb-stats { grid-template-columns: repeat(2, 1fr); } }
-@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 12px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .login-wheel-overlay { width: 130px; height: 130px; } .login-banner-wrap img { height: 180px; } .nb-timer { font-size: 30px; } .nb-stats { grid-template-columns: 1fr 1fr; } .nb-grid { gap: 3px; height: 55vh; } .nb-cell { font-size: 11px; border-radius: 6px; } }
-@media(max-width:450px) { .wheel-container { width: 280px; } .nb-grid { gap: 2px; height: 50vh; } .nb-cell { font-size: 10px; border-radius: 4px; border-width: 1.5px; } }
+@media(max-width:700px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: flex; overflow-x: auto; padding: 10px; }
+  .nav { min-width: 130px; margin-right: 5px; }
+  .main { padding: 12px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .full { grid-column: auto; }
+  .stats { grid-template-columns: 1fr; }
+  .wheel-container { width: 320px; }
+  .timer { font-size: 40px; }
+  .banner-img { height: 160px; }
+  .nb-timer { font-size: 26px; }
+  .nb-stats { grid-template-columns: 1fr 1fr; }
+  .nb-grid { gap: 3px; height: 50vh; }
+  .nb-cell { font-size: 11px; border-radius: 6px; }
+  .login-animated-header { padding: 12px; gap: 8px; }
+  .login-svg-wheel { max-width: 130px; }
+  .login-svg-numbers { max-width: 150px; }
+}
+@media(max-width:450px) { .wheel-container { width: 280px; } .nb-grid { gap: 2px; height: 46vh; } .nb-cell { font-size: 10px; border-radius: 4px; border-width: 1.5px; } }
 </style>
 </head>
 <body>
 <div id="toast" class="toast hidden"></div>
-<button id="chatFab" class="chat-fab hidden" onclick="toggleChat()">💬 AI Assistant</button>
+
+<button id="exitPublicBtn" onclick="exitPublicView()">✕ Exit Public View</button>
+
 <div id="chatPanel" class="chat-panel hidden">
     <div class="chat-head">
         <h3>🤖 Lucky Assistant</h3>
@@ -223,14 +270,83 @@ th { color: #94a3b8; }
         <button id="chatSendBtn" class="chat-send" onclick="sendChat()">Send</button>
     </div>
 </div>
+
 <section id="loginPage" class="login-page">
 <div class="login-card">
     <div class="login-banner-wrap">
-        <img src="image4.jpg" alt="Lucky Wheel" onerror="this.style.display='none'">
-        <div class="login-wheel-pointer"></div>
+        <div class="login-animated-header">
+            <svg class="login-svg-wheel" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="wheelGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.5"/>
+                        <stop offset="70%" stop-color="#fbbf24" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <circle cx="100" cy="100" r="95" fill="url(#wheelGlow)"/>
+                <circle cx="100" cy="100" r="85" fill="#0f172a" stroke="#fbbf24" stroke-width="4"/>
+                <g class="wheel-spin-group" style="transform-origin: 100px 100px;">
+                    <path d="M100,100 L100,15 A85,85 0 0,1 173.6,57.5 Z" fill="#ef4444"/>
+                    <path d="M100,100 L173.6,57.5 A85,85 0 0,1 173.6,142.5 Z" fill="#fbbf24"/>
+                    <path d="M100,100 L173.6,142.5 A85,85 0 0,1 100,185 Z" fill="#22c55e"/>
+                    <path d="M100,100 L100,185 A85,85 0 0,1 26.4,142.5 Z" fill="#3b82f6"/>
+                    <path d="M100,100 L26.4,142.5 A85,85 0 0,1 26.4,57.5 Z" fill="#a855f7"/>
+                    <path d="M100,100 L26.4,57.5 A85,85 0 0,1 100,15 Z" fill="#f97316"/>
+                    <text x="140" y="80" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">1</text>
+                    <text x="155" y="110" fill="#111827" font-size="16" font-weight="bold" text-anchor="middle">2</text>
+                    <text x="140" y="150" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">3</text>
+                    <text x="100" y="165" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">4</text>
+                    <text x="60" y="150" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">5</text>
+                    <text x="45" y="110" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">6</text>
+                    <text x="60" y="80" fill="#111827" font-size="16" font-weight="bold" text-anchor="middle">7</text>
+                    <text x="100" y="60" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">8</text>
+                </g>
+                <circle cx="100" cy="100" r="20" fill="#111827" stroke="#fbbf24" stroke-width="4"/>
+                <circle cx="100" cy="100" r="7" fill="#fbbf24"/>
+                <polygon points="100,0 92,18 108,18" fill="#dc2626"/>
+            </svg>
+            <svg class="login-svg-numbers" viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="numGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#22c55e" stop-opacity="0.5"/>
+                        <stop offset="70%" stop-color="#22c55e" stop-opacity="0"/>
+                    </radialGradient>
+                </defs>
+                <rect x="5" y="5" width="190" height="150" rx="12" fill="url(#numGlow)"/>
+                <rect x="5" y="5" width="190" height="150" rx="12" fill="#0f172a" stroke="#fbbf24" stroke-width="3"/>
+                <g class="num-glow-seq">
+                    <rect x="15" y="20" width="30" height="20" rx="4" fill="#22c55e" opacity="0.9"/>
+                    <rect x="50" y="20" width="30" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="85" y="20" width="30" height="20" rx="4" fill="#22c55e" opacity="0.6"/>
+                    <rect x="120" y="20" width="30" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="155" y="20" width="30" height="20" rx="4" fill="#22c55e" opacity="0.3"/>
+                </g>
+                <g class="num-glow-seq-2">
+                    <rect x="15" y="50" width="30" height="20" rx="4" fill="#dc2626" opacity="0.4"/>
+                    <rect x="50" y="50" width="30" height="20" rx="4" fill="#22c55e" opacity="0.8"/>
+                    <rect x="85" y="50" width="30" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="120" y="50" width="30" height="20" rx="4" fill="#22c55e" opacity="0.5"/>
+                    <rect x="155" y="50" width="30" height="20" rx="4" fill="#1e293b"/>
+                </g>
+                <g class="num-glow-seq-3">
+                    <rect x="15" y="80" width="30" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="50" y="80" width="30" height="20" rx="4" fill="#22c55e" opacity="0.4"/>
+                    <rect x="85" y="80" width="30" height="20" rx="4" fill="#22c55e" opacity="0.9"/>
+                    <rect x="120" y="80" width="30" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="155" y="80" width="30" height="20" rx="4" fill="#22c55e" opacity="0.6"/>
+                </g>
+                <g class="num-glow-seq-4">
+                    <rect x="15" y="110" width="30" height="20" rx="4" fill="#22c55e" opacity="0.5"/>
+                    <rect x="50" y="110" width="30" height="20" rx="4" fill="#1e293b"/>
+                    <rect x="85" y="110" width="30" height="20" rx="4" fill="#22c55e" opacity="0.3"/>
+                    <rect x="120" y="110" width="30" height="20" rx="4" fill="#22c55e" opacity="0.7"/>
+                    <rect x="155" y="110" width="30" height="20" rx="4" fill="#1e293b"/>
+                </g>
+                <text x="100" y="148" fill="#fbbf24" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="1">NUMBER BETTING</text>
+            </svg>
+        </div>
     </div>
     <div class="logo">LUCKY<span>WHEEL</span></div>
-    <p class="login-description">Teshe Number Lucky Wheel</p>
+    <p class="login-description">Teshe Number Lucky Wheel · Number Betting</p>
     <div id="loginForm">
         <input id="loginPhone" placeholder="Phone Number">
         <input id="loginPassword" type="password" placeholder="Password">
@@ -250,6 +366,7 @@ th { color: #94a3b8; }
     </div>
 </div>
 </section>
+
 <section id="app" class="hidden">
 <header class="header">
     <div class="header-logo">LUCKY<span>WHEEL</span></div>
@@ -264,9 +381,10 @@ th { color: #94a3b8; }
 <main id="main" class="main"></main>
 </div>
 </section>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const API = '/api';
+    const API = '/api';
 let TOKEN    = localStorage.getItem('lw_token') || null;
 let ME       = null;
 let SETTINGS = null;
@@ -307,6 +425,7 @@ function renderSidebar() {
             <button class="nav" data-page="tickets" onclick="openPage('tickets')">🎟️ Assign Tickets</button>
             <button class="nav" data-page="requests" onclick="openPage('requests')">📥 Requests</button>
             <button class="nav" data-page="history" onclick="openPage('history')">📜 History</button>
+            <button class="nav" data-page="ai" onclick="openPage('ai')">💬 AI Assistant</button>
             <button class="nav" data-page="settings" onclick="openPage('settings')">⚙️ Settings</button>
         `;
     } else {
@@ -319,9 +438,11 @@ function renderSidebar() {
             <button class="nav" data-page="withdraw" onclick="openPage('withdraw')">💸 Withdraw</button>
             <button class="nav" data-page="referrals" onclick="openPage('referrals')">🎁 Referrals</button>
             <button class="nav" data-page="history" onclick="openPage('history')">📜 History</button>
+            <button class="nav" data-page="ai" onclick="openPage('ai')">💬 AI Assistant</button>
         `;
     }
 }
+
 function toast(msg, isError = false) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -329,6 +450,7 @@ function toast(msg, isError = false) {
     clearTimeout(t._timer);
     t._timer = setTimeout(() => t.classList.remove('show'), 4500);
 }
+
 async function api(path, options = {}) {
     let res;
     try {
@@ -343,6 +465,7 @@ async function api(path, options = {}) {
     if (!res.ok) throw new Error(data.error || 'Something went wrong.');
     return data;
 }
+
 async function boot() {
     try {
         const cfg = await api('/config');
@@ -364,6 +487,7 @@ async function boot() {
 function showLoginPage() { document.getElementById('loginPage').classList.remove('hidden'); document.getElementById('app').classList.add('hidden'); }
 function showRegister() { document.getElementById('loginForm').classList.add('hidden'); document.getElementById('register').classList.remove('hidden'); }
 function showLogin() { document.getElementById('loginForm').classList.remove('hidden'); document.getElementById('register').classList.add('hidden'); }
+
 async function register() {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
@@ -376,6 +500,7 @@ async function register() {
         showLogin();
     } catch (e) { alert('❌ ' + e.message); }
 }
+
 async function loginUser() {
     const phone = document.getElementById('loginPhone').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
@@ -387,6 +512,7 @@ async function loginUser() {
         await enterApp();
     } catch (e) { alert('❌ ' + e.message); }
 }
+
 async function enterApp() {
     await refreshState();
     document.getElementById('loginPage').classList.add('hidden');
@@ -395,7 +521,6 @@ async function enterApp() {
     renderSidebar();
     subscribeRealtime();
     openPage('dashboard');
-    showChatFab();
 }
 async function refreshState() {
     const data = await api('/state');
@@ -440,6 +565,7 @@ async function renderPage() {
     if (PAGE === 'tickets')    return ticketsPage();
     if (PAGE === 'requests')   return requestsPage();
     if (PAGE === 'history')    return historyPage();
+    if (PAGE === 'ai')         return aiPage();
     if (PAGE === 'settings')   return settingsPage();
 }
 function stopLivePolls() {
@@ -449,6 +575,54 @@ function stopLivePolls() {
     if (nbPollId) { clearInterval(nbPollId); nbPollId = null; }
     if (nbSettleId) { clearInterval(nbSettleId); nbSettleId = null; }
 }
+
+/* ============= AI PAGE ============= */
+let aiHistory = [];
+function aiPage() {
+    document.getElementById('main').innerHTML = `
+        <h1 class="title">💬 AI Assistant</h1>
+        <div class="card" style="max-width: 800px; margin: auto; display: flex; flex-direction: column; height: 70vh;">
+            <div id="aiBody" class="chat-body" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+                <div class="chat-msg bot">Hi! 👋 Ask me anything about your account, games, or platform.</div>
+            </div>
+            <div class="chat-input-row">
+                <input id="aiInput" placeholder="Type your question..." onkeydown="if(event.key==='Enter')sendAiChat()">
+                <button id="aiSendBtn" class="chat-send" onclick="sendAiChat()">Send</button>
+            </div>
+        </div>
+    `;
+    setTimeout(() => document.getElementById('aiInput').focus(), 100);
+}
+async function sendAiChat() {
+    const input = document.getElementById('aiInput');
+    const btn = document.getElementById('aiSendBtn');
+    const body = document.getElementById('aiBody');
+    const text = input.value.trim();
+    if (!text) return;
+    body.innerHTML += `<div class="chat-msg user">${escapeHTML(text)}</div>`;
+    input.value = '';
+    btn.disabled = true;
+    const typingId = 'ai-typing-' + Date.now();
+    body.innerHTML += `<div id="${typingId}" class="chat-msg bot typing">typing...</div>`;
+    body.scrollTop = body.scrollHeight;
+    try {
+        const res = await api('/chat', { method: 'POST', body: { message: text, history: aiHistory } });
+        document.getElementById(typingId)?.remove();
+        const reply = res.reply || 'No response.';
+        body.innerHTML += `<div class="chat-msg bot">${escapeHTML(reply)}</div>`;
+        aiHistory.push({ role: 'user', content: text });
+        aiHistory.push({ role: 'assistant', content: reply });
+        if (aiHistory.length > 12) aiHistory = aiHistory.slice(-12);
+    } catch (e) {
+        document.getElementById(typingId)?.remove();
+        body.innerHTML += `<div class="chat-msg bot" style="color:#f87171">❌ ${escapeHTML(e.message)}</div>`;
+    } finally {
+        btn.disabled = false;
+        body.scrollTop = body.scrollHeight;
+    }
+}
+function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('hidden'); }
+
 function dashboard() {
     const sold = TICKETS.filter(t => t.user_id !== null).length;
     const botUrl = 'https://t.me/' + CONFIG.botUsername;
@@ -535,7 +709,6 @@ function dashboard() {
 function copyReferral() { if (!ME.referral_code) return; navigator.clipboard.writeText(ME.referral_code); toast('📋 Copied!'); }
 function copyInviteLink() { if (!ME.referral_code) return; const link = window.location.origin + '/?ref=' + ME.referral_code; navigator.clipboard.writeText(link); toast('🔗 Copied!'); }
 
-/* ============= BUY ============= */
 async function buyPage() {
     if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Admin — use Assign Tickets instead.</p></div>`; return; }
     buySelected = [];
@@ -694,7 +867,6 @@ async function nbBuyConfirm() {
     catch (e) { alert('❌ ' + e.message); }
 }
 
-/* ============= ASSIGN (admin) ============= */
 async function ticketsPage() {
     assignSelectedWheel = [];
     assignSelectedNB = [];
@@ -817,7 +989,6 @@ async function assignTicketsNB() {
     catch (e) { alert('❌ ' + e.message); }
 }
 
-/* ============= NB PAGE ============= */
 async function nbPage() {
     try {
         const s = await api('/nb/state');
@@ -830,7 +1001,11 @@ async function nbPage() {
     const isAdmin = ME.role === 'admin';
     const drawing = s.round_state === 'drawing';
     const salesOpen = s.sales_state === 'open';
+
     document.getElementById('main').innerHTML = `
+        <div class="nb-hero">
+            <img src="image5.jpg" alt="Number Betting" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<svg viewBox=0 0 800 180 xmlns=http://www.w3.org/2000/svg style=width:100%;height:100%><rect width=800 height=180 fill=#0b1220/><circle cx=140 cy=90 r=55 fill=#fbbf24 opacity=0.15/><text x=140 y=100 text-anchor=middle font-size=44 font-weight=bold fill=#fbbf24 font-family=monospace>80</text><text x=140 y=135 text-anchor=middle font-size=12 fill=#94a3b8>NUMBERS</text><text x=400 y=95 text-anchor=middle font-size=36 font-weight=bold fill=#fff>NUMBER BETTING</text><text x=400 y=125 text-anchor=middle font-size=14 fill=#94a3b8>Pick your numbers. Watch the draw. Win big.</text><circle cx=660 cy=90 r=55 fill=#22c55e opacity=0.15/><text x=660 y=100 text-anchor=middle font-size=44 font-weight=bold fill=#22c55e font-family=monospace>20</text><text x=660 y=135 text-anchor=middle font-size=12 fill=#94a3b8>DRAWN</text></svg>'">
+        </div>
         <h1 class="title">🎰 Number Betting — Round #${s.round_number}</h1>
         <div class="nb-stats">
             <div class="stat"><small>Status</small><h2 id="nbStatusH">${nbStatusText(s)}</h2></div>
@@ -839,30 +1014,43 @@ async function nbPage() {
             <div class="stat"><small>Drawn</small><h2 id="nbDrawnH">0/${s.drawn_count}</h2></div>
         </div>
         <div id="nbTimer" class="nb-timer ${drawing ? 'drawing' : salesOpen ? 'sales' : 'idle'}">--:--</div>
-        <div class="card">
-            <h2>Numbers Board</h2>
-            <p class="muted" style="margin-top:6px;font-size:13px">⏳ Waiting · 🟡 Your pick · 🟢 Drawn (winning) · 🔴 Not drawn (losing)</p>
-            <div class="nb-board" style="margin-top:12px"><div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div></div>
-        </div>
-        ${isAdmin ? nbAdminPanel(s) : nbUserPanel(s)}
-        <div class="live-panel">
-            <h3>🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
-                <button class="mini-btn" style="background:#22c55e" onclick="joinLive()">Join Live</button>
-                <button class="mini-btn" style="background:#7f1d1d" onclick="leaveLive()">Leave</button>
-                <button class="mini-btn" style="background:#0ea5e9" onclick="toggleSpeak()">🎤 Voice</button>
-            </h3>
-            <div id="viewersList" class="live-viewers-list"><p class="muted" style="font-size:12px">No viewers yet.</p></div>
-            <div class="live-chat">
-                <h4>💬 Live Chat</h4>
-                <div id="liveChatMessages" class="live-chat-messages"></div>
-                <div class="live-chat-input">
-                    <input id="liveChatInput" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendLiveChat()">
-                    <button onclick="sendLiveChat()">Send</button>
+        <div class="nb-wrap">
+            <div class="card" style="padding:12px;margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+                    <h2 style="margin:0">Numbers Board</h2>
+                    <button class="small-button gold-button" onclick="enterPublicView()">🖥️ Public View</button>
+                </div>
+                <p class="muted" style="font-size:12px;margin-bottom:6px">⏳ Waiting · 🟡 Your pick · 🟢 Drawn (winning) · 🔴 Not drawn (losing)</p>
+                <div class="nb-board">
+                    <div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div>
+                    <div id="nbWinnersOverlay"></div>
                 </div>
             </div>
         </div>
+        ${isAdmin ? nbAdminPanel(s) : nbUserPanel(s)}
     `;
+    renderNbWinnersOverlay(s);
     nbStartPolls(s);
+}
+function renderNbWinnersOverlay(s) {
+    const el = document.getElementById('nbWinnersOverlay');
+    if (!el) return;
+    const finished = s.round_state === 'finished';
+    if (!finished || !s.winners || !s.winners.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+        <div class="nb-overlay-winners">
+            ${s.winners.map(w => `
+                <div class="nb-win-card place-${w.place}">
+                    <span class="rank">${w.place === 1 ? '🥇' : w.place === 2 ? '🥈' : w.place === 3 ? '🥉' : '🏅'} #${w.place}</span>
+                    <span class="w-name">${escapeHTML(w.name)}</span>
+                    <span class="w-id">${escapeHTML(w.public_code || '—')}</span>
+                    <span class="w-phone">${escapeHTML(w.phone_masked || '—')}</span>
+                    <span class="w-tickets">${(w.shown_numbers || []).map(n => '#' + n).join(' ') || '—'}</span>
+                    <span class="w-prize">${money(w.prize)}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 function nbStatusText(s) {
     if (s.round_state === 'drawing') return '🎬 DRAWING';
@@ -892,13 +1080,8 @@ function nbGridHtml(s) {
         let cls = 'nb-cell';
         const drawn = drawnSet.has(i);
         const mine = mineSet.has(i);
-        if (drawingOrDone) {
-            if (drawn) cls += ' drawn-win';
-            else cls += ' drawn-lose';
-        } else {
-            if (mine) cls += ' mine';
-            else if (userNumbers.has(i)) cls += ' taken';
-        }
+        if (drawingOrDone) { if (drawn) cls += ' drawn-win'; else cls += ' drawn-lose'; }
+        else { if (mine) cls += ' mine'; else if (userNumbers.has(i)) cls += ' taken'; }
         html += `<div class="${cls}" data-num="${i}">${i}</div>`;
     }
     return html;
@@ -906,11 +1089,6 @@ function nbGridHtml(s) {
 function nbAdminPanel(s) {
     const drawing = s.round_state === 'drawing';
     const salesOpen = s.sales_state === 'open';
-    const finished = s.round_state === 'finished';
-    let winnersHtml = '';
-    if (finished && s.winners && s.winners.length) {
-        winnersHtml = `<div class="winners"><h2>🏆 Winners</h2>${s.winners.map(w => `<div class="winner"><b>#${w.place} — ${escapeHTML(w.name)}</b><br>Matches: ${w.matches}<br>Shown: ${(w.shown_numbers || []).map(n => '#' + n).join(', ')}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
-    }
     return `
     <div class="card">
         <h2>Admin Controls</h2>
@@ -920,65 +1098,15 @@ function nbAdminPanel(s) {
             <button class="action-btn" onclick="nbDraw()" ${drawing || !salesOpen ? 'disabled' : ''}>🎬 DRAW NUMBERS</button>
             <button class="action-btn red" onclick="nbNewRound()" ${drawing ? 'disabled' : ''}>🔄 NEW ROUND</button>
         </div>
-    </div>
-    ${winnersHtml}`;
+    </div>`;
 }
 function nbUserPanel(s) {
     const mine = nbState.my_tickets || [];
-    const finished = s.round_state === 'finished';
-    const salesOpen = s.sales_state === 'open';
-    const drawing = s.round_state === 'drawing';
-    let winnersHtml = '';
-    if (finished && s.winners && s.winners.length) {
-        winnersHtml = `<div class="winners"><h2>🏆 Winners</h2>${s.winners.map(w => `<div class="winner"><b>#${w.place} — ${escapeHTML(w.name)}</b><br>Matches: ${w.matches}<br>Shown: ${(w.shown_numbers || []).map(n => '#' + n).join(', ')}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
-    }
     return `
     <div class="card">
         <h2>My NB Tickets (${mine.length})</h2><br>
         ${mine.length ? mine.map(t => `<span class="nb-pick-chip" style="margin:3px">#${t.number}</span>`).join('') : `<p class="muted">No tickets yet this round.</p>`}
-    </div>
-    <div class="card">
-        <h2>🛒 Buy Tickets</h2>
-        <p class="muted" style="margin:8px 0">Pick <b>${s.tickets_per_purchase}</b> numbers for <b>${money(s.price_per_purchase)}</b>.</p>
-        ${!salesOpen ? `<p style="color:#ef4444;font-weight:bold;margin-bottom:10px">⚠️ Sales are closed. Wait for admin to open.</p>` : ''}
-        <div class="nb-pick-info">
-            <b>Selected:</b> <span id="nbPageCount">0</span> / ${s.tickets_per_purchase}
-            <div class="nb-pick-list" id="nbPageList"></div>
-        </div>
-        <button class="main-button" onclick="nbPageBuy()" ${!salesOpen || drawing ? 'disabled' : ''}>🛒 CONFIRM PURCHASE</button>
-    </div>
-    ${winnersHtml}`;
-}
-async function nbPageBuy() {
-    const cfg = await api('/nb/config');
-    if (!window._nbPagePicked) window._nbPagePicked = [];
-    const picked = window._nbPagePicked;
-    if (picked.length !== cfg.tickets_per_purchase) { alert(`Pick exactly ${cfg.tickets_per_purchase} numbers on the board above`); return; }
-    if (Number(ME.balance) < Number(cfg.price_per_purchase)) { alert('Insufficient balance'); return; }
-    if (!confirm(`Buy ${cfg.tickets_per_purchase} NB tickets for ${money(cfg.price_per_purchase)}?`)) return;
-    try { await api('/nb/buy', { method: 'POST', body: { numbers: picked } }); toast('✅ Purchased!'); window._nbPagePicked = []; await refreshState(); await nbPage(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-function nbPageAttachGrid(s) {
-    const grid = document.getElementById('nbGrid');
-    if (!grid) return;
-    if (grid._nbpHandler) grid.removeEventListener('click', grid._nbpHandler);
-    grid._nbpHandler = (ev) => {
-        if (ME.role === 'admin') return;
-        if (s.sales_state !== 'open' || s.round_state === 'drawing' || s.round_state === 'finished') return;
-        const cell = ev.target.closest('.nb-cell');
-        if (!cell) return;
-        if (cell.classList.contains('taken')) return;
-        const num = Number(cell.dataset.num);
-        if (!num) return;
-        if (!window._nbPagePicked) window._nbPagePicked = [];
-        const picked = window._nbPagePicked;
-        if (picked.includes(num)) { window._nbPagePicked = picked.filter(n => n !== num); cell.classList.remove('mine-picked'); }
-        else { if (picked.length >= s.tickets_per_purchase) { toast('Max ' + s.tickets_per_purchase + ' numbers', true); return; } picked.push(num); cell.classList.add('mine-picked'); }
-        const cnt = document.getElementById('nbPageCount'); if (cnt) cnt.textContent = window._nbPagePicked.length;
-        const list = document.getElementById('nbPageList'); if (list) list.innerHTML = window._nbPagePicked.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
-    };
-    grid.addEventListener('click', grid._nbpHandler);
+    </div>`;
 }
 function nbStartPolls(s) {
     if (nbPollId) clearInterval(nbPollId);
@@ -994,7 +1122,6 @@ function nbStartPolls(s) {
             try { await api('/nb/settle', { method: 'POST' }); await nbRefreshSilent(); } catch (e) {}
         }
     }, 3000);
-    if (ME.role !== 'admin' && nbState) nbPageAttachGrid(s);
 }
 function nbRevealTick() {
     if (!nbState) return;
@@ -1029,9 +1156,7 @@ function nbTickTimer() {
         const total = s.round_duration_minutes * 60;
         const secs = Math.max(0, total - elapsed);
         el.textContent = `SALES ${formatTime(Math.ceil(secs))}`;
-    } else {
-        el.textContent = '--:--';
-    }
+    } else { el.textContent = '--:--'; }
 }
 async function nbRefreshSilent() {
     try {
@@ -1043,6 +1168,7 @@ async function nbRefreshSilent() {
         }
         const grid = document.getElementById('nbGrid');
         if (grid) grid.innerHTML = nbGridHtml(s.settings);
+        renderNbWinnersOverlay(s.settings);
         const soldEl = document.getElementById('nbSoldH');
         if (soldEl) soldEl.textContent = `${s.sold_count}/${s.settings.total_numbers}`;
         const statusEl = document.getElementById('nbStatusH');
@@ -1063,7 +1189,20 @@ async function nbNewRound() {
     catch (e) { alert('❌ ' + e.message); }
 }
 
-/* ============= WHEEL PAGE ============= */
+function enterPublicView() {
+    document.body.classList.add('public-view');
+    setTimeout(() => {
+        const grid = document.querySelector('.nb-grid');
+        if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+function exitPublicView() {
+    document.body.classList.remove('public-view');
+}
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') exitPublicView();
+});
+
 function wheelPage() {
     const isAdmin = ME.role === 'admin';
     const spinning = SETTINGS.round_state === 'spinning';
@@ -1089,27 +1228,9 @@ function wheelPage() {
                 </div>` : `<div class="card"><h3>My Tickets</h3><br>${myTicketList()}</div>`}
                 <div id="winnerArea"></div>
             </div>
-        </div>
-        <div class="live-panel">
-            <h3>🟢 LIVE VIEWERS <span id="viewerCount" class="live-badge">0</span>
-                <button class="mini-btn" style="background:#22c55e" onclick="joinLive()">Join Live</button>
-                <button class="mini-btn" style="background:#7f1d1d" onclick="leaveLive()">Leave</button>
-                <button class="mini-btn" style="background:#0ea5e9" onclick="toggleSpeak()">🎤 Voice</button>
-            </h3>
-            <div id="viewersList" class="live-viewers-list"><p class="muted" style="font-size:12px">No viewers yet.</p></div>
-            <div class="live-chat">
-                <h4>💬 Live Chat</h4>
-                <div id="liveChatMessages" class="live-chat-messages"></div>
-                <div class="live-chat-input">
-                    <input id="liveChatInput" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendLiveChat()">
-                    <button onclick="sendLiveChat()">Send</button>
-                </div>
-            </div>
-        </div>
-        </div>`;
+        </div></div>`;
     buildWheel();
     applyWheelState();
-    startLivePolls();
 }
 function buildWheel() {
     const wheel = document.getElementById('wheel');
@@ -1234,10 +1355,9 @@ async function newRound() { if (!confirm('Start new round?')) return; try { awai
 function showWinners(winners) {
     const area = document.getElementById('winnerArea'); if (!area) return;
     if (!winners || !winners.length) { area.innerHTML = ''; return; }
-    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `<div class="winner"><b>Winner ${w.place}</b><br><br>Name: ${escapeHTML(w.name)}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `<div class="winner"><b>Winner ${w.place}</b><br>Name: ${escapeHTML(w.name)}<br>ID: ${escapeHTML(w.public_code || '—')}<br>Phone: ${escapeHTML(w.phone_masked || '—')}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
 }
 
-/* ============= DEPOSIT ============= */
 async function depositPage() {
     if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
     let dep = { deposits: [] };
@@ -1273,8 +1393,6 @@ async function submitDeposit() {
     try { await api('/user/deposits', { method: 'POST', body: { method, amount, transactionId } }); alert('✅ Submitted!'); depositPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
-/* ============= WITHDRAW ============= */
 async function withdrawPage() {
     if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
     let w = { withdrawals: [] };
@@ -1285,12 +1403,9 @@ async function withdrawPage() {
         <div class="stats"><div class="stat"><small>Balance</small><h2>${money(ME.balance)}</h2></div></div>
         <div class="card">
             <h2>Request Withdrawal</h2><br>
-            <label>Method</label>
-            <select id="wdMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
-            <label>Amount (ETB)</label>
-            <input id="wdAmount" type="number" min="1" placeholder="e.g. 500">
-            <label>Your Account Number</label>
-            <input id="wdAccount" placeholder="Your account">
+            <label>Method</label><select id="wdMethod"><option value="cbe">CBE</option><option value="boa">BOA</option></select>
+            <label>Amount (ETB)</label><input id="wdAmount" type="number" min="1" placeholder="e.g. 500">
+            <label>Your Account Number</label><input id="wdAccount" placeholder="Your account">
             <button class="main-button" onclick="submitWithdraw()">📤 SUBMIT WITHDRAWAL</button>
         </div>
         <div class="card"><h2>My Withdrawals</h2><br>
@@ -1308,8 +1423,6 @@ async function submitWithdraw() {
     try { await api('/user/withdrawals', { method: 'POST', body: { method, amount, accountNumber } }); alert('✅ Submitted!'); await refreshState(); withdrawPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
-/* ============= REFERRALS ============= */
 async function referralsPage() {
     if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
     const data = await api('/referrals');
@@ -1330,8 +1443,6 @@ async function referralsPage() {
             ${data.referrals.length ? data.referrals.map(r => `<div class="ref-row"><div><b>${escapeHTML(r.name)}</b><br><span class="muted" style="font-size:12px">${escapeHTML(r.phone)}</span></div><div>${r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>'}</div></div>`).join('') : `<p class="muted">No referrals yet.</p>`}
         </div>`;
 }
-
-/* ============= USERS (admin) ============= */
 async function usersPage() {
     const data = await api('/admin/users/full');
     const list = data.users;
@@ -1339,8 +1450,9 @@ async function usersPage() {
         <img src="image4.jpg" alt="Users" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">👥 Registered Users</h1>
         <div class="card"><div class="table-box"><table>
-            <thead><tr><th>Name</th><th>Phone</th><th>Password</th><th>Balance</th><th>Tickets</th><th>Refs</th><th>Free</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Password</th><th>Balance</th><th>Tickets</th><th>Refs</th><th>Free</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>${list.length ? list.map(u => `<tr>
+                    <td style="font-family:monospace;color:#fbbf24">${u.public_id ? 'U' + String(u.public_id).padStart(5,'0') : '—'}</td>
                     <td>${escapeHTML(u.name)}</td>
                     <td>${escapeHTML(u.phone)}</td>
                     <td><span style="font-family:monospace;color:#fbbf24">${escapeHTML(u.password_plain || '—')}</span></td>
@@ -1354,7 +1466,7 @@ async function usersPage() {
                         <button class="small-button" onclick="resetPassword('${u.id}', '${escapeHTML(u.name)}')">Reset PW</button>
                         ${u.banned ? `<button class="small-button green-button" onclick="banUser('${u.id}', false)">Restore</button>` : `<button class="small-button red-button" onclick="banUser('${u.id}', true)">Ban</button>`}
                     </td>
-                </tr>`).join('') : `<tr><td colspan="9" class="muted">No users yet.</td></tr>`}</tbody>
+                </tr>`).join('') : `<tr><td colspan="10" class="muted">No users yet.</td></tr>`}</tbody>
         </table></div></div>`;
 }
 async function resetPassword(userId, userName) {
@@ -1377,8 +1489,6 @@ async function adjustBalance(id) {
     try { await api('/admin/users/balance', { method: 'POST', body: { userId: id, amount: value } }); await refreshState(); usersPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
-/* ============= REQUESTS (admin) ============= */
 async function requestsPage() {
     const [dep, wd] = await Promise.all([api('/admin/deposits'), api('/admin/withdrawals')]);
     const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
@@ -1411,13 +1521,8 @@ async function decideWithdraw(id, action) {
     try { await api(`/admin/withdrawals/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
-
-/* ============= HISTORY ============= */
 async function historyPage() {
-    const [w, nb] = await Promise.all([
-        api('/rounds').catch(() => ({ rounds: [] })),
-        api('/nb/rounds').catch(() => ({ rounds: [] }))
-    ]);
+    const [w, nb] = await Promise.all([api('/rounds').catch(() => ({ rounds: [] })), api('/nb/rounds').catch(() => ({ rounds: [] }))]);
     document.getElementById('main').innerHTML = `
         <img src="image3.jpg" alt="History" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">📜 History</h1>
@@ -1429,24 +1534,12 @@ async function historyPage() {
     `;
     const content = document.getElementById('historyContent');
     if (historyGame === 'wheel') {
-        content.innerHTML = !w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `
-            <div class="history"><h3>🎡 Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br>
-                <strong>Sold:</strong><br><p>${(r.sold_tickets || []).map(t => '#' + t.number).join(', ') || '-'}</p><br>
-                <strong>Winners:</strong><br>
-                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
-            </div>`).join('');
+        content.innerHTML = !w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `<div class="history"><h3>🎡 Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br><strong>Winners:</strong><br>${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}</div>`).join('');
     } else {
-        content.innerHTML = !nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `
-            <div class="history"><h3>🎰 NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br>
-                <strong>Winning numbers:</strong><br><p>${(r.winning_numbers || []).map(n => '#' + n).join(', ') || '-'}</p><br>
-                <strong>Winners:</strong><br>
-                ${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} — ${x.matches} matches — <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}
-            </div>`).join('');
+        content.innerHTML = !nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `<div class="history"><h3>🎰 NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br><strong>Winning numbers:</strong><br><p>${(r.winning_numbers || []).map(n => '#' + n).join(', ') || '-'}</p><br><strong>Winners:</strong><br>${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} — ${x.matches} matches — <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}</div>`).join('');
     }
 }
 function historySwitchGame(game) { if (historyGame === game) return; historyGame = game; historyPage(); }
-
-/* ============= SETTINGS (with game chooser) ============= */
 async function settingsPage() {
     let nbSettings = null;
     try { nbSettings = await api('/nb/config'); } catch (e) {}
@@ -1491,9 +1584,8 @@ function renderWheelSettings() {
         </div>
         <div class="card" style="border-color:#dc2626">
             <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
-            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
-            <label>New Password</label><input id="newAdminPw" type="password" placeholder="New admin password">
-            <label>Secret Reset Code</label><input id="resetCode" type="password" placeholder="Enter secret code">
+            <label>New Password</label><input id="newAdminPw" type="password">
+            <label>Secret Reset Code</label><input id="resetCode" type="password">
             <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword('')">🔐 Change Password</button>
         </div>`;
 }
@@ -1517,7 +1609,7 @@ async function saveWheelSettings() {
     try {
         if (ticketCount !== SETTINGS.ticket_count) await api('/admin/tickets/count', { method: 'POST', body: { count: ticketCount } });
         await api('/admin/settings', { method: 'POST', body: { duration, winners, prize, ticketPrice: price, referralGoal, referralReward, prizes, salesDuration } });
-        await refreshState(); alert('✅ Wheel settings saved.'); settingsPage();
+        await refreshState(); alert('✅ Saved.'); settingsPage();
     } catch (e) { alert('❌ ' + e.message); }
 }
 function renderNBSettings(s) {
@@ -1534,9 +1626,9 @@ function renderNBSettings(s) {
             <h2>🎰 Number Betting Configuration</h2><br>
             <label>Total Numbers</label><input id="nbTotal" type="number" min="10" max="200" value="${s.total_numbers}">
             <label>Drawn per Round</label><input id="nbDrawn" type="number" min="1" max="50" value="${s.drawn_count}">
-            <label>Tickets per Purchase (bundle size)</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
-            <label>Price per Purchase (ETB) — one bundle price</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
-            <label>Draw Speed (seconds between each number)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
+            <label>Tickets per Purchase</label><input id="nbTpp" type="number" min="1" max="20" value="${s.tickets_per_purchase}">
+            <label>Price per Purchase (ETB)</label><input id="nbPrice" type="number" min="0" value="${s.price_per_purchase}">
+            <label>Draw Speed (seconds)</label><input id="nbDelay" type="number" min="1" max="30" value="${s.draw_delay_seconds}">
             <label>Round Duration (minutes)</label><input id="nbDuration" type="number" min="1" max="120" value="${s.round_duration_minutes}">
             <label>Number of Winners</label><input id="nbWinners" type="number" min="1" max="20" value="${wc}" onchange="nbSettingsReloadPrizes()">
             <br><hr style="border-color:#334155;margin:16px 0"><br>
@@ -1546,9 +1638,8 @@ function renderNBSettings(s) {
         </div>
         <div class="card" style="border-color:#dc2626">
             <h2 style="color:#dc2626">🔐 Change Admin Password</h2>
-            <p class="muted" style="margin:8px 0 12px">Enter new password and the secret code to confirm.</p>
-            <label>New Password</label><input id="newAdminPwNb" type="password" placeholder="New admin password">
-            <label>Secret Reset Code</label><input id="resetCodeNb" type="password" placeholder="Enter secret code">
+            <label>New Password</label><input id="newAdminPwNb" type="password">
+            <label>Secret Reset Code</label><input id="resetCodeNb" type="password">
             <button class="main-button" style="background:#dc2626;color:white" onclick="changeAdminPassword('Nb')">🔐 Change Password</button>
         </div>`;
 }
@@ -1567,7 +1658,7 @@ async function saveNBSettings() {
     const round_duration_minutes = Number(document.getElementById('nbDuration').value);
     const winner_count = Number(document.getElementById('nbWinners').value);
     const prizes = Array.from(document.querySelectorAll('.nb-prize-input')).map(i => Number(i.value) || 0);
-    try { await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } }); alert('✅ Number Betting settings saved'); await settingsPage(); }
+    try { await api('/admin/nb/settings', { method: 'POST', body: { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } }); alert('✅ Saved'); await settingsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
 async function changeAdminPassword(suffix = '') {
@@ -1581,103 +1672,16 @@ async function changeAdminPassword(suffix = '') {
     try { await api('/admin/change-password', { method: 'POST', body: { newPassword: pw, code } }); alert('✅ Admin password changed!'); pwEl.value = ''; codeEl.value = ''; }
     catch (e) { alert('❌ ' + e.message); }
 }
-
-/* ============= LIVE ============= */
-function startLivePolls() {
-    refreshViewers(); refreshLiveChat();
-    viewersPollId = setInterval(refreshViewers, 4000);
-    chatPollId = setInterval(refreshLiveChat, 4000);
-    livePingId = setInterval(async () => { try { await api('/live/heartbeat', { method: 'POST' }); } catch (e) {} }, 20000);
-}
-async function joinLive() { try { await api('/live/join', { method: 'POST' }); toast('✅ Joined live'); refreshViewers(); } catch (e) { alert('❌ ' + e.message); } }
-async function leaveLive() { try { await api('/live/leave', { method: 'POST' }); toast('👋 Left live'); refreshViewers(); } catch (e) { alert('❌ ' + e.message); } }
-async function toggleSpeak() {
-    try {
-        const viewers = (await api('/live/viewers')).viewers || [];
-        const me = ME.role === 'admin' ? viewers.find(v => v.role === 'admin') : viewers.find(v => String(v.user_id) === String(ME.id));
-        if (!me) { alert('Join Live first'); return; }
-        const newState = !me.speaking;
-        await api('/live/speak', { method: 'POST', body: { speaking: newState } });
-        toast(newState ? '🎤 You are now speaking' : '🔇 Stopped speaking');
-        refreshViewers();
-    } catch (e) { alert('❌ ' + e.message); }
-}
-async function refreshViewers() {
-    try {
-        const data = await api('/live/viewers');
-        const list = data.viewers || [];
-        const listEl = document.getElementById('viewersList');
-        const countEl = document.getElementById('viewerCount');
-        if (!listEl || !countEl) return;
-        countEl.textContent = list.length;
-        if (!list.length) { listEl.innerHTML = `<p class="muted" style="font-size:12px">No viewers yet. Tap "Join Live" to appear.</p>`; return; }
-        listEl.innerHTML = list.map(v => {
-            const isMe = (ME.role === 'admin' && v.role === 'admin') || (ME.role !== 'admin' && String(v.user_id) === String(ME.id));
-            const dotCls = v.role === 'admin' ? 'viewer-dot admin' : (v.muted ? 'viewer-dot muted' : 'viewer-dot');
-            const micIcon = v.muted ? '🔇' : '🎤';
-            let voiceBadge = '';
-            if (v.muted) voiceBadge = '<span class="voice-badge muted">MUTED</span>';
-            else if (v.speaking) voiceBadge = '<span class="voice-badge speaking">🔴 LIVE</span>';
-            else voiceBadge = '<span class="voice-badge ready">🎤 READY</span>';
-            const adminActions = ME.role === 'admin' && v.role !== 'admin' ? `<div class="viewer-actions"><button class="mini-btn ${v.muted ? 'unmute' : 'mute'}" onclick="toggleMute(${v.id}, ${!v.muted})">${v.muted ? 'Unmute' : 'Mute'}</button><button class="mini-btn kick" onclick="kickViewer(${v.id})">Kick</button></div>` : '';
-            return `<div class="viewer-row"><div class="${dotCls}"></div><div class="viewer-name">${escapeHTML(v.user_name)} ${v.role === 'admin' ? '(Admin)' : ''} ${isMe ? '(you)' : ''} ${voiceBadge}</div><div style="font-size:16px">${micIcon}</div>${adminActions}</div>`;
-        }).join('');
-    } catch (e) {}
-}
-async function toggleMute(viewerId, muted) { try { await api('/live/mute', { method: 'POST', body: { viewerId, muted } }); refreshViewers(); } catch (e) { alert('❌ ' + e.message); } }
-async function kickViewer(viewerId) { if (!confirm('Kick this viewer?')) return; try { await api('/live/kick', { method: 'POST', body: { viewerId } }); toast('👋 Kicked'); refreshViewers(); } catch (e) { alert('❌ ' + e.message); } }
-async function refreshLiveChat() {
-    try {
-        const data = await api('/live/chat');
-        const el = document.getElementById('liveChatMessages');
-        if (!el) return;
-        const msgs = data.messages || [];
-        el.innerHTML = msgs.length ? msgs.map(m => `<div class="live-chat-msg"><b>${escapeHTML(m.user_name)}:</b> ${escapeHTML(m.message)}</div>`).join('') : `<p class="muted" style="font-size:12px">No messages yet.</p>`;
-        el.scrollTop = el.scrollHeight;
-    } catch (e) {}
-}
-async function sendLiveChat() {
-    const input = document.getElementById('liveChatInput');
-    if (!input) return;
-    const text = input.value.trim();
-    if (!text) return;
-    try { await api('/live/chat', { method: 'POST', body: { message: text } }); input.value = ''; refreshLiveChat(); }
-    catch (e) { alert('❌ ' + e.message); }
-}
-
-/* ============= HELPERS ============= */
 async function startSales() { try { await api('/admin/start-sales', { method: 'POST' }); toast('🟢 Sales opened!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 async function closeSales() { try { await api('/admin/close-sales', { method: 'POST' }); toast('🔴 Sales closed!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
 function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
-function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); hideChatFab(); }
+function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); }
 function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
 function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
 function formatDate(d) { try { return new Date(d).toLocaleString(); } catch { return '—'; } }
 function escapeHTML(v) { return String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
-let chatHistory = [];
-function toggleChat() { const p = document.getElementById('chatPanel'); p.classList.toggle('hidden'); if (!p.classList.contains('hidden')) setTimeout(() => document.getElementById('chatInput').focus(), 100); }
-function showChatFab() { document.getElementById('chatFab').classList.remove('hidden'); }
-function hideChatFab() { document.getElementById('chatFab').classList.add('hidden'); document.getElementById('chatPanel').classList.add('hidden'); }
-async function sendChat() {
-    const input = document.getElementById('chatInput'); const btn = document.getElementById('chatSendBtn'); const body = document.getElementById('chatBody');
-    const text = input.value.trim(); if (!text) return;
-    body.innerHTML += `<div class="chat-msg user">${escapeHTML(text)}</div>`; input.value = ''; btn.disabled = true;
-    const typingId = 'typing-' + Date.now();
-    body.innerHTML += `<div id="${typingId}" class="chat-msg bot typing">typing...</div>`;
-    body.scrollTop = body.scrollHeight;
-    try {
-        const res = await api('/chat', { method: 'POST', body: { message: text, history: chatHistory } });
-        document.getElementById(typingId)?.remove();
-        const reply = res.reply || 'No response.';
-        body.innerHTML += `<div class="chat-msg bot">${escapeHTML(reply)}</div>`;
-        chatHistory.push({ role: 'user', content: text }); chatHistory.push({ role: 'assistant', content: reply });
-        if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
-    } catch (e) {
-        document.getElementById(typingId)?.remove();
-        body.innerHTML += `<div class="chat-msg bot" style="color:#f87171">❌ ${escapeHTML(e.message)}</div>`;
-    } finally { btn.disabled = false; body.scrollTop = body.scrollHeight; }
-}
+
 boot();
 </script>
 </body>
