@@ -195,8 +195,10 @@ th { color: #94a3b8; }
 .nb-cell.drawn-win { background: #16a34a; border-color: #22c55e; color: #ffffff; animation: nbRevealOnce .5s ease-out; animation-fill-mode: both; }
 .nb-cell.drawn-lose { background: #991b1b; border-color: #dc2626; color: #fecaca; animation: nbRevealOnce .5s ease-out; animation-fill-mode: both; }
 @keyframes nbRevealOnce { 0% { transform: scale(0.4); opacity: 0.3; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-.nb-overlay-winners { position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 30; display: flex; flex-direction: column; gap: 6px; pointer-events: none; max-height: 62%; overflow-y: auto; }
-.nb-win-card { padding: 10px 14px; border-radius: 10px; border: 3px solid; backdrop-filter: blur(4px); background: rgba(15, 23, 42, 0.86); box-shadow: 0 6px 24px rgba(0,0,0,.6); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: bold; font-size: clamp(11px, 1.3vw, 15px); }
+
+/* Winner cards — BELOW the board */
+.nb-overlay-winners { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.nb-win-card { padding: 10px 14px; border-radius: 10px; border: 3px solid; background: rgba(15, 23, 42, 0.95); box-shadow: 0 6px 20px rgba(0,0,0,.5); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: bold; font-size: clamp(11px, 1.3vw, 15px); }
 .nb-win-card .rank { font-size: clamp(16px, 2vw, 22px); }
 .nb-win-card.place-1 { border-color: #FFD700; box-shadow: 0 0 24px rgba(255,215,0,.7); }
 .nb-win-card.place-2 { border-color: #C0C0C0; box-shadow: 0 0 20px rgba(192,192,192,.6); }
@@ -209,6 +211,7 @@ th { color: #94a3b8; }
 .nb-win-card .w-phone { color: #94a3b8; font-family: monospace; font-size: 12px; }
 .nb-win-card .w-prize { margin-left: auto; color: #fbbf24; font-weight: bold; }
 .nb-win-card .w-tickets { font-size: 12px; color: #cbd5e1; font-family: monospace; }
+
 .nb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
 .nb-stats .stat h2 { font-size: 18px; }
 .nb-timer { text-align: center; font-size: 38px; font-weight: bold; color: #22c55e; font-family: monospace; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 2px solid #166534; margin-bottom: 12px; }
@@ -220,8 +223,7 @@ th { color: #94a3b8; }
 body.public-view .header, body.public-view .sidebar, body.public-view .nb-stats, body.public-view .nb-timer { display: none !important; }
 body.public-view .layout { grid-template-columns: 1fr !important; }
 body.public-view .main { max-width: 100% !important; padding: 8px !important; }
-body.public-view .nb-grid { height: 72vh; max-height: 720px; }
-body.public-view .nb-overlay-winners { max-height: 65%; }
+body.public-view .nb-grid { height: 68vh; max-height: 720px; }
 body.public-view #exitPublicBtn { display: inline-flex !important; }
 #exitPublicBtn { display: none; position: fixed; top: 10px; right: 10px; z-index: 9999; padding: 10px 16px; background: #991b1b; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 .game-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -230,25 +232,7 @@ body.public-view #exitPublicBtn { display: inline-flex !important; }
 .game-tab.active { background: #fbbf24; border-color: #fbbf24; color: #111827; box-shadow: 0 0 20px rgba(251,191,36,.5); }
 .nb-hero { width: 100%; height: 180px; border-radius: 15px; margin-bottom: 20px; overflow: hidden; border: 2px solid #334155; background: #0b1220; display: block; }
 @media(max-width:1000px) { .stats { grid-template-columns: repeat(2,1fr); } .wheel-layout { grid-template-columns: 1fr; } .nb-stats { grid-template-columns: repeat(2, 1fr); } }
-@media(max-width:700px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { display: flex; overflow-x: auto; padding: 10px; }
-  .nav { min-width: 130px; margin-right: 5px; }
-  .main { padding: 12px; }
-  .form-grid { grid-template-columns: 1fr; }
-  .full { grid-column: auto; }
-  .stats { grid-template-columns: 1fr; }
-  .wheel-container { width: 320px; }
-  .timer { font-size: 40px; }
-  .banner-img { height: 160px; }
-  .nb-timer { font-size: 26px; }
-  .nb-stats { grid-template-columns: 1fr 1fr; }
-  .nb-grid { gap: 3px; height: 50vh; }
-  .nb-cell { font-size: 11px; border-radius: 6px; }
-  .login-animated-header { padding: 12px; gap: 8px; }
-  .login-svg-wheel { max-width: 130px; }
-  .login-svg-numbers { max-width: 150px; }
-}
+@media(max-width:700px) { .layout { grid-template-columns: 1fr; } .sidebar { display: flex; overflow-x: auto; padding: 10px; } .nav { min-width: 130px; margin-right: 5px; } .main { padding: 12px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } .stats { grid-template-columns: 1fr; } .wheel-container { width: 320px; } .timer { font-size: 40px; } .banner-img { height: 160px; } .nb-timer { font-size: 26px; } .nb-stats { grid-template-columns: 1fr 1fr; } .nb-grid { gap: 3px; height: 50vh; } .nb-cell { font-size: 11px; border-radius: 6px; } .login-animated-header { padding: 12px; gap: 8px; } .login-svg-wheel { max-width: 130px; } .login-svg-numbers { max-width: 150px; } }
 @media(max-width:450px) { .wheel-container { width: 280px; } .nb-grid { gap: 2px; height: 46vh; } .nb-cell { font-size: 10px; border-radius: 4px; border-width: 1.5px; } }
 </style>
 </head>
@@ -384,7 +368,7 @@ body.public-view #exitPublicBtn { display: inline-flex !important; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const API = '/api';
+const API = '/api';
 let TOKEN    = localStorage.getItem('lw_token') || null;
 let ME       = null;
 let SETTINGS = null;
@@ -576,7 +560,6 @@ function stopLivePolls() {
     if (nbSettleId) { clearInterval(nbSettleId); nbSettleId = null; }
 }
 
-/* ============= AI PAGE ============= */
 let aiHistory = [];
 function aiPage() {
     document.getElementById('main').innerHTML = `
@@ -599,23 +582,23 @@ async function sendAiChat() {
     const body = document.getElementById('aiBody');
     const text = input.value.trim();
     if (!text) return;
-    body.innerHTML += `<div class="chat-msg user">${escapeHTML(text)}</div>`;
+    body.innerHTML += '<div class="chat-msg user">' + escapeHTML(text) + '</div>';
     input.value = '';
     btn.disabled = true;
     const typingId = 'ai-typing-' + Date.now();
-    body.innerHTML += `<div id="${typingId}" class="chat-msg bot typing">typing...</div>`;
+    body.innerHTML += '<div id="' + typingId + '" class="chat-msg bot typing">typing...</div>';
     body.scrollTop = body.scrollHeight;
     try {
         const res = await api('/chat', { method: 'POST', body: { message: text, history: aiHistory } });
         document.getElementById(typingId)?.remove();
         const reply = res.reply || 'No response.';
-        body.innerHTML += `<div class="chat-msg bot">${escapeHTML(reply)}</div>`;
+        body.innerHTML += '<div class="chat-msg bot">' + escapeHTML(reply) + '</div>';
         aiHistory.push({ role: 'user', content: text });
         aiHistory.push({ role: 'assistant', content: reply });
         if (aiHistory.length > 12) aiHistory = aiHistory.slice(-12);
     } catch (e) {
         document.getElementById(typingId)?.remove();
-        body.innerHTML += `<div class="chat-msg bot" style="color:#f87171">❌ ${escapeHTML(e.message)}</div>`;
+        body.innerHTML += '<div class="chat-msg bot" style="color:#f87171">❌ ' + escapeHTML(e.message) + '</div>';
     } finally {
         btn.disabled = false;
         body.scrollTop = body.scrollHeight;
@@ -703,14 +686,14 @@ function dashboard() {
             </div>
         </div>
         <div class="card"><h2>🎟️ My Tickets</h2><br>
-            ${mine.length ? mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' ') : `<p class="muted">No tickets yet.</p>`}
+            ${mine.length ? mine.map(t => '<button class="small-button gold-button">Ticket #' + t.number + '</button>').join(' ') : '<p class="muted">No tickets yet.</p>'}
         </div>`;
 }
 function copyReferral() { if (!ME.referral_code) return; navigator.clipboard.writeText(ME.referral_code); toast('📋 Copied!'); }
 function copyInviteLink() { if (!ME.referral_code) return; const link = window.location.origin + '/?ref=' + ME.referral_code; navigator.clipboard.writeText(link); toast('🔗 Copied!'); }
 
 async function buyPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Admin — use Assign Tickets instead.</p></div>`; return; }
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = '<div class="card"><p class="muted">Admin — use Assign Tickets instead.</p></div>'; return; }
     buySelected = [];
     nbBuyPicked = [];
     let nbSettings = null;
@@ -733,7 +716,7 @@ function buyRenderWheel() {
     const soldCount = TICKETS.filter(t => t.user_id !== null).length;
     const availCount = TICKETS.length - soldCount;
     document.getElementById('buyContent').innerHTML = `
-        ${!salesOpen ? `<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Lucky Wheel sales are currently CLOSED.</b></p></div>` : ''}
+        ${!salesOpen ? '<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Lucky Wheel sales are currently CLOSED.</b></p></div>' : ''}
         <div class="stats">
             <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
             <div class="stat"><small>Ticket Price</small><h2>${money(SETTINGS.ticket_price)} each</h2></div>
@@ -765,7 +748,7 @@ function buyTicketButtons() {
         let label = 'AVAILABLE';
         if (mine) label = 'YOURS';
         else if (sold) label = 'SOLD';
-        return `<button type="button" class="${cls}" ${sold ? 'disabled' : ''} onclick="selectBuy(${t.number}, this)">#${t.number}<br><small>${label}</small></button>`;
+        return '<button type="button" class="' + cls + '" ' + (sold ? 'disabled' : '') + ' onclick="selectBuy(' + t.number + ', this)">#' + t.number + '<br><small>' + label + '</small></button>';
     }).join('');
 }
 function selectBuy(number, element) {
@@ -786,13 +769,13 @@ async function buySelectedTickets() {
     const useFree = document.getElementById('buyUseFree').checked;
     if (useFree && buySelected.length > 1) { alert('With free ticket, select only 1.'); return; }
     const cost = useFree ? 0 : buySelected.length * Number(SETTINGS.ticket_price);
-    if (!useFree && Number(ME.balance) < cost) { alert(`Not enough balance.`); return; }
-    if (!confirm(`Buy ${buySelected.length} ticket(s) for ${money(cost)}?`)) return;
+    if (!useFree && Number(ME.balance) < cost) { alert('Not enough balance.'); return; }
+    if (!confirm('Buy ' + buySelected.length + ' ticket(s) for ' + money(cost) + '?')) return;
     try { await api('/user/tickets/buy', { method: 'POST', body: { numbers: buySelected, useFreeTicket: useFree } }); alert('✅ Purchased!'); await refreshState(); buyPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
 async function buyRenderNB(nbSettings) {
-    if (!nbSettings) { document.getElementById('buyContent').innerHTML = `<div class="card"><p class="muted">Number Betting not available.</p></div>`; return; }
+    if (!nbSettings) { document.getElementById('buyContent').innerHTML = '<div class="card"><p class="muted">Number Betting not available.</p></div>'; return; }
     const s = nbSettings;
     const salesOpen = s.sales_state === 'open';
     let st = { tickets: [], my_tickets: [] };
@@ -800,7 +783,7 @@ async function buyRenderNB(nbSettings) {
     const takenSet = new Set((st.tickets || []).filter(t => t.user_id).map(t => t.number));
     const mySet = new Set((st.my_tickets || []).map(t => t.number));
     document.getElementById('buyContent').innerHTML = `
-        ${!salesOpen ? `<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Number Betting sales are currently CLOSED.</b></p></div>` : ''}
+        ${!salesOpen ? '<div class="card" style="background:#7f1d1d;border-color:#ef4444"><p><b>⚠️ Number Betting sales are currently CLOSED.</b></p></div>' : ''}
         <div class="stats">
             <div class="stat"><small>My Balance</small><h2>${money(ME.balance)}</h2></div>
             <div class="stat"><small>Bundle Price</small><h2>${money(s.price_per_purchase)} for ${s.tickets_per_purchase}</h2></div>
@@ -809,7 +792,7 @@ async function buyRenderNB(nbSettings) {
         </div>
         <div class="card">
             <h2>My NB Tickets</h2>
-            <div style="margin-top:10px">${mySet.size ? [...mySet].sort((a,b)=>a-b).map(n => `<span class="nb-pick-chip" style="margin:3px">#${n}</span>`).join('') : '<span class="muted">No tickets yet this round.</span>'}</div>
+            <div style="margin-top:10px">${mySet.size ? [...mySet].sort((a,b)=>a-b).map(n => '<span class="nb-pick-chip" style="margin:3px">#' + n + '</span>').join('') : '<span class="muted">No tickets yet this round.</span>'}</div>
         </div>
         <div class="card">
             <h2>Pick ${s.tickets_per_purchase} Numbers</h2>
@@ -833,7 +816,7 @@ function nbBuyGridHtml(s, takenSet, mySet) {
         if (nbBuyPicked.includes(i)) cls += ' mine-picked';
         else if (mySet.has(i)) cls += ' mine';
         else if (takenSet.has(i)) cls += ' taken';
-        html += `<div class="${cls}" data-num="${i}">${i}</div>`;
+        html += '<div class="' + cls + '" data-num="' + i + '">' + i + '</div>';
     }
     return html;
 }
@@ -856,13 +839,13 @@ function nbBuyToggle(num, cell, s) {
     if (nbBuyPicked.includes(num)) { nbBuyPicked = nbBuyPicked.filter(n => n !== num); cell.classList.remove('mine-picked'); }
     else { if (nbBuyPicked.length >= tpp) { toast('Max ' + tpp + ' numbers', true); return; } nbBuyPicked.push(num); cell.classList.add('mine-picked'); }
     const cnt = document.getElementById('nbBuyCount'); if (cnt) cnt.textContent = nbBuyPicked.length;
-    const list = document.getElementById('nbBuyList'); if (list) list.innerHTML = nbBuyPicked.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
+    const list = document.getElementById('nbBuyList'); if (list) list.innerHTML = nbBuyPicked.map(n => '<span class="nb-pick-chip">#' + n + '</span>').join('');
 }
 async function nbBuyConfirm() {
     const cfg = await api('/nb/config');
-    if (nbBuyPicked.length !== cfg.tickets_per_purchase) { alert(`Pick exactly ${cfg.tickets_per_purchase} numbers`); return; }
+    if (nbBuyPicked.length !== cfg.tickets_per_purchase) { alert('Pick exactly ' + cfg.tickets_per_purchase + ' numbers'); return; }
     if (Number(ME.balance) < Number(cfg.price_per_purchase)) { alert('Insufficient balance'); return; }
-    if (!confirm(`Buy ${cfg.tickets_per_purchase} NB tickets for ${money(cfg.price_per_purchase)}?`)) return;
+    if (!confirm('Buy ' + cfg.tickets_per_purchase + ' NB tickets for ' + money(cfg.price_per_purchase) + '?')) return;
     try { await api('/nb/buy', { method: 'POST', body: { numbers: nbBuyPicked } }); toast('✅ Purchased!'); nbBuyPicked = []; await refreshState(); await buyPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
@@ -903,7 +886,7 @@ function assignRenderWheel() {
 function ticketButtons() {
     return TICKETS.map(t => {
         const sold = t.user_id !== null;
-        return `<button type="button" class="ticket-select ${sold ? 'sold' : ''}" ${sold ? 'disabled' : ''} onclick="selectAssignWheel(${t.number}, this)">#${t.number}<br><small>${sold ? 'SOLD' : 'AVAILABLE'}</small></button>`;
+        return '<button type="button" class="ticket-select ' + (sold ? 'sold' : '') + '" ' + (sold ? 'disabled' : '') + ' onclick="selectAssignWheel(' + t.number + ', this)">#' + t.number + '<br><small>' + (sold ? 'SOLD' : 'AVAILABLE') + '</small></button>';
     }).join('');
 }
 function selectAssignWheel(number, element) {
@@ -924,19 +907,28 @@ async function assignTicketsWheel() {
 function ticketStatus() {
     return TICKETS.map(t => {
         const sold = t.user_id !== null;
-        return `<div class="ticket ${sold ? 'sold' : ''} ${t.used_free_ticket ? 'free' : ''}">
-            <div class="ticket-number">#${t.number}</div>
-            ${sold ? `<p class="sold-text">SOLD</p>${t.used_free_ticket ? '<p class="free-badge">🎁 FREE</p>' : ''}<br><p>${escapeHTML(t.user_name || '')}</p><p>${escapeHTML(t.phone || '')}</p><button class="small-button red-button" style="margin-top:8px;padding:5px 10px;font-size:11px" onclick="resetOneTicket(${t.number})">🔄 Reset</button>` : `<p class="available">AVAILABLE</p>`}
-        </div>`;
+        let html = '<div class="ticket ' + (sold ? 'sold' : '') + ' ' + (t.used_free_ticket ? 'free' : '') + '">';
+        html += '<div class="ticket-number">#' + t.number + '</div>';
+        if (sold) {
+            html += '<p class="sold-text">SOLD</p>';
+            if (t.used_free_ticket) html += '<p class="free-badge">🎁 FREE</p>';
+            html += '<br><p>' + escapeHTML(t.user_name || '') + '</p>';
+            html += '<p>' + escapeHTML(t.phone || '') + '</p>';
+            html += '<button class="small-button red-button" style="margin-top:8px;padding:5px 10px;font-size:11px" onclick="resetOneTicket(' + t.number + ')">🔄 Reset</button>';
+        } else {
+            html += '<p class="available">AVAILABLE</p>';
+        }
+        html += '</div>';
+        return html;
     }).join('');
 }
 async function resetOneTicket(number) {
-    if (!confirm(`Reset ticket #${number}?`)) return;
+    if (!confirm('Reset ticket #' + number + '?')) return;
     try { await api('/admin/tickets/reset-one', { method: 'POST', body: { number } }); toast('✅ Reset'); await refreshState(); ticketsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
 async function assignRenderNB(nbSettings) {
-    if (!nbSettings) { document.getElementById('assignContent').innerHTML = `<div class="card"><p class="muted">Number Betting not available.</p></div>`; return; }
+    if (!nbSettings) { document.getElementById('assignContent').innerHTML = '<div class="card"><p class="muted">Number Betting not available.</p></div>'; return; }
     const s = nbSettings;
     let st = { tickets: [] };
     try { st = await api('/nb/state'); } catch (e) {}
@@ -965,7 +957,7 @@ function nbAssignGridHtml(s, takenSet) {
         let cls = 'nb-cell';
         if (assignSelectedNB.includes(i)) cls += ' mine-picked';
         else if (takenSet.has(i)) cls += ' taken';
-        html += `<div class="${cls}" data-num="${i}">${i}</div>`;
+        html += '<div class="' + cls + '" data-num="' + i + '">' + i + '</div>';
     }
     return html;
 }
@@ -975,7 +967,7 @@ function nbAssignToggle(num, cell, s) {
     if (assignSelectedNB.includes(num)) { assignSelectedNB = assignSelectedNB.filter(n => n !== num); cell.classList.remove('mine-picked'); }
     else { if (assignSelectedNB.length >= tpp) { toast('Max ' + tpp + ' numbers', true); return; } assignSelectedNB.push(num); cell.classList.add('mine-picked'); }
     const cnt = document.getElementById('nbAssignCount'); if (cnt) cnt.textContent = assignSelectedNB.length;
-    const list = document.getElementById('nbAssignList'); if (list) list.innerHTML = assignSelectedNB.map(n => `<span class="nb-pick-chip">#${n}</span>`).join('');
+    const list = document.getElementById('nbAssignList'); if (list) list.innerHTML = assignSelectedNB.map(n => '<span class="nb-pick-chip">#' + n + '</span>').join('');
 }
 async function assignTicketsNB() {
     const name = document.getElementById('assignNbName').value.trim();
@@ -984,7 +976,7 @@ async function assignTicketsNB() {
     const balance = Number(document.getElementById('assignNbBalance').value) || 0;
     const cfg = await api('/nb/config');
     if (!name || !phone) { alert('Enter name and phone'); return; }
-    if (assignSelectedNB.length !== cfg.tickets_per_purchase) { alert(`Pick exactly ${cfg.tickets_per_purchase} numbers`); return; }
+    if (assignSelectedNB.length !== cfg.tickets_per_purchase) { alert('Pick exactly ' + cfg.tickets_per_purchase + ' numbers'); return; }
     try { await api('/admin/nb/assign', { method: 'POST', body: { name, phone, password, balance, numbers: assignSelectedNB } }); alert('✅ NB Tickets Assigned!'); assignSelectedNB = []; await refreshState(); ticketsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
@@ -994,7 +986,7 @@ async function nbPage() {
         const s = await api('/nb/state');
         nbState = s;
     } catch (e) {
-        document.getElementById('main').innerHTML = `<div class="card"><p>❌ ${escapeHTML(e.message)}</p></div>`;
+        document.getElementById('main').innerHTML = '<div class="card"><p>❌ ' + escapeHTML(e.message) + '</p></div>';
         return;
     }
     const s = nbState.settings;
@@ -1004,7 +996,7 @@ async function nbPage() {
 
     document.getElementById('main').innerHTML = `
         <div class="nb-hero">
-            <img src="image5.jpg" alt="Number Betting" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentElement.innerHTML='<svg viewBox=0 0 800 180 xmlns=http://www.w3.org/2000/svg style=width:100%;height:100%><rect width=800 height=180 fill=#0b1220/><circle cx=140 cy=90 r=55 fill=#fbbf24 opacity=0.15/><text x=140 y=100 text-anchor=middle font-size=44 font-weight=bold fill=#fbbf24 font-family=monospace>80</text><text x=140 y=135 text-anchor=middle font-size=12 fill=#94a3b8>NUMBERS</text><text x=400 y=95 text-anchor=middle font-size=36 font-weight=bold fill=#fff>NUMBER BETTING</text><text x=400 y=125 text-anchor=middle font-size=14 fill=#94a3b8>Pick your numbers. Watch the draw. Win big.</text><circle cx=660 cy=90 r=55 fill=#22c55e opacity=0.15/><text x=660 y=100 text-anchor=middle font-size=44 font-weight=bold fill=#22c55e font-family=monospace>20</text><text x=660 y=135 text-anchor=middle font-size=12 fill=#94a3b8>DRAWN</text></svg>'">
+            <img src="image5.jpg" alt="Number Betting" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
         </div>
         <h1 class="title">🎰 Number Betting — Round #${s.round_number}</h1>
         <div class="nb-stats">
@@ -1023,8 +1015,8 @@ async function nbPage() {
                 <p class="muted" style="font-size:12px;margin-bottom:6px">⏳ Waiting · 🟡 Your pick · 🟢 Drawn (winning) · 🔴 Not drawn (losing)</p>
                 <div class="nb-board">
                     <div class="nb-grid" id="nbGrid">${nbGridHtml(s)}</div>
-                    <div id="nbWinnersOverlay"></div>
                 </div>
+                <div id="nbWinnersOverlay"></div>
             </div>
         </div>
         ${isAdmin ? nbAdminPanel(s) : nbUserPanel(s)}
@@ -1032,26 +1024,30 @@ async function nbPage() {
     renderNbWinnersOverlay(s);
     nbStartPolls(s);
 }
+
 function renderNbWinnersOverlay(s) {
     const el = document.getElementById('nbWinnersOverlay');
     if (!el) return;
     const finished = s.round_state === 'finished';
     if (!finished || !s.winners || !s.winners.length) { el.innerHTML = ''; return; }
-    el.innerHTML = `
-        <div class="nb-overlay-winners">
-            ${s.winners.map(w => `
-                <div class="nb-win-card place-${w.place}">
-                    <span class="rank">${w.place === 1 ? '🥇' : w.place === 2 ? '🥈' : w.place === 3 ? '🥉' : '🏅'} #${w.place}</span>
-                    <span class="w-name">${escapeHTML(w.name)}</span>
-                    <span class="w-id">${escapeHTML(w.public_code || '—')}</span>
-                    <span class="w-phone">${escapeHTML(w.phone_masked || '—')}</span>
-                    <span class="w-tickets">${(w.shown_numbers || []).map(n => '#' + n).join(' ') || '—'}</span>
-                    <span class="w-prize">${money(w.prize)}</span>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    let html = '<div class="nb-overlay-winners">';
+    for (let i = 0; i < s.winners.length; i++) {
+        const w = s.winners[i];
+        const medal = w.place === 1 ? '🥇' : w.place === 2 ? '🥈' : w.place === 3 ? '🥉' : '🏅';
+        const tickets = (w.shown_numbers || []).map(n => '#' + n).join(' ') || '—';
+        html += '<div class="nb-win-card place-' + w.place + '">';
+        html += '<span class="rank">' + medal + ' #' + w.place + '</span>';
+        html += '<span class="w-name">' + escapeHTML(w.name) + '</span>';
+        html += '<span class="w-id">' + escapeHTML(w.public_code || '—') + '</span>';
+        html += '<span class="w-phone">' + escapeHTML(w.phone_masked || '—') + '</span>';
+        html += '<span class="w-tickets">' + escapeHTML(tickets) + '</span>';
+        html += '<span class="w-prize">' + money(w.prize) + '</span>';
+        html += '</div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
 }
+
 function nbStatusText(s) {
     if (s.round_state === 'drawing') return '🎬 DRAWING';
     if (s.round_state === 'finished') return '✅ FINISHED';
@@ -1082,7 +1078,7 @@ function nbGridHtml(s) {
         const mine = mineSet.has(i);
         if (drawingOrDone) { if (drawn) cls += ' drawn-win'; else cls += ' drawn-lose'; }
         else { if (mine) cls += ' mine'; else if (userNumbers.has(i)) cls += ' taken'; }
-        html += `<div class="${cls}" data-num="${i}">${i}</div>`;
+        html += '<div class="' + cls + '" data-num="' + i + '">' + i + '</div>';
     }
     return html;
 }
@@ -1105,7 +1101,7 @@ function nbUserPanel(s) {
     return `
     <div class="card">
         <h2>My NB Tickets (${mine.length})</h2><br>
-        ${mine.length ? mine.map(t => `<span class="nb-pick-chip" style="margin:3px">#${t.number}</span>`).join('') : `<p class="muted">No tickets yet this round.</p>`}
+        ${mine.length ? mine.map(t => '<span class="nb-pick-chip" style="margin:3px">#' + t.number + '</span>').join('') : '<p class="muted">No tickets yet this round.</p>'}
     </div>`;
 }
 function nbStartPolls(s) {
@@ -1135,7 +1131,7 @@ function nbRevealTick() {
         const grid = document.getElementById('nbGrid');
         if (grid) grid.innerHTML = nbGridHtml(s);
         const drawnEl = document.getElementById('nbDrawnH');
-        if (drawnEl) drawnEl.textContent = `${shown}/${s.drawn_count}`;
+        if (drawnEl) drawnEl.textContent = shown + '/' + s.drawn_count;
     }
 }
 function nbTickTimer() {
@@ -1149,13 +1145,13 @@ function nbTickTimer() {
         const shown = nbDrawnSoFar(s);
         const total = s.drawn_count * s.draw_delay_seconds;
         const secs = Math.max(0, total - elapsed);
-        el.textContent = `DRAW ${shown}/${s.drawn_count} · ${formatTime(Math.ceil(secs))}`;
+        el.textContent = 'DRAW ' + shown + '/' + s.drawn_count + ' · ' + formatTime(Math.ceil(secs));
     } else if (s.sales_state === 'open' && s.sales_started_at) {
         const start = new Date(s.sales_started_at).getTime();
         const elapsed = (Date.now() - start) / 1000;
         const total = s.round_duration_minutes * 60;
         const secs = Math.max(0, total - elapsed);
-        el.textContent = `SALES ${formatTime(Math.ceil(secs))}`;
+        el.textContent = 'SALES ' + formatTime(Math.ceil(secs));
     } else { el.textContent = '--:--'; }
 }
 async function nbRefreshSilent() {
@@ -1170,7 +1166,7 @@ async function nbRefreshSilent() {
         if (grid) grid.innerHTML = nbGridHtml(s.settings);
         renderNbWinnersOverlay(s.settings);
         const soldEl = document.getElementById('nbSoldH');
-        if (soldEl) soldEl.textContent = `${s.sold_count}/${s.settings.total_numbers}`;
+        if (soldEl) soldEl.textContent = s.sold_count + '/' + s.settings.total_numbers;
         const statusEl = document.getElementById('nbStatusH');
         if (statusEl) statusEl.textContent = nbStatusText(s.settings);
         nbTickTimer();
@@ -1220,12 +1216,12 @@ function wheelPage() {
             <div>
                 <div id="timer" class="timer">${formatTime(SETTINGS.duration)}</div>
                 <p id="status" class="status">${SETTINGS.round_state === 'spinning' ? '🎡 Spinning...' : SETTINGS.round_state === 'finished' ? 'Round completed.' : isAdmin ? 'Ready.' : 'Waiting for admin.'}</p>
-                ${isAdmin ? `<div class="action-buttons">
-                    <button class="action-btn green" onclick="startSales()" ${salesOpen ? 'disabled' : ''}>🟢 START SALES</button>
-                    <button class="action-btn red" onclick="closeSales()" ${!salesOpen ? 'disabled' : ''}>🔴 CLOSE SALES</button>
-                    <button id="spinButton" class="action-btn" onclick="startSpin()" ${spinning ? 'disabled' : ''}>🎡 SPIN NOW</button>
-                    <button class="action-btn red" onclick="newRound()" ${spinning ? 'disabled' : ''}>🔄 NEW ROUND</button>
-                </div>` : `<div class="card"><h3>My Tickets</h3><br>${myTicketList()}</div>`}
+                ${isAdmin ? '<div class="action-buttons">' +
+                    '<button class="action-btn green" onclick="startSales()" ' + (salesOpen ? 'disabled' : '') + '>🟢 START SALES</button>' +
+                    '<button class="action-btn red" onclick="closeSales()" ' + (!salesOpen ? 'disabled' : '') + '>🔴 CLOSE SALES</button>' +
+                    '<button id="spinButton" class="action-btn" onclick="startSpin()" ' + (spinning ? 'disabled' : '') + '>🎡 SPIN NOW</button>' +
+                    '<button class="action-btn red" onclick="newRound()" ' + (spinning ? 'disabled' : '') + '>🔄 NEW ROUND</button>' +
+                    '</div>' : '<div class="card"><h3>My Tickets</h3><br>' + myTicketList() + '</div>'}
                 <div id="winnerArea"></div>
             </div>
         </div></div>`;
@@ -1238,7 +1234,7 @@ function buildWheel() {
     if (!wheel || !labels) return;
     const soldTickets = TICKETS.filter(t => t.user_id !== null);
     const n = soldTickets.length;
-    if (n === 0) { wheel.style.background = '#334155'; labels.innerHTML = `<div style="position:absolute;inset:0;display:flex;justify-content:center;align-items:center;color:#94a3b8;font-size:16px;text-align:center;padding:0 40px">No tickets sold yet.</div>`; return; }
+    if (n === 0) { wheel.style.background = '#334155'; labels.innerHTML = '<div style="position:absolute;inset:0;display:flex;justify-content:center;align-items:center;color:#94a3b8;font-size:16px;text-align:center;padding:0 40px">No tickets sold yet.</div>'; return; }
     const angle = 360 / n;
     const winners = SETTINGS.round_state === 'finished' ? (SETTINGS.winner_numbers || []) : [];
     const stops = [];
@@ -1247,11 +1243,11 @@ function buildWheel() {
         const start = i * angle, end = (i + 1) * angle;
         let color;
         if (winners.includes(t.number)) color = '#fbbf24';
-        else if (i % 2 === 1) color = `hsl(${(t.number * 37) % 360}, 62%, 38%)`;
-        else color = `hsl(${(t.number * 37) % 360}, 55%, 27%)`;
-        stops.push(`${color} ${start}deg ${end}deg`);
+        else if (i % 2 === 1) color = 'hsl(' + ((t.number * 37) % 360) + ', 62%, 38%)';
+        else color = 'hsl(' + ((t.number * 37) % 360) + ', 55%, 27%)';
+        stops.push(color + ' ' + start + 'deg ' + end + 'deg');
     }
-    wheel.style.background = `conic-gradient(from 0deg, ${stops.join(',')})`;
+    wheel.style.background = 'conic-gradient(from 0deg, ' + stops.join(',') + ')';
     wheel.classList.toggle('has-winners', winners.length > 0);
     const fontSize = Math.max(9, Math.min(22, 250 / n));
     let html = '';
@@ -1259,7 +1255,7 @@ function buildWheel() {
         const t = soldTickets[i];
         const rot = i * angle + angle / 2;
         const isWinner = winners.includes(t.number);
-        html += `<div class="wl" style="transform:rotate(${rot}deg)"><span style="font-size:${fontSize}px;color:${isWinner ? '#111827' : '#ffffff'}">#${t.number}</span></div>`;
+        html += '<div class="wl" style="transform:rotate(' + rot + 'deg)"><span style="font-size:' + fontSize + 'px;color:' + (isWinner ? '#111827' : '#ffffff') + '">#' + t.number + '</span></div>';
     }
     labels.innerHTML = html;
 }
@@ -1301,14 +1297,14 @@ function applyWheelState() {
         wheel._spinKey = spinKey;
         wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
         void wheel.offsetWidth;
-        requestAnimationFrame(() => { wheel.style.transition = `transform ${s.duration}s cubic-bezier(.15,.7,.2,1)`; wheel.style.transform = `rotate(${target}deg)`; });
+        requestAnimationFrame(() => { wheel.style.transition = 'transform ' + s.duration + 's cubic-bezier(.15,.7,.2,1)'; wheel.style.transform = 'rotate(' + target + 'deg)'; });
         startCountdown(startedAt, s.duration);
         return;
     }
     if (s.round_state === 'finished') {
         stopCountdown(); timerEl.classList.remove('spinning', 'sales');
         wheel._spinKey = null;
-        wheel.style.transition = 'none'; wheel.style.transform = `rotate(${target}deg)`;
+        wheel.style.transition = 'none'; wheel.style.transform = 'rotate(' + target + 'deg)';
         if (pointer) pointer.classList.add('winner');
         const winners = s.winner_numbers || [];
         if (orbit && winners.length > 0 && n > 0) {
@@ -1318,11 +1314,11 @@ function applyWheelState() {
                 const angle = 360 / n;
                 const center = winnerIndex * angle + angle / 2;
                 const screen = ((center + target) % 360 + 360) % 360;
-                orbit.classList.remove('hidden'); orbit.style.transform = `rotate(${screen}deg)`;
+                orbit.classList.remove('hidden'); orbit.style.transform = 'rotate(' + screen + 'deg)';
             }
         }
         const centerEl = document.getElementById('wheelCenter');
-        if (centerEl) centerEl.innerHTML = winners.length ? `🏆<br>#${winners[0]}` : 'DONE';
+        if (centerEl) centerEl.innerHTML = winners.length ? '🏆<br>#' + winners[0] : 'DONE';
         timerEl.textContent = '00:00';
         const statusEl = document.getElementById('status'); if (statusEl) statusEl.textContent = 'Round completed.';
         showWinners(s.winners || []);
@@ -1355,11 +1351,16 @@ async function newRound() { if (!confirm('Start new round?')) return; try { awai
 function showWinners(winners) {
     const area = document.getElementById('winnerArea'); if (!area) return;
     if (!winners || !winners.length) { area.innerHTML = ''; return; }
-    area.innerHTML = `<div class="winners"><h2>🏆 WINNERS</h2>${winners.map(w => `<div class="winner"><b>Winner ${w.place}</b><br>Name: ${escapeHTML(w.name)}<br>ID: ${escapeHTML(w.public_code || '—')}<br>Phone: ${escapeHTML(w.phone_masked || '—')}<br>Ticket: #${w.ticket}<br>Prize: <span class="gold">${money(w.prize)}</span></div>`).join('')}</div>`;
+    let html = '<div class="winners"><h2>🏆 WINNERS</h2>';
+    for (const w of winners) {
+        html += '<div class="winner"><b>Winner ' + w.place + '</b><br>Name: ' + escapeHTML(w.name) + '<br>ID: ' + escapeHTML(w.public_code || '—') + '<br>Phone: ' + escapeHTML(w.phone_masked || '—') + '<br>Ticket: #' + w.ticket + '<br>Prize: <span class="gold">' + money(w.prize) + '</span></div>';
+    }
+    html += '</div>';
+    area.innerHTML = html;
 }
 
 async function depositPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = '<div class="card"><p class="muted">Users only.</p></div>'; return; }
     let dep = { deposits: [] };
     try { dep = await api('/user/deposits'); } catch (e) {}
     document.getElementById('main').innerHTML = `
@@ -1381,7 +1382,7 @@ async function depositPage() {
             <button class="main-button" onclick="submitDeposit()">📤 SUBMIT DEPOSIT</button>
         </div>
         <div class="card"><h2>My Deposits</h2><br>
-            ${!dep.deposits.length ? `<p class="muted">No deposits yet.</p>` : dep.deposits.map(d => `<div class="req-card"><div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div><div class="row"><b>Method:</b> <span>${d.method.toUpperCase()}</span></div><div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div></div>`).join('')}
+            ${!dep.deposits.length ? '<p class="muted">No deposits yet.</p>' : dep.deposits.map(d => '<div class="req-card"><div class="row"><b>Amount:</b> <span class="gold">' + money(d.amount) + '</span></div><div class="row"><b>Method:</b> <span>' + d.method.toUpperCase() + '</span></div><div class="row"><b>Txn:</b> <span>' + escapeHTML(d.transaction_id) + '</span></div><div class="row"><b>Status:</b> <span class="status-badge ' + d.status + '">' + d.status.toUpperCase() + '</span></div></div>').join('')}
         </div>`;
 }
 async function submitDeposit() {
@@ -1394,7 +1395,7 @@ async function submitDeposit() {
     catch (e) { alert('❌ ' + e.message); }
 }
 async function withdrawPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = '<div class="card"><p class="muted">Users only.</p></div>'; return; }
     let w = { withdrawals: [] };
     try { w = await api('/user/withdrawals'); } catch (e) {}
     document.getElementById('main').innerHTML = `
@@ -1409,7 +1410,7 @@ async function withdrawPage() {
             <button class="main-button" onclick="submitWithdraw()">📤 SUBMIT WITHDRAWAL</button>
         </div>
         <div class="card"><h2>My Withdrawals</h2><br>
-            ${!w.withdrawals.length ? `<p class="muted">No withdrawals yet.</p>` : w.withdrawals.map(x => `<div class="req-card"><div class="row"><b>Amount:</b> <span class="gold">${money(x.amount)}</span></div><div class="row"><b>Method:</b> <span>${x.method.toUpperCase()}</span></div><div class="row"><b>Account:</b> <span>${escapeHTML(x.account_number)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${x.status}">${x.status.toUpperCase()}</span></div></div>`).join('')}
+            ${!w.withdrawals.length ? '<p class="muted">No withdrawals yet.</p>' : w.withdrawals.map(x => '<div class="req-card"><div class="row"><b>Amount:</b> <span class="gold">' + money(x.amount) + '</span></div><div class="row"><b>Method:</b> <span>' + x.method.toUpperCase() + '</span></div><div class="row"><b>Account:</b> <span>' + escapeHTML(x.account_number) + '</span></div><div class="row"><b>Status:</b> <span class="status-badge ' + x.status + '">' + x.status.toUpperCase() + '</span></div></div>').join('')}
         </div>`;
 }
 async function submitWithdraw() {
@@ -1419,12 +1420,12 @@ async function submitWithdraw() {
     if (!amount || amount <= 0) { alert('Enter valid amount'); return; }
     if (!accountNumber) { alert('Enter account number'); return; }
     if (amount > Number(ME.balance)) { alert('Not enough balance'); return; }
-    if (!confirm(`Withdraw ${money(amount)}?`)) return;
+    if (!confirm('Withdraw ' + money(amount) + '?')) return;
     try { await api('/user/withdrawals', { method: 'POST', body: { method, amount, accountNumber } }); alert('✅ Submitted!'); await refreshState(); withdrawPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
 async function referralsPage() {
-    if (ME.role === 'admin') { document.getElementById('main').innerHTML = `<div class="card"><p class="muted">Users only.</p></div>`; return; }
+    if (ME.role === 'admin') { document.getElementById('main').innerHTML = '<div class="card"><p class="muted">Users only.</p></div>'; return; }
     const data = await api('/referrals');
     const goal = SETTINGS.referral_goal || 8;
     document.getElementById('main').innerHTML = `
@@ -1440,37 +1441,46 @@ async function referralsPage() {
             <p class="muted" style="margin-top:12px">Every <b class="gold">${goal}</b> friends who buy = <b class="gold">1 FREE ticket</b>.</p>
         </div>
         <div class="card"><h2>Friends (${data.referrals.length})</h2><br>
-            ${data.referrals.length ? data.referrals.map(r => `<div class="ref-row"><div><b>${escapeHTML(r.name)}</b><br><span class="muted" style="font-size:12px">${escapeHTML(r.phone)}</span></div><div>${r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>'}</div></div>`).join('') : `<p class="muted">No referrals yet.</p>`}
+            ${data.referrals.length ? data.referrals.map(r => '<div class="ref-row"><div><b>' + escapeHTML(r.name) + '</b><br><span class="muted" style="font-size:12px">' + escapeHTML(r.phone) + '</span></div><div>' + (r.has_bought_ticket ? '<span class="ref-badge active">✓ ACTIVE</span>' : '<span class="ref-badge pending">⏳ PENDING</span>') + '</div></div>').join('') : '<p class="muted">No referrals yet.</p>'}
         </div>`;
 }
 async function usersPage() {
     const data = await api('/admin/users/full');
     const list = data.users;
+    let rows = '';
+    if (list.length) {
+        for (const u of list) {
+            const pid = u.public_id ? 'U' + String(u.public_id).padStart(5, '0') : '—';
+            const status = u.banned ? '<span class="status-badge rejected">BANNED</span>' : '<span class="status-badge approved">ACTIVE</span>';
+            const banBtn = u.banned
+                ? '<button class="small-button green-button" onclick="banUser(\'' + u.id + '\', false)">Restore</button>'
+                : '<button class="small-button red-button" onclick="banUser(\'' + u.id + '\', true)">Ban</button>';
+            rows += '<tr>' +
+                '<td style="font-family:monospace;color:#fbbf24">' + pid + '</td>' +
+                '<td>' + escapeHTML(u.name) + '</td>' +
+                '<td>' + escapeHTML(u.phone) + '</td>' +
+                '<td><span style="font-family:monospace;color:#fbbf24">' + escapeHTML(u.password_plain || '—') + '</span></td>' +
+                '<td class="gold">' + money(u.balance) + '</td>' +
+                '<td>' + (userTickets(u.id) || '-') + '</td>' +
+                '<td>' + (u.active_referrals || 0) + '</td>' +
+                '<td class="gold">' + (u.free_tickets || 0) + '</td>' +
+                '<td>' + status + '</td>' +
+                '<td><button class="small-button gold-button" onclick="adjustBalance(\'' + u.id + '\')">Balance</button><button class="small-button" onclick="resetPassword(\'' + u.id + '\', \'' + escapeHTML(u.name) + '\')">Reset PW</button>' + banBtn + '</td>' +
+                '</tr>';
+        }
+    } else {
+        rows = '<tr><td colspan="10" class="muted">No users yet.</td></tr>';
+    }
     document.getElementById('main').innerHTML = `
         <img src="image4.jpg" alt="Users" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">👥 Registered Users</h1>
         <div class="card"><div class="table-box"><table>
             <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Password</th><th>Balance</th><th>Tickets</th><th>Refs</th><th>Free</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>${list.length ? list.map(u => `<tr>
-                    <td style="font-family:monospace;color:#fbbf24">${u.public_id ? 'U' + String(u.public_id).padStart(5,'0') : '—'}</td>
-                    <td>${escapeHTML(u.name)}</td>
-                    <td>${escapeHTML(u.phone)}</td>
-                    <td><span style="font-family:monospace;color:#fbbf24">${escapeHTML(u.password_plain || '—')}</span></td>
-                    <td class="gold">${money(u.balance)}</td>
-                    <td>${userTickets(u.id) || '-'}</td>
-                    <td>${u.active_referrals || 0}</td>
-                    <td class="gold">${u.free_tickets || 0}</td>
-                    <td>${u.banned ? '<span class="status-badge rejected">BANNED</span>' : '<span class="status-badge approved">ACTIVE</span>'}</td>
-                    <td>
-                        <button class="small-button gold-button" onclick="adjustBalance('${u.id}')">Balance</button>
-                        <button class="small-button" onclick="resetPassword('${u.id}', '${escapeHTML(u.name)}')">Reset PW</button>
-                        ${u.banned ? `<button class="small-button green-button" onclick="banUser('${u.id}', false)">Restore</button>` : `<button class="small-button red-button" onclick="banUser('${u.id}', true)">Ban</button>`}
-                    </td>
-                </tr>`).join('') : `<tr><td colspan="10" class="muted">No users yet.</td></tr>`}</tbody>
+            <tbody>${rows}</tbody>
         </table></div></div>`;
 }
 async function resetPassword(userId, userName) {
-    const newPw = prompt(`New password for ${userName}:\n(min 4 characters)`);
+    const newPw = prompt('New password for ' + userName + ':\n(min 4 characters)');
     if (newPw === null) return;
     if (newPw.trim().length < 4) { alert('Min 4 characters'); return; }
     try { await api('/admin/users/reset-password', { method: 'POST', body: { userId, newPassword: newPw.trim() } }); alert('✅ Updated.'); usersPage(); }
@@ -1493,6 +1503,20 @@ async function requestsPage() {
     const [dep, wd] = await Promise.all([api('/admin/deposits'), api('/admin/withdrawals')]);
     const pendingDeps = dep.deposits.filter(d => d.status === 'pending');
     const pendingWds  = wd.withdrawals.filter(w => w.status === 'pending');
+    let depsHtml = '<p class="muted">None yet.</p>';
+    if (dep.deposits.length) {
+        depsHtml = dep.deposits.map(d => {
+            const actions = d.status === 'pending' ? '<div class="req-actions"><button class="small-button green-button" onclick="decideDeposit(' + d.id + ', \'approve\')">✓ Approve</button><button class="small-button red-button" onclick="decideDeposit(' + d.id + ', \'reject\')">✗ Reject</button></div>' : '';
+            return '<div class="req-card"><div class="row"><b>User:</b> <span>' + escapeHTML(d.user_name) + ' (' + escapeHTML(d.phone) + ')</span></div><div class="row"><b>Amount:</b> <span class="gold">' + money(d.amount) + '</span></div><div class="row"><b>Txn:</b> <span>' + escapeHTML(d.transaction_id) + '</span></div><div class="row"><b>Status:</b> <span class="status-badge ' + d.status + '">' + d.status.toUpperCase() + '</span></div>' + actions + '</div>';
+        }).join('');
+    }
+    let wdsHtml = '<p class="muted">None yet.</p>';
+    if (wd.withdrawals.length) {
+        wdsHtml = wd.withdrawals.map(w => {
+            const actions = w.status === 'pending' ? '<div class="req-actions"><button class="small-button green-button" onclick="decideWithdraw(' + w.id + ', \'approve\')">✓ Approve</button><button class="small-button red-button" onclick="decideWithdraw(' + w.id + ', \'reject\')">✗ Reject</button></div>' : '';
+            return '<div class="req-card"><div class="row"><b>User:</b> <span>' + escapeHTML(w.user_name) + ' (' + escapeHTML(w.phone) + ')</span></div><div class="row"><b>Amount:</b> <span class="gold">' + money(w.amount) + '</span></div><div class="row"><b>Account:</b> <span>' + escapeHTML(w.account_number) + '</span></div><div class="row"><b>Status:</b> <span class="status-badge ' + w.status + '">' + w.status.toUpperCase() + '</span></div>' + actions + '</div>';
+        }).join('');
+    }
     document.getElementById('main').innerHTML = `
         <img src="image1.jpg" alt="Requests" class="banner-img" onerror="this.style.display='none'">
         <h1 class="title">📥 Manage Requests</h1>
@@ -1502,23 +1526,19 @@ async function requestsPage() {
             <div class="stat"><small>Total Deposits</small><h2>${dep.deposits.length}</h2></div>
             <div class="stat"><small>Total Withdrawals</small><h2>${wd.withdrawals.length}</h2></div>
         </div>
-        <div class="card"><h2>💰 Deposits</h2><br>
-            ${!dep.deposits.length ? `<p class="muted">None yet.</p>` : dep.deposits.map(d => `<div class="req-card"><div class="row"><b>User:</b> <span>${escapeHTML(d.user_name)} (${escapeHTML(d.phone)})</span></div><div class="row"><b>Amount:</b> <span class="gold">${money(d.amount)}</span></div><div class="row"><b>Txn:</b> <span>${escapeHTML(d.transaction_id)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></div>${d.status === 'pending' ? `<div class="req-actions"><button class="small-button green-button" onclick="decideDeposit(${d.id}, 'approve')">✓ Approve</button><button class="small-button red-button" onclick="decideDeposit(${d.id}, 'reject')">✗ Reject</button></div>` : ''}</div>`).join('')}
-        </div>
-        <div class="card"><h2>💸 Withdrawals</h2><br>
-            ${!wd.withdrawals.length ? `<p class="muted">None yet.</p>` : wd.withdrawals.map(w => `<div class="req-card"><div class="row"><b>User:</b> <span>${escapeHTML(w.user_name)} (${escapeHTML(w.phone)})</span></div><div class="row"><b>Amount:</b> <span class="gold">${money(w.amount)}</span></div><div class="row"><b>Account:</b> <span>${escapeHTML(w.account_number)}</span></div><div class="row"><b>Status:</b> <span class="status-badge ${w.status}">${w.status.toUpperCase()}</span></div>${w.status === 'pending' ? `<div class="req-actions"><button class="small-button green-button" onclick="decideWithdraw(${w.id}, 'approve')">✓ Approve</button><button class="small-button red-button" onclick="decideWithdraw(${w.id}, 'reject')">✗ Reject</button></div>` : ''}</div>`).join('')}
-        </div>`;
+        <div class="card"><h2>💰 Deposits</h2><br>${depsHtml}</div>
+        <div class="card"><h2>💸 Withdrawals</h2><br>${wdsHtml}</div>`;
 }
 async function decideDeposit(id, action) {
     const comment = prompt(action === 'approve' ? 'Approve? Comment:' : 'Reject? Reason:');
     if (comment === null) return;
-    try { await api(`/admin/deposits/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
+    try { await api('/admin/deposits/' + id + '/decide', { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
 async function decideWithdraw(id, action) {
     const comment = prompt(action === 'approve' ? 'Approve? Reference:' : 'Reject? Reason:');
     if (comment === null) return;
-    try { await api(`/admin/withdrawals/${id}/decide`, { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
+    try { await api('/admin/withdrawals/' + id + '/decide', { method: 'POST', body: { action, comment } }); toast('✅ Done'); await refreshState(); requestsPage(); }
     catch (e) { alert('❌ ' + e.message); }
 }
 async function historyPage() {
@@ -1534,9 +1554,26 @@ async function historyPage() {
     `;
     const content = document.getElementById('historyContent');
     if (historyGame === 'wheel') {
-        content.innerHTML = !w.rounds.length ? `<div class="card"><p class="muted">No wheel rounds yet.</p></div>` : w.rounds.map(r => `<div class="history"><h3>🎡 Wheel Round #${r.round_number}</h3><p class="muted">${formatDate(r.date || r.created_at)}</p><br><strong>Winners:</strong><br>${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} - #${x.ticket} - <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}</div>`).join('');
+        content.innerHTML = !w.rounds.length
+            ? '<div class="card"><p class="muted">No wheel rounds yet.</p></div>'
+            : w.rounds.map(r => {
+                let winnersHtml = '<p class="muted">None</p>';
+                if (r.winners && r.winners.length) {
+                    winnersHtml = r.winners.map(x => '<div class="winner">🏆 ' + x.place + '. ' + escapeHTML(x.name) + ' - #' + x.ticket + ' - <span class="gold">' + money(x.prize) + '</span></div>').join('');
+                }
+                return '<div class="history"><h3>🎡 Wheel Round #' + r.round_number + '</h3><p class="muted">' + formatDate(r.date || r.created_at) + '</p><br><strong>Winners:</strong><br>' + winnersHtml + '</div>';
+            }).join('');
     } else {
-        content.innerHTML = !nb.rounds.length ? `<div class="card"><p class="muted">No NB rounds yet.</p></div>` : nb.rounds.map(r => `<div class="history"><h3>🎰 NB Round #${r.round_number}</h3><p class="muted">${formatDate(r.created_at)}</p><br><strong>Winning numbers:</strong><br><p>${(r.winning_numbers || []).map(n => '#' + n).join(', ') || '-'}</p><br><strong>Winners:</strong><br>${(r.winners || []).map(x => `<div class="winner">🏆 ${x.place}. ${escapeHTML(x.name)} — ${x.matches} matches — <span class="gold">${money(x.prize)}</span></div>`).join('') || '<p class="muted">None</p>'}</div>`).join('');
+        content.innerHTML = !nb.rounds.length
+            ? '<div class="card"><p class="muted">No NB rounds yet.</p></div>'
+            : nb.rounds.map(r => {
+                const winningNums = (r.winning_numbers || []).map(n => '#' + n).join(', ') || '-';
+                let winnersHtml = '<p class="muted">None</p>';
+                if (r.winners && r.winners.length) {
+                    winnersHtml = r.winners.map(x => '<div class="winner">🏆 ' + x.place + '. ' + escapeHTML(x.name) + ' — ' + x.matches + ' matches — <span class="gold">' + money(x.prize) + '</span></div>').join('');
+                }
+                return '<div class="history"><h3>🎰 NB Round #' + r.round_number + '</h3><p class="muted">' + formatDate(r.created_at) + '</p><br><strong>Winning numbers:</strong><br><p>' + winningNums + '</p><br><strong>Winners:</strong><br>' + winnersHtml + '</div>';
+            }).join('');
     }
 }
 function historySwitchGame(game) { if (historyGame === game) return; historyGame = game; historyPage(); }
@@ -1562,7 +1599,7 @@ function renderWheelSettings() {
     let prizeInputs = '';
     for (let i = 0; i < wc; i++) {
         const val = prizes[i] !== undefined ? prizes[i] : SETTINGS.prize;
-        prizeInputs += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${val}">`;
+        prizeInputs += '<label>Prize for Winner #' + (i + 1) + ' (ETB)</label><input class="prize-input" type="number" min="0" value="' + val + '">';
     }
     document.getElementById('settingsContent').innerHTML = `
         <div class="card">
@@ -1593,7 +1630,7 @@ function reloadPrizeInputs() {
     const wc = Math.max(1, Math.min(60, Number(document.getElementById('winnerCount').value) || 1));
     const defaultPrize = Number(document.getElementById('prize').value) || 0;
     let html = '';
-    for (let i = 0; i < wc; i++) html += `<label>Prize for Winner #${i + 1} (ETB)</label><input class="prize-input" type="number" min="0" value="${defaultPrize}">`;
+    for (let i = 0; i < wc; i++) html += '<label>Prize for Winner #' + (i + 1) + ' (ETB)</label><input class="prize-input" type="number" min="0" value="' + defaultPrize + '">';
     document.getElementById('prizeList').innerHTML = html;
 }
 async function saveWheelSettings() {
@@ -1613,13 +1650,13 @@ async function saveWheelSettings() {
     } catch (e) { alert('❌ ' + e.message); }
 }
 function renderNBSettings(s) {
-    if (!s) { document.getElementById('settingsContent').innerHTML = `<div class="card"><p class="muted">Number Betting settings not available.</p></div>`; return; }
+    if (!s) { document.getElementById('settingsContent').innerHTML = '<div class="card"><p class="muted">Number Betting settings not available.</p></div>'; return; }
     const prizes = s.prizes || [];
     const wc = s.winner_count || 1;
     let prizeInputs = '';
     for (let i = 0; i < wc; i++) {
         const val = prizes[i] !== undefined ? prizes[i] : 0;
-        prizeInputs += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="${val}">`;
+        prizeInputs += '<label>Prize for #' + (i + 1) + '</label><input class="nb-prize-input" type="number" min="0" value="' + val + '">';
     }
     document.getElementById('settingsContent').innerHTML = `
         <div class="card">
@@ -1646,7 +1683,7 @@ function renderNBSettings(s) {
 function nbSettingsReloadPrizes() {
     const count = Math.max(1, Math.min(20, Number(document.getElementById('nbWinners').value) || 1));
     let html = '';
-    for (let i = 0; i < count; i++) html += `<label>Prize for #${i + 1}</label><input class="nb-prize-input" type="number" min="0" value="0">`;
+    for (let i = 0; i < count; i++) html += '<label>Prize for #' + (i + 1) + '</label><input class="nb-prize-input" type="number" min="0" value="0">';
     document.getElementById('nbPrizeList').innerHTML = html;
 }
 async function saveNBSettings() {
@@ -1675,7 +1712,7 @@ async function changeAdminPassword(suffix = '') {
 async function startSales() { try { await api('/admin/start-sales', { method: 'POST' }); toast('🟢 Sales opened!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 async function closeSales() { try { await api('/admin/close-sales', { method: 'POST' }); toast('🔴 Sales closed!'); await refreshState(); renderPage(); } catch (e) { alert('❌ ' + e.message); } }
 function userTickets(id) { return TICKETS.filter(t => String(t.user_id) === String(id)).map(t => '#' + t.number).join(', '); }
-function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return `<p class="muted">No tickets.</p>`; return mine.map(t => `<button class="small-button gold-button">Ticket #${t.number}</button>`).join(' '); }
+function myTicketList() { const mine = TICKETS.filter(t => String(t.user_id) === String(ME.id)); if (!mine.length) return '<p class="muted">No tickets.</p>'; return mine.map(t => '<button class="small-button gold-button">Ticket #' + t.number + '</button>').join(' '); }
 function logout() { TOKEN = null; ME = null; localStorage.removeItem('lw_token'); if (sb) { try { sb.removeAllChannels(); } catch (e) {} } subscribed = false; stopCountdown(); stopLivePolls(); showLoginPage(); }
 function money(v) { return Number(v || 0).toLocaleString() + ' ETB'; }
 function formatTime(s) { s = Math.max(0, Number(s)); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = Math.floor(s % 60); if (h > 0) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'); return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); }
