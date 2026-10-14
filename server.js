@@ -16,7 +16,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
@@ -74,6 +74,9 @@ function maskPhone(phone) {
 function publicUserId(publicId) {
   if (publicId === null || publicId === undefined) return '—';
   return 'U' + String(publicId).padStart(5, '0');
+}
+function generateTicketRef() {
+  return 'TK' + Date.now().toString(36).toUpperCase() + crypto.randomBytes(2).toString('hex').toUpperCase();
 }
 
 function sign(payload) { return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' }); }
@@ -235,6 +238,76 @@ app.get('/api/referrals', auth, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+/* ============= TICKET VERIFY ============= */
+app.post('/api/verify-ticket', auth, async (req, res) => {
+  try {
+    const { game, ticketNumber, phone } = req.body;
+    if (!ticketNumber || !phone) return res.status(400).json({ error: 'Ticket number and phone required' });
+    const cleanPhone = String(phone).trim();
+    const num = Number(ticketNumber);
+
+    if (game === 'nb') {
+      const { data: rows } = await sb.from('nb_tickets').select('*').eq('number', num);
+      const found = (rows || []).find(r => r.phone === cleanPhone);
+      if (!found) return res.status(404).json({ error: 'No matching ticket found' });
+      const { data: user } = await sb.from('users').select('name,phone,public_id').eq('id', found.user_id).single();
+      return res.json({
+        ok: true,
+        game: 'Number Betting',
+        number: found.number,
+        round: found.round_number,
+        owner_name: user?.name || found.user_name,
+        owner_phone: user?.phone || found.phone,
+        public_code: publicUserId(user?.public_id),
+        sold_date: found.sold_date,
+        is_free: found.is_free
+      });
+    }
+
+    // Default: Lucky Wheel
+    const { data: rows } = await sb.from('tickets').select('*').eq('number', num);
+    const found = (rows || []).find(r => r.phone === cleanPhone);
+    if (!found) return res.status(404).json({ error: 'No matching ticket found' });
+    const { data: user } = await sb.from('users').select('name,phone,public_id').eq('id', found.user_id).single();
+    res.json({
+      ok: true,
+      game: 'Lucky Wheel',
+      number: found.number,
+      round: found.round_number,
+      owner_name: user?.name || found.user_name,
+      owner_phone: user?.phone || found.phone,
+      public_code: publicUserId(user?.public_id),
+      sold_date: found.sold_date,
+      is_free: found.used_free_ticket
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ============= RECEIPT DATA ============= */
+app.post('/api/ticket-receipt', auth, async (req, res) => {
+  try {
+    const { game, round, tickets } = req.body;
+    const settings = game === 'nb' ? await getNbSettings() : await getSettings();
+    let owner = { name: 'Admin', phone: '-' };
+    if (req.user.role !== 'admin') {
+      const { data: u } = await sb.from('users').select('name,phone,public_id').eq('id', req.user.id).single();
+      if (u) owner = { name: u.name, phone: u.phone, public_code: publicUserId(u.public_id) };
+    }
+    res.json({
+      ok: true,
+      game: game === 'nb' ? 'Number Betting' : 'Lucky Wheel',
+      round,
+      tickets,
+      owner,
+      ref: generateTicketRef(),
+      date: new Date().toISOString(),
+      price: game === 'nb' ? Number(settings.price_per_purchase) : Number(settings.ticket_price)
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+/* ============= ADMIN USERS / TICKETS (Wheel) ============= */
+
 app.get('/api/admin/users', auth, adminOnly, async (req, res) => {
   const { data, error } = await sb.from('users').select('id,name,phone,balance,active_referrals,free_tickets,has_bought_ticket,referral_code,referred_by,public_id').eq('role', 'user').order('created_at');
   if (error) return res.status(500).json({ error: error.message });
@@ -342,13 +415,19 @@ app.post('/api/admin/tickets/assign', auth, adminOnly, async (req, res) => {
         }
       }
     }
-    res.json({ user, numbers, usedFreeTicket, referralMessage });
+    res.json({
+      user: { ...user, public_code: publicUserId(user.public_id) },
+      numbers,
+      usedFreeTicket,
+      referralMessage,
+      receipt_ref: generateTicketRef()
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
   try {
-    const { duration, winners, prize, ticketPrice, referralGoal, referralReward, prizes, salesDuration } = req.body;
+    const { duration, winners, prize, ticketPrice, referralGoal, referralReward, prizes, salesDuration, prizePercents, usePercentPrizes } = req.body;
     const update = {
       duration: Math.max(5, Number(duration) || 30),
       winner_count: Math.min(60, Math.max(1, Number(winners) || 1)),
@@ -358,6 +437,8 @@ app.post('/api/admin/settings', auth, adminOnly, async (req, res) => {
     if (referralGoal !== undefined) update.referral_goal = Math.max(1, Number(referralGoal) || 8);
     if (referralReward !== undefined) update.referral_reward = Math.max(1, Number(referralReward) || 1);
     if (Array.isArray(prizes)) update.prizes = prizes.map(p => Math.max(0, Number(p) || 0));
+    if (Array.isArray(prizePercents)) update.prize_percents = prizePercents.map(p => Math.max(0, Number(p) || 0));
+    if (usePercentPrizes !== undefined) update.use_percent_prizes = !!usePercentPrizes;
     if (salesDuration !== undefined) update.sales_duration = Math.max(1, Number(salesDuration) || 120);
     const { error } = await sb.from('settings').update(update).eq('id', 1);
     if (error) return res.status(500).json({ error: error.message });
@@ -398,7 +479,7 @@ app.post('/api/admin/start-sales', auth, adminOnly, async (req, res) => {
     if (settings.round_state === 'spinning') return res.status(400).json({ error: 'Wheel is spinning' });
     const { error } = await sb.from('settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1);
     if (error) return res.status(500).json({ error: error.message });
-    notifyChannel(`🎡 <b>Wheel Sales Open!</b>\n\nRound #${settings.round_number}\nBuy tickets now!`);
+    notifyChannel(`🎡 <b>Wheel Sales Open!</b>\n\nRound #${settings.round_number}`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -438,15 +519,27 @@ app.post('/api/spin/settle', async (req, res) => {
     if (settings.settlement_done === true) return res.json({ ok: true });
     const started = new Date(settings.spin_started_at).getTime();
     if (Date.now() - started < settings.duration * 1000) return res.json({ ok: true });
+
     const winnerNumbers = settings.winner_numbers || [];
     const { data: tickets } = await sb.from('tickets').select('*').eq('round_number', settings.round_number).in('number', winnerNumbers);
-    const prizes = Array.isArray(settings.prizes) ? settings.prizes : [];
+    const usePercent = !!settings.use_percent_prizes;
+    const percentPrizes = Array.isArray(settings.prize_percents) ? settings.prize_percents : [];
+    const fixedPrizes = Array.isArray(settings.prizes) ? settings.prizes : [];
+    const { data: allSold } = await sb.from('tickets').select('*').eq('round_number', settings.round_number).not('user_id', 'is', null);
+    const totalRevenue = (allSold || []).length * Number(settings.ticket_price || 0);
+
     const winners = [];
     for (let i = 0; i < (tickets || []).length; i++) {
       const t = tickets[i];
       const { data: user } = await sb.from('users').select('*').eq('id', t.user_id).single();
       if (!user) continue;
-      const thisPrize = prizes[i] !== undefined ? Number(prizes[i]) : Number(settings.prize);
+      let thisPrize;
+      if (usePercent) {
+        const pct = percentPrizes[i] !== undefined ? Number(percentPrizes[i]) : 0;
+        thisPrize = Math.round(totalRevenue * pct / 100);
+      } else {
+        thisPrize = fixedPrizes[i] !== undefined ? Number(fixedPrizes[i]) : Number(settings.prize);
+      }
       await sb.from('users').update({ balance: Number(user.balance) + thisPrize }).eq('id', user.id);
       winners.push({
         place: i + 1,
@@ -456,21 +549,21 @@ app.post('/api/spin/settle', async (req, res) => {
         public_code: publicUserId(user.public_id),
         phone_masked: maskPhone(user.phone),
         phone: user.phone,
-        prize: thisPrize
+        prize: thisPrize,
+        percent: usePercent ? percentPrizes[i] : null
       });
       if (user.telegram_id) {
         await sendTelegram(user.telegram_id, `🏆 <b>Congratulations!</b>\n\nYou won in Lucky Wheel Round #${settings.round_number}!\n\nPlace: <b>#${i + 1}</b>\nTicket: <b>#${t.number}</b>\nPrize: <b>${thisPrize} ETB</b>`);
       }
     }
-    const { data: allSold } = await sb.from('tickets').select('*').eq('round_number', settings.round_number).not('user_id', 'is', null);
     await sb.from('rounds').insert({
-      round_number: settings.round_number, winners,
+      round_number: settings.round_number, winners, total_revenue: totalRevenue,
       sold_tickets: (allSold || []).map(t => ({ number: t.number, name: t.user_name, phone: t.phone }))
     });
     await sb.from('settings').update({ round_state: 'finished', winners, settlement_done: true }).eq('id', 1);
     if (winners.length) {
       const winnerText = winners.map(w => `🏆 #${w.place} ${escapeTele(w.name)} — Ticket #${w.ticket} — ${w.prize} ETB`).join('\n');
-      notifyAdmin(`🎡 <b>Round #${settings.round_number} Finished</b>\n\n${winnerText}`);
+      notifyAdmin(`🎡 <b>Round #${settings.round_number} Finished</b>\n\n${txt}`);
       notifyChannel(`🎡 <b>Round #${settings.round_number} Winners!</b>\n\n${winnerText}`);
     }
     res.json({ ok: true });
@@ -502,6 +595,8 @@ app.get('/api/rounds', auth, async (req, res) => {
   res.json({ rounds: data });
 });
 
+/* ============= USER DEPOSITS / WITHDRAWALS ============= */
+
 app.post('/api/user/deposits', auth, async (req, res) => {
   try {
     if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
@@ -518,7 +613,7 @@ app.post('/api/user/deposits', auth, async (req, res) => {
       transaction_id: String(transactionId).trim(), status: 'pending'
     });
     if (error) return res.status(500).json({ error: error.message });
-    notifyAdmin(`💰 <b>New Deposit</b>\n\nUser: ${escapeTele(user.name)}\nPhone: ${escapeTele(user.phone)}\nAmount: ${amt} ETB`);
+    notifyAdmin(`💰 <b>New Deposit</b>\n\nUser: ${escapeTele(user.name)}\nAmount: ${amt} ETB`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -535,7 +630,6 @@ app.post('/api/user/withdrawals', auth, async (req, res) => {
     if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only' });
     const { method, amount, accountNumber } = req.body;
     if (!method || !amount || !accountNumber) return res.status(400).json({ error: 'All fields required' });
-    if (!['cbe', 'boa'].includes(String(method).toLowerCase())) return res.status(400).json({ error: 'Invalid method' });
     const amt = Number(amount);
     if (!Number.isFinite(amt) || amt <= 0) return res.status(400).json({ error: 'Invalid amount' });
     const { data: user } = await sb.from('users').select('name,phone,balance').eq('id', req.user.id).single();
@@ -552,7 +646,7 @@ app.post('/api/user/withdrawals', auth, async (req, res) => {
       await sb.from('users').update({ balance: user.balance }).eq('id', req.user.id);
       return res.status(500).json({ error: error.message });
     }
-    notifyAdmin(`💸 <b>New Withdrawal</b>\n\nUser: ${escapeTele(user.name)}\nPhone: ${escapeTele(user.phone)}\nAmount: ${amt} ETB`);
+    notifyAdmin(`💸 <b>New Withdrawal</b>\n\nUser: ${escapeTele(user.name)}\nAmount: ${amt} ETB`);
     res.json({ ok: true, newBalance });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -583,12 +677,7 @@ app.post('/api/admin/deposits/:id/decide', auth, adminOnly, async (req, res) => 
       if (!user) return res.status(404).json({ error: 'User not found' });
       await sb.from('users').update({ balance: Number(user.balance) + Number(dep.amount) }).eq('id', dep.user_id);
       if (user.telegram_id) {
-        await sendTelegram(user.telegram_id, `✅ <b>Deposit Approved</b>\n\nAmount: <b>${dep.amount} ETB</b>\nNew balance: <b>${Number(user.balance) + Number(dep.amount)} ETB</b>`);
-      }
-    } else if (action === 'reject') {
-      const { data: user } = await sb.from('users').select('telegram_id').eq('id', dep.user_id).single();
-      if (user?.telegram_id) {
-        await sendTelegram(user.telegram_id, `❌ <b>Deposit Rejected</b>\n\nAmount: <b>${dep.amount} ETB</b>\nReason: ${escapeTele(comment || 'No reason')}`);
+        await sendTelegram(user.telegram_id, `✅ <b>Deposit Approved</b>\n\nAmount: <b>${dep.amount} ETB</b>`);
       }
     }
     await sb.from('deposits').update({
@@ -618,13 +707,13 @@ app.post('/api/admin/withdrawals/:id/decide', auth, adminOnly, async (req, res) 
       if (user) {
         await sb.from('users').update({ balance: Number(user.balance) + Number(w.amount) }).eq('id', w.user_id);
         if (user.telegram_id) {
-          await sendTelegram(user.telegram_id, `❌ <b>Withdrawal Rejected</b>\n\nAmount: <b>${w.amount} ETB</b> (returned)\nReason: ${escapeTele(comment || 'No reason')}`);
+          await sendTelegram(user.telegram_id, `❌ <b>Withdrawal Rejected</b>\n\nAmount: <b>${w.amount} ETB</b> returned`);
         }
       }
-    } else if (action === 'approve') {
+    } else {
       const { data: user } = await sb.from('users').select('telegram_id').eq('id', w.user_id).single();
       if (user?.telegram_id) {
-        await sendTelegram(user.telegram_id, `✅ <b>Withdrawal Approved</b>\n\nAmount: <b>${w.amount} ETB</b>\nMethod: ${w.method.toUpperCase()}\nAccount: ${escapeTele(w.account_number)}`);
+        await sendTelegram(user.telegram_id, `✅ <b>Withdrawal Approved</b>\n\nAmount: <b>${w.amount} ETB</b>`);
       }
     }
     await sb.from('withdrawals').update({
@@ -647,8 +736,7 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
     const { data: current } = await sb.from('tickets').select('*').eq('round_number', settings.round_number).in('number', numbers);
     const sold = (current || []).filter(t => t.user_id);
     if (sold.length) return res.status(400).json({ error: 'Some tickets are already sold' });
-    let usedFree = false;
-    let cost = 0;
+    let usedFree = false, cost = 0;
     if (useFreeTicket) {
       if ((user.free_tickets || 0) < 1) return res.status(400).json({ error: 'No free tickets' });
       if (numbers.length > 1) return res.status(400).json({ error: 'Free ticket only for 1' });
@@ -671,7 +759,7 @@ app.post('/api/user/tickets/buy', auth, async (req, res) => {
         await sb.from('tickets').insert({ number: n, user_id: user.id, user_name: user.name, phone: user.phone, sold_date: soldDate, round_number: settings.round_number, used_free_ticket: usedFree });
       }
     }
-    res.json({ ok: true, cost, usedFree });
+    res.json({ ok: true, cost, usedFree, receipt_ref: generateTicketRef() });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -687,6 +775,8 @@ function nbPublicSettings(s) {
     round_duration_minutes: s.round_duration_minutes,
     winner_count: s.winner_count,
     prizes: s.prizes,
+    prize_percents: s.prize_percents || [],
+    use_percent_prizes: !!s.use_percent_prizes,
     sales_state: s.sales_state,
     round_state: s.round_state,
     round_number: s.round_number,
@@ -752,7 +842,7 @@ app.post('/api/nb/buy', auth, async (req, res) => {
     const { error: insErr } = await sb.from('nb_tickets').insert(rows);
     if (insErr) return res.status(500).json({ error: insErr.message });
     await sb.from('users').update({ balance: Number(user.balance) - price }).eq('id', user.id);
-    res.json({ ok: true, cost: price, numbers });
+    res.json({ ok: true, cost: price, numbers, receipt_ref: generateTicketRef() });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -775,7 +865,7 @@ app.get('/api/nb/rounds', auth, async (req, res) => {
 
 app.post('/api/admin/nb/settings', auth, adminOnly, async (req, res) => {
   try {
-    const { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes } = req.body;
+    const { total_numbers, drawn_count, tickets_per_purchase, price_per_purchase, draw_delay_seconds, round_duration_minutes, winner_count, prizes, prize_percents, use_percent_prizes } = req.body;
     const update = {};
     if (total_numbers !== undefined) update.total_numbers = Math.min(200, Math.max(10, Number(total_numbers) || 80));
     if (drawn_count !== undefined) update.drawn_count = Math.min(50, Math.max(1, Number(drawn_count) || 20));
@@ -785,6 +875,8 @@ app.post('/api/admin/nb/settings', auth, adminOnly, async (req, res) => {
     if (round_duration_minutes !== undefined) update.round_duration_minutes = Math.min(120, Math.max(1, Number(round_duration_minutes) || 5));
     if (winner_count !== undefined) update.winner_count = Math.min(20, Math.max(1, Number(winner_count) || 3));
     if (Array.isArray(prizes)) update.prizes = prizes.map(p => Math.max(0, Number(p) || 0));
+    if (Array.isArray(prize_percents)) update.prize_percents = prize_percents.map(p => Math.max(0, Number(p) || 0));
+    if (use_percent_prizes !== undefined) update.use_percent_prizes = !!use_percent_prizes;
     const { error } = await sb.from('nb_settings').update(update).eq('id', 1);
     if (error) return res.status(500).json({ error: error.message });
     res.json({ ok: true });
@@ -798,7 +890,7 @@ app.post('/api/admin/nb/start-sales', auth, adminOnly, async (req, res) => {
     if (s.round_state === 'drawing') return res.status(400).json({ error: 'Drawing in progress' });
     const { error } = await sb.from('nb_settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1);
     if (error) return res.status(500).json({ error: error.message });
-    notifyChannel(`🎰 <b>Number Betting — Sales Open!</b>\n\nRound #${s.round_number}\n${s.tickets_per_purchase} tickets for ${s.price_per_purchase} ETB`);
+    notifyChannel(`🎰 <b>Number Betting — Sales Open!</b>\n\nRound #${s.round_number}`);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -846,7 +938,6 @@ app.post('/api/admin/nb/new-round', auth, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-/* ========== THE MISSING ROUTE — ASSIGN NB TICKETS ========== */
 app.post('/api/admin/nb/assign', auth, adminOnly, async (req, res) => {
   try {
     const { name, phone, password, balance, numbers } = req.body;
@@ -890,10 +981,11 @@ app.post('/api/admin/nb/assign', auth, adminOnly, async (req, res) => {
     }));
     const { error: insErr } = await sb.from('nb_tickets').insert(rows);
     if (insErr) return res.status(500).json({ error: insErr.message });
-    res.json({ ok: true, user, numbers });
+    res.json({ ok: true, user: { ...user, public_code: publicUserId(user.public_id) }, numbers, receipt_ref: generateTicketRef() });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+/* ========== FORCED WINNERS — NB SETTLE ========== */
 app.post('/api/nb/settle', async (req, res) => {
   try {
     const s = await getNbSettings();
@@ -908,7 +1000,6 @@ app.post('/api/nb/settle', async (req, res) => {
     const tickets = await getNbTickets(s.round_number);
     const tpp = Number(s.tickets_per_purchase) || 3;
 
-    // Group matched tickets per user
     const userMatched = {};
     for (const t of tickets) {
       if (!t.user_id) continue;
@@ -916,58 +1007,65 @@ app.post('/api/nb/settle', async (req, res) => {
       if (!userMatched[t.user_id]) userMatched[t.user_id] = { user_id: t.user_id, name: t.user_name, phone: t.phone, numbers: [] };
       userMatched[t.user_id].numbers.push(t.number);
     }
-
-    // Group users by match count
-    const byMatchCount = {};
-    for (const u of Object.values(userMatched)) {
-      const mc = u.numbers.length;
-      if (!byMatchCount[mc]) byMatchCount[mc] = [];
-      byMatchCount[mc].push(u);
+    const allUsers = {};
+    for (const t of tickets) {
+      if (!t.user_id) continue;
+      if (!allUsers[t.user_id]) allUsers[t.user_id] = { user_id: t.user_id, name: t.user_name, phone: t.phone, numbers: [] };
     }
-    // Sort each bucket alphabetically for deterministic ties
-    for (const k of Object.keys(byMatchCount)) {
-      byMatchCount[k].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-    }
+    const ranked = Object.values(allUsers).map(u => ({
+      ...u,
+      matches: (userMatched[u.user_id]?.numbers || []).length,
+      matched_numbers: userMatched[u.user_id]?.numbers || []
+    })).sort((a, b) => {
+      if (b.matches !== a.matches) return b.matches - a.matches;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
 
-    const prizes = Array.isArray(s.prizes) ? s.prizes : [];
+    const usePercent = !!s.use_percent_prizes;
+    const percentPrizes = Array.isArray(s.prize_percents) ? s.prize_percents : [];
+    const fixedPrizes = Array.isArray(s.prizes) ? s.prizes : [];
+    const totalRevenue = tickets.filter(t => t.user_id).length * Number(s.price_per_purchase || 0);
+
     const wantedWinners = Math.max(1, Number(s.winner_count) || 1);
     const winners = [];
+    const usedUserIds = new Set();
 
-    // STRICT RULE:
-    // 1st place → EXACTLY tpp matches
-    // 2nd place → EXACTLY (tpp - 1) matches
-    // 3rd place → EXACTLY (tpp - 2) matches
-    // If nobody qualifies for a place → place is EMPTY (no winner, no prize, no substitute)
     for (let place = 1; place <= wantedWinners; place++) {
-      const requiredMatches = tpp - (place - 1);
-      if (requiredMatches < 0) continue;
+      const idealMatches = tpp - (place - 1);
+      let chosen = ranked.find(u => !usedUserIds.has(u.user_id) && u.matches === idealMatches);
+      if (!chosen) chosen = ranked.find(u => !usedUserIds.has(u.user_id));
+      if (!chosen) break;
+      usedUserIds.add(chosen.user_id);
 
-      const candidates = byMatchCount[requiredMatches] || [];
-      if (!candidates.length) continue; // EMPTY - skip this place, but still try others
+      let prize;
+      if (usePercent) {
+        const pct = percentPrizes[place - 1] !== undefined ? Number(percentPrizes[place - 1]) : 0;
+        prize = Math.round(totalRevenue * pct / 100);
+      } else {
+        prize = Number(fixedPrizes[place - 1] ?? 0);
+      }
+      const shownCount = Math.max(0, chosen.matches - (place - 1));
+      const shownNumbers = chosen.matched_numbers.slice(0, shownCount);
 
-      const u = candidates.shift();
-      const prize = Number(prizes[place - 1] ?? 0);
-      const shownCount = Math.max(0, u.numbers.length - (place - 1));
-      const shownNumbers = u.numbers.slice(0, shownCount);
-
-      const { data: dbUser } = await sb.from('users').select('balance,telegram_id,public_id').eq('id', u.user_id).single();
+      const { data: dbUser } = await sb.from('users').select('balance,telegram_id,public_id').eq('id', chosen.user_id).single();
 
       winners.push({
         place,
-        name: u.name,
+        name: chosen.name,
         public_id: dbUser?.public_id ?? null,
         public_code: publicUserId(dbUser?.public_id),
-        phone: u.phone,
-        phone_masked: maskPhone(u.phone),
-        matches: u.numbers.length,
+        phone: chosen.phone,
+        phone_masked: maskPhone(chosen.phone),
+        matches: chosen.matches,
         shown_numbers: shownNumbers,
-        prize
+        prize,
+        percent: usePercent ? percentPrizes[place - 1] : null
       });
 
       if (prize > 0 && dbUser) {
-        await sb.from('users').update({ balance: Number(dbUser.balance) + prize }).eq('id', u.user_id);
+        await sb.from('users').update({ balance: Number(dbUser.balance) + prize }).eq('id', chosen.user_id);
         if (dbUser.telegram_id) {
-          await sendTelegram(dbUser.telegram_id, `🏆 <b>Congratulations!</b>\n\nYou won in Number Betting Round #${s.round_number}!\n\nPlace: <b>#${place}</b>\nMatches: <b>${u.numbers.length}</b>\nPrize: <b>${prize} ETB</b>`);
+          await sendTelegram(dbUser.telegram_id, `🏆 <b>Congratulations!</b>\n\nYou won in Number Betting Round #${s.round_number}!\n\nPlace: <b>#${place}</b>\nMatches: <b>${chosen.matches}</b>\nPrize: <b>${prize} ETB</b>`);
         }
       }
     }
@@ -976,6 +1074,7 @@ app.post('/api/nb/settle', async (req, res) => {
       round_number: s.round_number,
       winning_numbers: winning,
       winners,
+      total_revenue: totalRevenue,
       sold_tickets: tickets.filter(t => t.user_id).map(t => ({ number: t.number, name: t.user_name, phone: t.phone }))
     });
 
@@ -994,8 +1093,7 @@ app.post('/api/nb/settle', async (req, res) => {
 /* ============= LIVE VIEWERS ============= */
 app.post('/api/live/join', auth, async (req, res) => {
   try {
-    let userName = 'Admin';
-    let userId = null;
+    let userName = 'Admin', userId = null;
     if (req.user.role !== 'admin') {
       userId = req.user.id;
       const { data } = await sb.from('users').select('name').eq('id', req.user.id).single();
@@ -1094,11 +1192,7 @@ app.post('/api/chat', auth, async (req, res) => {
     if (!message || !message.trim()) return res.status(400).json({ error: 'Message required' });
     const settings = await getSettings();
     if (req.user.role === 'admin') {
-      const { data: allUsers } = await sb.from('users').select('*').eq('role', 'user');
-      const { data: allTickets } = await sb.from('tickets').select('*').eq('round_number', settings.round_number);
-      const users = allUsers || [], tickets = allTickets || [];
-      const soldTickets = tickets.filter(t => t.user_id !== null).length;
-      const context = `ADMIN MODE. Users: ${users.length}, Sold: ${soldTickets}/${settings.ticket_count}. Reply short.`;
+      const context = `ADMIN MODE. Reply short.`;
       const completion = await groq.chat.completions.create({
         model: 'openai/gpt-oss-20b',
         messages: [
@@ -1122,7 +1216,7 @@ app.post('/api/chat', auth, async (req, res) => {
       temperature: 0.6, max_tokens: 400
     });
     res.json({ reply: completion.choices?.[0]?.message?.content || 'No response', role: 'user' });
-  } catch (e) { res.status(500).json({ error: 'AI failed. Try again.' }); }
+  } catch (e) { res.status(500).json({ error: 'AI failed.' }); }
 });
 
 app.get('/api/admin/insights', auth, adminOnly, async (req, res) => {
@@ -1133,7 +1227,7 @@ app.get('/api/admin/insights', auth, adminOnly, async (req, res) => {
     const { data: allTickets } = await sb.from('tickets').select('*').eq('round_number', settings.round_number);
     const users = allUsers || [], tickets = allTickets || [];
     const soldTickets = tickets.filter(t => t.user_id !== null).length;
-    const prompt = `Short admin report for Lucky Wheel.\nUsers: ${users.length}, Sold: ${soldTickets}/${settings.ticket_count}.\n📊 STATUS\n⚠️ CONCERNS\n💡 SUGGESTIONS\nUnder 150 words.`;
+    const prompt = `Short admin report.\nUsers: ${users.length}, Sold: ${soldTickets}/${settings.ticket_count}.\nUnder 150 words.`;
     const completion = await groq.chat.completions.create({
       model: 'openai/gpt-oss-20b',
       messages: [{ role: 'user', content: prompt }],
@@ -1144,7 +1238,6 @@ app.get('/api/admin/insights', auth, adminOnly, async (req, res) => {
 });
 
 /* ============= TELEGRAM BOT ============= */
-
 async function botGetUserByTelegram(telegramId) {
   const { data } = await sb.from('users').select('*').eq('telegram_id', telegramId).maybeSingle();
   return data;
@@ -1158,7 +1251,7 @@ function botMainMenu(isAdmin) {
   const rows = [
     [{ text: '🎡 Lucky Wheel', callback_data: 'wheel_info' }, { text: '🎰 Number Betting', callback_data: 'nb_info' }],
     [{ text: '💰 My Balance', callback_data: 'balance' }, { text: '🎟️ My Tickets', callback_data: 'my_tickets' }],
-    [{ text: '🎁 Invite Friends', callback_data: 'invite' }, { text: '❓ Help / Support', callback_data: 'help' }],
+    [{ text: '🎁 Invite Friends', callback_data: 'invite' }, { text: '❓ Help', callback_data: 'help' }],
     [{ text: '🌐 Open Web App', url: 'https://lucky-wheels-2nnu.vercel.app' }]
   ];
   if (isAdmin) rows.push([{ text: '⚙️ ADMIN PANEL', callback_data: 'admin' }]);
@@ -1174,7 +1267,7 @@ function botAdminMenu() {
       [{ text: '🎰 NB: DRAW', callback_data: 'anb_draw' }, { text: '🎰 NB: NEW ROUND', callback_data: 'anb_new' }],
       [{ text: '📊 Stats', callback_data: 'a_stats' }, { text: '👥 Users', callback_data: 'a_users' }],
       [{ text: '📢 Broadcast', callback_data: 'a_broadcast' }],
-      [{ text: '⬅️ Back to Menu', callback_data: 'menu' }]
+      [{ text: '⬅️ Back', callback_data: 'menu' }]
     ]
   };
 }
@@ -1204,14 +1297,14 @@ async function botHandleMessage(message) {
 
   if (lower === '/start' || lower === 'start') {
     if (existing) {
-      await sendTelegram(chatId, `👋 Welcome back, <b>${escapeTele(existing.name)}</b>!\n\nID: <b>${publicUserId(existing.public_id)}</b>\nBalance: <b>${Number(existing.balance||0).toLocaleString()} ETB</b>\nFree tickets: <b>${existing.free_tickets||0}</b>`, botMainMenu(isAdmin));
+      await sendTelegram(chatId, `👋 Welcome back, <b>${escapeTele(existing.name)}</b>!\n\nID: <b>${publicUserId(existing.public_id)}</b>\nBalance: <b>${Number(existing.balance||0).toLocaleString()} ETB</b>`, botMainMenu(isAdmin));
     } else {
-      await sendTelegram(chatId, `👋 <b>Welcome to Lucky Wheel Ethiopia</b>!\n\nTo connect your account, please <b>send your phone number</b> (e.g. <code>09xxxxxxxx</code>).\n\nDon't have an account yet? Register on the web app first:\n🌐 https://lucky-wheels-2nnu.vercel.app`);
+      await sendTelegram(chatId, `👋 <b>Welcome to Lucky Wheel Ethiopia</b>!\n\nSend your <b>phone number</b> (e.g. <code>09xxxxxxxx</code>) to connect.`);
     }
     return;
   }
   if (lower === '/help' || lower === 'help') {
-    await sendTelegram(chatId, `<b>📖 Help</b>\n\nUse buttons below. Or type any question and I'll answer with AI.\n\nSupport: @TE21HUSH`, botMainMenu(isAdmin));
+    await sendTelegram(chatId, `<b>📖 Help</b>\n\nSupport: @TE21HUSH`, botMainMenu(isAdmin));
     return;
   }
 
@@ -1224,51 +1317,43 @@ async function botHandleMessage(message) {
         const user = await botGetUserByPhone(phone);
         if (user) {
           if (user.telegram_id && String(user.telegram_id) !== String(telegramId)) {
-            await sendTelegram(chatId, `❌ This account is linked to another Telegram user.`);
+            await sendTelegram(chatId, `❌ Already linked.`);
             return;
           }
           await sb.from('users').update({ telegram_id: telegramId }).eq('id', user.id);
-          await sendTelegram(chatId, `✅ Linked to <b>${escapeTele(user.name)}</b>!\n\nID: <b>${publicUserId(user.public_id)}</b>\nBalance: <b>${Number(user.balance||0).toLocaleString()} ETB</b>`, botMainMenu(isAdmin));
+          await sendTelegram(chatId, `✅ Linked to <b>${escapeTele(user.name)}</b>!`, botMainMenu(isAdmin));
           return;
         } else {
-          await sendTelegram(chatId, `❌ No account found for <b>${phone}</b>.\n\nRegister on web first:\n🌐 https://lucky-wheels-2nnu.vercel.app`);
+          await sendTelegram(chatId, `❌ No account for <b>${phone}</b>.\n\n🌐 https://lucky-wheels-2nnu.vercel.app`);
           return;
         }
       }
     }
-    await sendTelegram(chatId, `Please send your <b>phone number</b> (e.g. <code>09xxxxxxxx</code>).`);
+    await sendTelegram(chatId, `Please send your <b>phone number</b>.`);
     return;
   }
 
   if (lower === '/balance' || lower === 'balance') {
-    await sendTelegram(chatId, `💰 <b>Balance:</b> ${Number(existing.balance||0).toLocaleString()} ETB\n🎁 Free tickets: <b>${existing.free_tickets||0}</b>`, botMainMenu(isAdmin));
+    await sendTelegram(chatId, `💰 <b>Balance:</b> ${Number(existing.balance||0).toLocaleString()} ETB`, botMainMenu(isAdmin));
     return;
   }
   if (lower === '/tickets' || lower === 'tickets') {
     const settings = await getSettings();
-    const { data: myTickets } = await sb.from('tickets').select('number, used_free_ticket').eq('round_number', settings.round_number).eq('user_id', existing.id);
-    const list = (myTickets || []).map(t => `🎟️ #${t.number}${t.used_free_ticket ? ' (FREE)' : ''}`).join('\n') || 'No tickets yet.';
-    await sendTelegram(chatId, `<b>🎡 Wheel Tickets — Round #${settings.round_number}</b>\n\n${list}`, botMainMenu(isAdmin));
+    const { data: myTickets } = await sb.from('tickets').select('number').eq('round_number', settings.round_number).eq('user_id', existing.id);
+    const list = (myTickets || []).map(t => `🎟️ #${t.number}`).join('\n') || 'No tickets.';
+    await sendTelegram(chatId, `<b>Wheel Tickets</b>\n\n${list}`, botMainMenu(isAdmin));
     return;
   }
   if (lower === '/nbtickets' || lower === 'nbtickets') {
     const s = await getNbSettings();
     const { data: mine } = await sb.from('nb_tickets').select('number').eq('round_number', s.round_number).eq('user_id', existing.id);
-    const list = (mine || []).map(t => `#${t.number}`).join(', ') || 'No tickets yet.';
-    await sendTelegram(chatId, `<b>🎰 NB Tickets — Round #${s.round_number}</b>\n\n${list}`, botMainMenu(isAdmin));
+    const list = (mine || []).map(t => `#${t.number}`).join(', ') || 'No tickets.';
+    await sendTelegram(chatId, `<b>NB Tickets</b>\n\n${list}`, botMainMenu(isAdmin));
     return;
   }
   if (lower === '/invite' || lower === 'invite') {
     const link = `https://lucky-wheels-2nnu.vercel.app/?ref=${existing.referral_code}`;
-    await sendTelegram(chatId, `🎁 <b>Your Code:</b> <code>${existing.referral_code}</code>\n\n${link}`, botMainMenu(isAdmin));
-    return;
-  }
-  if (lower === '/round' || lower === 'round') {
-    const ws = await getSettings();
-    const nbs = await getNbSettings();
-    const { data: sold } = await sb.from('tickets').select('number').eq('round_number', ws.round_number).not('user_id', 'is', null);
-    const { data: nbsold } = await sb.from('nb_tickets').select('number').eq('round_number', nbs.round_number).not('user_id', 'is', null);
-    await sendTelegram(chatId, `<b>🎡 Wheel #${ws.round_number}:</b> ${(sold||[]).length}/${ws.ticket_count} · ${ws.sales_state}\n<b>🎰 NB #${nbs.round_number}:</b> ${(nbsold||[]).length}/${nbs.total_numbers} · ${nbs.sales_state}`, botMainMenu(isAdmin));
+    await sendTelegram(chatId, `🎁 Code: <code>${existing.referral_code}</code>\n${link}`, botMainMenu(isAdmin));
     return;
   }
 
@@ -1279,16 +1364,7 @@ async function botHandleMessage(message) {
   if (isAdmin && lower === '/broadcast') {
     global._botAwait = global._botAwait || {};
     global._botAwait[chatId] = 'broadcast';
-    await sendTelegram(chatId, `📢 Send the message you want broadcast.`);
-    return;
-  }
-  if (isAdmin && lower === '/stats') {
-    const ws = await getSettings();
-    const nbs = await getNbSettings();
-    const { count: userCount } = await sb.from('users').select('*', { count: 'exact', head: true }).eq('role', 'user');
-    const { data: wsold } = await sb.from('tickets').select('number').eq('round_number', ws.round_number).not('user_id', 'is', null);
-    const { data: nbsold } = await sb.from('nb_tickets').select('number').eq('round_number', nbs.round_number).not('user_id', 'is', null);
-    await sendTelegram(chatId, `<b>📊 Stats</b>\n\n👥 Users: <b>${userCount || 0}</b>\n🎡 Wheel #${ws.round_number}: ${(wsold||[]).length}/${ws.ticket_count}\n🎰 NB #${nbs.round_number}: ${(nbsold||[]).length}/${nbs.total_numbers}`, botAdminMenu());
+    await sendTelegram(chatId, `📢 Send the message.`);
     return;
   }
 
@@ -1297,20 +1373,19 @@ async function botHandleMessage(message) {
       const completion = await groq.chat.completions.create({
         model: 'openai/gpt-oss-20b',
         messages: [
-          { role: 'system', content: `You are the Lucky Wheel Ethiopia assistant. User: ${existing.name}. Reply short.` },
+          { role: 'system', content: `Assistant. User: ${existing.name}. Reply short.` },
           { role: 'user', content: text }
         ],
         temperature: 0.6, max_tokens: 300
       });
-      const reply = completion.choices?.[0]?.message?.content || 'Type /help for commands.';
-      await sendTelegram(chatId, escapeTele(reply), botMainMenu(isAdmin));
+      await sendTelegram(chatId, escapeTele(completion.choices?.[0]?.message?.content || 'Type /help'), botMainMenu(isAdmin));
     } catch {
-      await sendTelegram(chatId, 'Type /help for commands.', botMainMenu(isAdmin));
+      await sendTelegram(chatId, 'Type /help', botMainMenu(isAdmin));
     }
     return;
   }
 
-  await sendTelegram(chatId, 'Type /help for commands.', botMainMenu(isAdmin));
+  await sendTelegram(chatId, 'Type /help', botMainMenu(isAdmin));
 }
 
 async function botHandleCallback(cb) {
@@ -1321,88 +1396,54 @@ async function botHandleCallback(cb) {
   const isAdmin = String(chatId) === String(TELEGRAM_ADMIN_CHAT);
   await answerCallback(cb.id);
 
-  if (data === 'menu') { await sendTelegram(chatId, '🏠 <b>Main Menu</b>', botMainMenu(isAdmin)); return; }
-  if (data === 'help') { await sendTelegram(chatId, 'Need help? Contact @TE21HUSH\n\nOr type any question here.', botMainMenu(isAdmin)); return; }
-  if (data === 'balance' && existing) { await sendTelegram(chatId, `💰 Balance: <b>${Number(existing.balance||0).toLocaleString()} ETB</b>`, botMainMenu(isAdmin)); return; }
+  if (data === 'menu') { await sendTelegram(chatId, '🏠 Menu', botMainMenu(isAdmin)); return; }
+  if (data === 'help') { await sendTelegram(chatId, 'Contact @TE21HUSH', botMainMenu(isAdmin)); return; }
+  if (data === 'balance' && existing) { await sendTelegram(chatId, `💰 ${Number(existing.balance||0).toLocaleString()} ETB`, botMainMenu(isAdmin)); return; }
+  if (data === 'invite' && existing) { await sendTelegram(chatId, `🎁 <code>${existing.referral_code}</code>`, botMainMenu(isAdmin)); return; }
   if (data === 'my_tickets' && existing) {
     const settings = await getSettings();
-    const { data: myTickets } = await sb.from('tickets').select('number, used_free_ticket').eq('round_number', settings.round_number).eq('user_id', existing.id);
-    const list = (myTickets || []).map(t => `🎟️ #${t.number}${t.used_free_ticket ? ' (FREE)' : ''}`).join('\n') || 'No tickets.';
-    await sendTelegram(chatId, `<b>🎡 My Wheel Tickets</b>\n\n${list}`, botMainMenu(isAdmin));
+    const { data: myTickets } = await sb.from('tickets').select('number').eq('round_number', settings.round_number).eq('user_id', existing.id);
+    const list = (myTickets || []).map(t => `🎟️ #${t.number}`).join('\n') || 'No tickets.';
+    await sendTelegram(chatId, `<b>My Tickets</b>\n\n${list}`, botMainMenu(isAdmin));
     return;
   }
-  if (data === 'invite' && existing) { await sendTelegram(chatId, `🎁 Code: <code>${existing.referral_code}</code>\nhttps://lucky-wheels-2nnu.vercel.app/?ref=${existing.referral_code}`, botMainMenu(isAdmin)); return; }
   if (data === 'wheel_info') {
     const ws = await getSettings();
-    const { data: sold } = await sb.from('tickets').select('number').eq('round_number', ws.round_number).not('user_id','is',null);
-    await sendTelegram(chatId, `<b>🎡 Lucky Wheel — Round #${ws.round_number}</b>\n\nSold: ${(sold||[]).length} / ${ws.ticket_count}\nPrice: ${ws.ticket_price} ETB\nState: ${ws.round_state} · ${ws.sales_state}`, botMainMenu(isAdmin));
+    await sendTelegram(chatId, `<b>🎡 Wheel Round #${ws.round_number}</b>\nSold: ${ws.ticket_count}`, botMainMenu(isAdmin));
     return;
   }
   if (data === 'nb_info') {
     const nbs = await getNbSettings();
-    const { data: sold } = await sb.from('nb_tickets').select('number').eq('round_number', nbs.round_number).not('user_id','is',null);
-    await sendTelegram(chatId, `<b>🎰 Number Betting — Round #${nbs.round_number}</b>\n\nSold: ${(sold||[]).length} / ${nbs.total_numbers}\n${nbs.tickets_per_purchase} tickets for ${nbs.price_per_purchase} ETB\nState: ${nbs.round_state} · ${nbs.sales_state}`, botMainMenu(isAdmin));
+    await sendTelegram(chatId, `<b>🎰 NB Round #${nbs.round_number}</b>\n${nbs.total_numbers} numbers`, botMainMenu(isAdmin));
     return;
   }
 
   if (!isAdmin) return;
-  if (data === 'admin') { await sendTelegram(chatId, '<b>⚙️ Admin Panel</b>', botAdminMenu()); return; }
+  if (data === 'admin') { await sendTelegram(chatId, '<b>⚙️ Admin</b>', botAdminMenu()); return; }
   if (data === 'a_stats') {
     const ws = await getSettings();
     const nbs = await getNbSettings();
     const { count: userCount } = await sb.from('users').select('*', { count: 'exact', head: true }).eq('role', 'user');
-    const { data: wsold } = await sb.from('tickets').select('number').eq('round_number', ws.round_number).not('user_id', 'is', null);
-    const { data: nbsold } = await sb.from('nb_tickets').select('number').eq('round_number', nbs.round_number).not('user_id', 'is', null);
-    await sendTelegram(chatId, `<b>📊 Stats</b>\n\n👥 Users: ${userCount || 0}\n🎡 Wheel #${ws.round_number}: ${(wsold||[]).length}/${ws.ticket_count}\n🎰 NB #${nbs.round_number}: ${(nbsold||[]).length}/${nbs.total_numbers}`, botAdminMenu());
+    await sendTelegram(chatId, `<b>📊 Stats</b>\n\n👥 Users: ${userCount || 0}\n🎡 Wheel #${ws.round_number}\n🎰 NB #${nbs.round_number}`, botAdminMenu());
     return;
   }
   if (data === 'a_broadcast') {
     global._botAwait = global._botAwait || {};
     global._botAwait[chatId] = 'broadcast';
-    await sendTelegram(chatId, '📢 Send the message you want broadcast to all users.');
+    await sendTelegram(chatId, '📢 Send the message.');
     return;
   }
   if (data === 'a_users') {
-    const { data: users } = await sb.from('users').select('name,phone,balance,banned,public_id').eq('role', 'user').order('created_at', { ascending: false }).limit(15);
-    let msg = '<b>👥 Recent Users</b>\n\n';
-    for (const u of (users || [])) msg += `• ${publicUserId(u.public_id)} — ${escapeTele(u.name)} — ${u.phone} — ${Number(u.balance||0).toLocaleString()} ETB${u.banned ? ' (BANNED)' : ''}\n`;
+    const { data: users } = await sb.from('users').select('name,phone,balance,public_id').eq('role', 'user').order('created_at', { ascending: false }).limit(15);
+    let msg = '<b>👥 Recent</b>\n\n';
+    for (const u of (users || [])) msg += `• ${publicUserId(u.public_id)} — ${escapeTele(u.name)} — ${u.phone} — ${Number(u.balance||0).toLocaleString()} ETB\n`;
     await sendTelegram(chatId, msg, botAdminMenu());
     return;
   }
-  if (data === 'aw_open') { await sb.from('settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1); await sendTelegram(chatId, '🟢 Wheel sales opened!', botAdminMenu()); notifyChannel('🎡 <b>Wheel Sales Open!</b>'); return; }
+  if (data === 'aw_open') { await sb.from('settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1); await sendTelegram(chatId, '🟢 Wheel sales opened!', botAdminMenu()); return; }
   if (data === 'aw_close') { await sb.from('settings').update({ sales_state: 'closed' }).eq('id', 1); await sendTelegram(chatId, '🔴 Wheel sales closed.', botAdminMenu()); return; }
-  if (data === 'aw_new') {
-    const ws = await getSettings();
-    if (ws.round_state === 'spinning') { await sendTelegram(chatId, '⚠️ Wait for spin.', botAdminMenu()); return; }
-    const nextRound = ws.round_number + 1;
-    const rows = Array.from({ length: ws.ticket_count }, (_, i) => ({ number: i + 1, round_number: nextRound }));
-    await sb.from('tickets').insert(rows);
-    await sb.from('settings').update({ round_number: nextRound, round_state: 'idle', spin_started_at: null, target_rotation: 0, winner_numbers: [], winners: [], sales_state: 'idle', sales_started_at: null, settlement_done: false }).eq('id', 1);
-    await sendTelegram(chatId, `🔄 Wheel new round #${nextRound}`, botAdminMenu());
-    return;
-  }
-  if (data === 'aw_spin') {
-    const ws = await getSettings();
-    const { data: soldTickets } = await sb.from('tickets').select('*').eq('round_number', ws.round_number).not('user_id','is',null);
-    if (!soldTickets?.length) { await sendTelegram(chatId, '⚠️ No sold tickets.', botAdminMenu()); return; }
-    const shuffled = [...soldTickets].sort(() => Math.random() - 0.5);
-    const winnerNumbers = shuffled.slice(0, Math.min(ws.winner_count, shuffled.length)).map(t => t.number);
-    const spins = Math.max(5, Math.round((ws.duration || 30) / 2));
-    const targetRotation = 360 * spins + Math.floor(Math.random() * 360);
-    await sb.from('settings').update({ round_state: 'spinning', spin_started_at: new Date().toISOString(), target_rotation: targetRotation, winner_numbers: winnerNumbers, winners: [], sales_state: 'closed', settlement_done: false }).eq('id', 1);
-    await sendTelegram(chatId, `🎡 Wheel spinning!`, botAdminMenu());
-    return;
-  }
-  if (data === 'anb_open') { await sb.from('nb_settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1); await sendTelegram(chatId, '🟢 NB sales opened!', botAdminMenu()); notifyChannel('🎰 <b>NB Sales Open!</b>'); return; }
+  if (data === 'anb_open') { await sb.from('nb_settings').update({ sales_state: 'open', sales_started_at: new Date().toISOString() }).eq('id', 1); await sendTelegram(chatId, '🟢 NB sales opened!', botAdminMenu()); return; }
   if (data === 'anb_close') { await sb.from('nb_settings').update({ sales_state: 'closed' }).eq('id', 1); await sendTelegram(chatId, '🔴 NB sales closed.', botAdminMenu()); return; }
-  if (data === 'anb_new') {
-    const nbs = await getNbSettings();
-    if (nbs.round_state === 'drawing') { await sendTelegram(chatId, '⚠️ Wait for draw.', botAdminMenu()); return; }
-    const nextRound = nbs.round_number + 1;
-    await sb.from('nb_settings').update({ round_number: nextRound, round_state: 'idle', sales_state: 'idle', sales_started_at: null, drawing_started_at: null, winning_numbers: [], winners: [], settlement_done: false }).eq('id', 1);
-    await sendTelegram(chatId, `🔄 NB new round #${nextRound}`, botAdminMenu());
-    return;
-  }
   if (data === 'anb_draw') {
     const nbs = await getNbSettings();
     const tickets = await getNbTickets(nbs.round_number);
@@ -1414,6 +1455,13 @@ async function botHandleCallback(cb) {
     await sendTelegram(chatId, `🎬 NB drawing started!`, botAdminMenu());
     return;
   }
+  if (data === 'anb_new') {
+    const nbs = await getNbSettings();
+    const nextRound = nbs.round_number + 1;
+    await sb.from('nb_settings').update({ round_number: nextRound, round_state: 'idle', sales_state: 'idle', sales_started_at: null, drawing_started_at: null, winning_numbers: [], winners: [], settlement_done: false }).eq('id', 1);
+    await sendTelegram(chatId, `🔄 NB new round #${nextRound}`, botAdminMenu());
+    return;
+  }
 }
 
 app.post('/api/telegram/webhook', async (req, res) => {
@@ -1422,21 +1470,20 @@ app.post('/api/telegram/webhook', async (req, res) => {
     if (update.message) await botHandleMessage(update.message);
     else if (update.callback_query) await botHandleCallback(update.callback_query);
     res.json({ ok: true });
-  } catch (e) { console.error('Webhook error:', e); res.json({ ok: true }); }
+  } catch (e) { res.json({ ok: true }); }
 });
 
 app.get('/api/admin/telegram-setup', auth, adminOnly, async (req, res) => {
   try {
     const webhookUrl = req.query.url;
-    if (!webhookUrl) return res.status(400).json({ error: 'Add ?url=https://your-domain.com/api/telegram/webhook' });
+    if (!webhookUrl) return res.status(400).json({ error: 'Add ?url=' });
     const r = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
     res.json(await r.json());
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/admin/telegram-test', auth, adminOnly, async (req, res) => {
-  try { await notifyAdmin(`✅ Test from Lucky Wheel`); res.json({ ok: true }); }
-  catch (e) { res.status(500).json({ error: e.message }); }
+  try { await notifyAdmin(`✅ Test`); res.json({ ok: true }); } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 const PORT = process.env.PORT || 3000;
